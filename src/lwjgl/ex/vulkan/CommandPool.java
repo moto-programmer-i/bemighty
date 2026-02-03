@@ -20,11 +20,12 @@ public class CommandPool implements AutoCloseable {
                     .sType$Default()
                     .queueFamilyIndex(settings.getQueueFamilyIndex());
             
-            // パフォーマンス上、resetは使わないほうがいいらしい
-            // https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-05/chapter-05.md
-//            if (settings.isSupportReset()) {
-//            	info.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-//            }
+            // 公式サンプル：resetを使っている
+            // https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+            // 非公式情報：パフォーマンス上、resetは使わないほうがいい
+            // https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-05/chapter-05.md#command-buffers
+            // さらに非公式情報の方のパフォーマンス比較実験の詳細が不明なので、resetを使う
+            info.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
             LongBuffer lp = stack.mallocLong(1);
             Vulkan.throwExceptionIfFailed(vkCreateCommandPool(settings.getLogicalDevice().getDevice(), info, null, lp),

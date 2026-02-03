@@ -9,3 +9,12 @@ https://chaosplant.tech/do/vulkan/2-3/
 のように、キューの構成にかなり幅がある。
 このあたりの最適化をどうすればよいのか全く不明
 ----------------------------------------------------------------------
+■commandPoolのリセットフラグは使うべきか不明
+公式サンプル：resetを使っている
+https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+
+非公式情報：パフォーマンス上、resetは使わないほうがいい
+https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-05/chapter-05.md#command-buffers
+さらに非公式情報の方のパフォーマンス比較実験の詳細が不明
+
+現状ではresetを使うことにした、後々パフォーマンスが問題になったときに、検証してみるというのはあり
