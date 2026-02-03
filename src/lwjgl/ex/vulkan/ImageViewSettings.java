@@ -2,17 +2,20 @@ package lwjgl.ex.vulkan;
 
 import static org.lwjgl.vulkan.VK14.*;
 
+import java.util.Objects;
+
 // 参考
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-04/src/main/java/org/vulkanb/eng/graph/vk/ImageView.java
 
 public class ImageViewSettings {
+	public static final int DEFAULT_ASPECT_MASK = VK_IMAGE_ASPECT_COLOR_BIT;
 	public static final int DEFAULT_BASE_ARRAY_LAYER = 0;
 	public static final int DEFAULT_LAYER_COUNT = 1;
 	public static final int DEFAULT_BASE_MIP_LEVEL = 0;
 	public static final int DEFAULT_LEVEL_COUNT = 1;
 	public static final int DEFAULT_VIEW_TYPE = VK_IMAGE_VIEW_TYPE_2D;
 
-	private int aspectMask;
+	private int aspectMask = DEFAULT_ASPECT_MASK;
 	private int baseArrayLayer = DEFAULT_BASE_ARRAY_LAYER;
 	/**
 	 * 本来はenumにするべきだが、LWJGLがこうなってしまっているのでしょうがない
@@ -98,4 +101,41 @@ public class ImageViewSettings {
 	public void setLogicalDevice(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(aspectMask, baseArrayLayer, baseMipLevel, format, imageHandler, layerCount, levelCount,
+				logicalDevice, viewType);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ImageViewSettings other = (ImageViewSettings) obj;
+		return aspectMask == other.aspectMask && baseArrayLayer == other.baseArrayLayer
+				&& baseMipLevel == other.baseMipLevel && format == other.format && imageHandler == other.imageHandler
+				&& layerCount == other.layerCount && levelCount == other.levelCount
+				&& Objects.equals(logicalDevice, other.logicalDevice) && viewType == other.viewType;
+	}
+
+	@Override
+	protected ImageViewSettings clone()  {
+		var clone = new ImageViewSettings();
+		clone.aspectMask = aspectMask;
+		clone.baseArrayLayer = baseArrayLayer;
+		clone.format = format;
+		clone.layerCount = layerCount;
+		clone.levelCount = levelCount;
+		clone.baseMipLevel = baseMipLevel;
+		clone.viewType = viewType;
+		clone.imageHandler = imageHandler;
+		clone.logicalDevice = logicalDevice;
+		return clone;
+	}
+	
 }

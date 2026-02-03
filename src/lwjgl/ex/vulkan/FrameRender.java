@@ -1,5 +1,6 @@
 package lwjgl.ex.vulkan;
 
+import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
 import static org.lwjgl.vulkan.VK13.vkQueueSubmit2;
 
 import java.util.Arrays;

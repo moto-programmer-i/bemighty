@@ -1,6 +1,8 @@
 package lwjgl.ex.vulkan;
 
 
+import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
+
 //参考
 //https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 
@@ -12,6 +14,7 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
 import org.lwjgl.vulkan.VkCommandBufferSubmitInfo;
+import org.lwjgl.vulkan.VkRenderingInfo;
 
 public class CommandBuffer implements AutoCloseable {
 	private final CommandBufferSettings settings;
@@ -51,9 +54,15 @@ public class CommandBuffer implements AutoCloseable {
             
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, info), "CommandBufferの開始に失敗しました");
         try {
-        	command.render(stack, swapChain);
+        	// 描画
+        	VkRenderingInfo renderingInfo = command.render(stack, swapChain); 
+    		vkCmdBeginRendering(buffer, renderingInfo);
         }
         finally {
+        	
+        	// vkEndCommandBuffer(): It is invalid to issue this call inside an active VkRenderPass 0x0.
+
+        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
         }
     }

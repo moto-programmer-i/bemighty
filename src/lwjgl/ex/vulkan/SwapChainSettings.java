@@ -9,6 +9,9 @@ public class SwapChainSettings {
 	private int imageArrayLayers = DEFAULT_IMAGE_ARRAY_LAYERS;
 	
 	private boolean vsync;
+	
+	private ImageViewSettings imageViewSettings = new ImageViewSettings();
+	
 	public Window getWindow() {
 		return window;
 	}
@@ -20,12 +23,19 @@ public class SwapChainSettings {
 	}
 	public void setLogicalDevice(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
+		imageViewSettings.setLogicalDevice(logicalDevice);
 	}
 	public Surface getSurface() {
 		return surface;
 	}
+	/**
+	 * Surfaceの設定
+	 * （imageViewSettings.setFormatも行われる）
+	 * @param surface
+	 */
 	public void setSurface(Surface surface) {
 		this.surface = surface;
+		imageViewSettings.setFormat(surface.getFormat());
 	}
 	
 	public int getImageArrayLayers() {
@@ -40,4 +50,11 @@ public class SwapChainSettings {
 	public void setVsync(boolean vsync) {
 		this.vsync = vsync;
 	}
+	public ImageViewSettings getImageViewSettings() {
+		return imageViewSettings;
+	}
+	public void setImageViewSettings(ImageViewSettings imageViewSettings) {
+		this.imageViewSettings = imageViewSettings;
+	}
+	
 }

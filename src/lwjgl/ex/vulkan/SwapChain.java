@@ -1,10 +1,12 @@
 package lwjgl.ex.vulkan;
 
+import java.awt.Dimension;
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.KHRSwapchain;
+import static org.lwjgl.vulkan.KHRSwapchain.*;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 import static org.lwjgl.vulkan.VK14.*;
@@ -12,9 +14,13 @@ import static org.lwjgl.vulkan.VK14.*;
 public class SwapChain implements AutoCloseable  {
 	private SwapChainSettings settings;
 	private final long handler;
+	private final ImageView[] imageViews;
+	private int width;
+	private int height;
 
 	public SwapChain(SwapChainSettings settings) {
 		this.settings = settings;
+		var vkDevice = settings.getLogicalDevice().getDevice();
 
 		// 参考
 		// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
@@ -24,6 +30,8 @@ public class SwapChain implements AutoCloseable  {
 			
 			// ここで変数として残しておかないと解放されてしまうのか、0, 0 になってしまう
 			var extent = calcSwapChainExtent(stack);
+			width = extent.width();
+			height = extent.height();
 			var minImageCount = surfaceCapabilities.minImageCount();
 
 			var info = VkSwapchainCreateInfoKHR.calloc(stack).sType$Default()
@@ -86,12 +94,38 @@ public class SwapChain implements AutoCloseable  {
 //			https://github.com/LWJGL/lwjgl3/blob/a73648fbfcbc0945e9a0ffa2a3dca021c372f3b2/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L670
 //			info.oldSwapchain(handler);
 
-			LongBuffer lp = stack.mallocLong(1);
+			LongBuffer buffer = stack.mallocLong(1);
 			Vulkan.throwExceptionIfFailed(
-					KHRSwapchain.vkCreateSwapchainKHR(settings.getLogicalDevice().getDevice(), info, null, lp),
+					vkCreateSwapchainKHR(vkDevice, info, null, buffer),
 					"swap chainの作成に失敗しました");
-			handler = lp.get(0);
+			handler = buffer.get(0);
+			
+			
+			// createImageView
+			// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
+			IntBuffer imageCountBuffer = stack.mallocInt(1);
+			Vulkan.throwExceptionIfFailed(vkGetSwapchainImagesKHR(vkDevice, handler, imageCountBuffer, null),
+					"Swapchainイメージの数の取得に失敗しました");
+            int imageCount = imageCountBuffer.get(0);
+            LongBuffer swapchainImagesBuffer = stack.mallocLong(imageCount);
+            Vulkan.throwExceptionIfFailed(vkGetSwapchainImagesKHR(vkDevice, handler, imageCountBuffer, swapchainImagesBuffer),
+            		"Swapchainイメージの取得に失敗しました");
+
+	        imageViews = ImageView.createArray(imageCount, swapchainImagesBuffer, settings.getImageViewSettings());
 		}
+	}
+	
+	public ImageView getImageView() {
+		// 本来、適切なimageViewの選択が必要だが保留	
+		return imageViews[0];
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
 	}
 
 	private VkExtent2D calcSwapChainExtent(MemoryStack stack) {
@@ -128,6 +162,6 @@ public class SwapChain implements AutoCloseable  {
 
 	@Override
 	public void close() throws Exception {
-		KHRSwapchain.vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
+		vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
 	}
 }

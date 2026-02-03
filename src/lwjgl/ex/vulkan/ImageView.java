@@ -1,6 +1,7 @@
 package lwjgl.ex.vulkan;
 
 import java.nio.LongBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
@@ -33,8 +34,36 @@ public class ImageView implements AutoCloseable {
             handler = lp.get(0);
 		}
 	}
+	
+	
 	@Override
 	public void close() throws Exception {
 		vkDestroyImageView(settings.getLogicalDevice().getDevice(), handler, null);
+	}
+	
+	public static ImageView[] createArray(int length, ImageViewSettings settings) {
+		var array = new ImageView[length];
+		// 参考
+		// https://qiita.com/payaneco/items/ea5db7b62d092927aed8
+		Arrays.setAll(array, i -> new ImageView(settings));
+		return array;
+	}
+	
+	public static ImageView[] createArray(int length, LongBuffer imageBuffer, ImageViewSettings commonSettings) {
+		var array = new ImageView[length];
+		// 参考
+		// https://qiita.com/payaneco/items/ea5db7b62d092927aed8
+		Arrays.setAll(array, i -> {
+			// imageは別のため、settingsをcloneする必要がある
+			var settings = commonSettings.clone();
+			settings.setImageHandler(imageBuffer.get(i));
+			return new ImageView(settings);	
+		});
+		return array;
+	}
+
+
+	public long getHandler() {
+		return handler;
 	}
 }

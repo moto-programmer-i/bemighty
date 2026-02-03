@@ -15,6 +15,7 @@ module bemighty {
 	requires org.lwjgl.stb.natives;
 	
 	requires org.lwjgl.vulkan;
+	requires java.desktop;
 	
 	// requires lwjgl.ex.window; 
 	

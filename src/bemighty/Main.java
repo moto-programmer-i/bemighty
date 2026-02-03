@@ -1,15 +1,22 @@
 package bemighty;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Set;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
+import org.lwjgl.vulkan.VkClearColorValue;
+import org.lwjgl.vulkan.VkClearValue;
+import org.lwjgl.vulkan.VkRect2D;
+import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
+import org.lwjgl.vulkan.VkRenderingInfo;
 import org.lwjgl.vulkan.VkSubmitInfo2;
 
 import static org.lwjgl.vulkan.VK13.vkQueueSubmit2;
 import static org.lwjgl.vulkan.VK14.*;
 
+import lwjgl.ex.vulkan.ColorUtils;
 import lwjgl.ex.vulkan.CommandBuffer;
 import lwjgl.ex.vulkan.CommandBufferSettings;
 import lwjgl.ex.vulkan.CommandPool;
@@ -21,6 +28,7 @@ import lwjgl.ex.vulkan.LogicalDeviceSettings;
 import lwjgl.ex.vulkan.PhysicalDevice;
 import lwjgl.ex.vulkan.Queue;
 import lwjgl.ex.vulkan.QueueSettings;
+import lwjgl.ex.vulkan.RectUtils;
 import lwjgl.ex.vulkan.Render;
 import lwjgl.ex.vulkan.RenderSettings;
 import lwjgl.ex.vulkan.Surface;
@@ -36,6 +44,7 @@ public class Main {
 	public static int WIDTH = 400;
 	public static int HEIGHT = 400;
 	public static String WINDOW_NAME = "Be Mighty";
+	public static Color clearColor = Color.black;
 
 	public static void main(String[] args) throws Exception {
 		var vulkanSettings = new VulkanSettings();
@@ -88,7 +97,26 @@ public class Main {
 								final int testCount = 3;
 								for(int i = 0; i < testCount; ++i) {
 									render.render((stack, tempSwapChain) -> {
-										System.out.println(swapChain);
+										// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
+										
+
+								            VkClearValue clearValue = ColorUtils.createClear(clearColor, stack);
+
+								            VkRenderingAttachmentInfo.Buffer colorAttachment = VkRenderingAttachmentInfo.calloc(1, stack)
+								                .sType$Default()
+								                .imageView(tempSwapChain.getImageView().getHandler())
+								                .imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+								                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+								                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+								                .clearValue(clearValue);
+
+								            VkRect2D renderingRect = RectUtils.createRect(tempSwapChain.getWidth(), tempSwapChain.getHeight(), stack);
+
+								            return VkRenderingInfo.calloc(stack)
+								                .sType$Default()
+								                .renderArea(renderingRect)
+								                .layerCount(1)
+								                .pColorAttachments(colorAttachment);
 									});
 								}
 								

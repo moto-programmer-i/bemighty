@@ -58,8 +58,9 @@ public class LogicalDevice implements AutoCloseable {
                         .sType$Default()
                         .pNext(extendedDynamicStateFeatures.address())
                         .synchronization2(settings.isSynchronization2())
-                        // 保留
-//                        .dynamicRendering(true)
+                        
+                        // trueでないと描画そのものが不可能だった
+                        .dynamicRendering(true)
                         ;
             	var deviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack)
                         .sType$Default()
