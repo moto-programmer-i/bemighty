@@ -14,20 +14,14 @@ public class FrameRender implements AutoCloseable {
 	private final RenderSettings settings;
 	private final Fence cpuSync;
 	private final Semaphore gpuCompleted;
-	private final CommandPool commandPool;
 	private final CommandBuffer commandBuffer;
 
 	public FrameRender(RenderSettings settings) {
 		this.settings = settings;
 		// AutoCloseableを変数として持つのでtry-with-resourcesができない
 		cpuSync = new Fence(settings.getLogicalDevice());
-		gpuCompleted = new Semaphore(settings.getLogicalDevice());
-		commandPool = new CommandPool(settings.getCommandPoolSettings());
-		
-		// commandPoolを変えなければいけないのでcloneが必要
-		var commandBufferSettings = settings.getCommandBufferSettings().clone();
-		commandBufferSettings.setCommandPool(commandPool);
-		commandBuffer = new CommandBuffer(commandBufferSettings);
+		gpuCompleted = new Semaphore(settings.getLogicalDevice());		
+		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
 
 //		try(var pool = new CommandPool(settings.getCommandPoolSettings());
 //				var poolB = new CommandPool(settings.getCommandPoolSettings())
@@ -85,7 +79,7 @@ public class FrameRender implements AutoCloseable {
 //		try(gpuCompleted;cpuSync;commandBuffer;commandPool) {};
 		
 		// 生成した順に書けば、Java側が逆順に解放してくれる
-		try(cpuSync;gpuCompleted;commandPool;commandBuffer) {}
+		try(cpuSync;gpuCompleted;commandBuffer) {}
 	}
 
 	public static FrameRender[] createArray(int length, RenderSettings settings) {

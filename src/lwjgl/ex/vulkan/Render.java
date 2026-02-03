@@ -11,6 +11,7 @@ import motopgi.utils.ExceptionUtils;
 
 public class Render implements AutoCloseable {
 	private final RenderSettings settings;
+	private final CommandPool commandPool;
 	// 毎フレーム実行する処理であるため、速度を気にして配列にする
 	private final FrameRender[] renders;
 	private int currentFrame = 0;
@@ -18,6 +19,8 @@ public class Render implements AutoCloseable {
 
 	public Render(RenderSettings settings) {
 		this.settings = settings;
+		commandPool = new CommandPool(settings.getCommandPoolSettings());
+		settings.getCommandBufferSettings().setCommandPool(commandPool);
 		renders = FrameRender.createArray(settings.getMaxInFlight(), settings);
 	}
 	
@@ -53,6 +56,7 @@ public class Render implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		ExceptionUtils.close(renders);
+		ExceptionUtils.close(commandPool);
 	}
 
 }
