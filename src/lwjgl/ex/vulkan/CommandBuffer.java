@@ -42,27 +42,24 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param command 描画内容
 	 */
     public void record(Command command, MemoryStack stack, SwapChain swapChain) {        
-        var info = VkCommandBufferBeginInfo.calloc(stack).sType$Default();
+        var beginInfo = VkCommandBufferBeginInfo.calloc(stack).sType$Default();
         
         // CommandBufferの使用法を決定
         // （VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BITなど）
-        info.flags(settings.getUsageBit());
+        beginInfo.flags(settings.getUsageBit());
         
         // todo secondaryの場合の実装
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
-            
-        Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, info), "CommandBufferの開始に失敗しました");
-        try {
-        	// 描画
-        	VkRenderingInfo renderingInfo = command.render(stack, swapChain); 
-    		vkCmdBeginRendering(buffer, renderingInfo);
-        }
-        finally {
-        	
-        	// vkEndCommandBuffer(): It is invalid to issue this call inside an active VkRenderPass 0x0.
+        
 
-        	
+        Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
+    	try {
+    		VkRenderingInfo renderingInfo = command.render(stack, swapChain);
+    		vkCmdBeginRendering(buffer, renderingInfo);
+    		vkCmdEndRendering(buffer);
+        }
+        finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
         }
     }

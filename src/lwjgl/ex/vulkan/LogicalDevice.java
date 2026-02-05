@@ -59,7 +59,7 @@ public class LogicalDevice implements AutoCloseable {
                         .pNext(extendedDynamicStateFeatures.address())
                         .synchronization2(settings.isSynchronization2())
                         
-                        // trueでないと描画そのものが不可能だった
+                        // 従来のRenderPassの代わりに、dynamicRenderingが標準になった
                         .dynamicRendering(true)
                         ;
             	var deviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack)
