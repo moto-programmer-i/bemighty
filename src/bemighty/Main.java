@@ -110,8 +110,9 @@ public class Main {
 								                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
 								                .clearValue(clearValue);
 
-								            VkRect2D renderingRect = RectUtils.createRect(tempSwapChain.getWidth(), tempSwapChain.getHeight(), stack);
+								            var renderingRect = RectUtils.createRect(tempSwapChain.getWidth(), tempSwapChain.getHeight(), stack);
 
+								            System.out.println("swapchain " + tempSwapChain.getWidth());
 								            return VkRenderingInfo.calloc(stack)
 								                .sType$Default()
 								                .renderArea(renderingRect)

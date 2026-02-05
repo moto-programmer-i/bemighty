@@ -4,6 +4,9 @@ import static org.lwjgl.vulkan.VK14.*;
 
 import java.util.Objects;
 
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkImageSubresourceRange;
+
 // 参考
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-04/src/main/java/org/vulkanb/eng/graph/vk/ImageView.java
 
@@ -27,7 +30,7 @@ public class ImageViewSettings {
 	private int viewType = DEFAULT_VIEW_TYPE;
 
 	private long imageHandler;
-	
+
 	private LogicalDevice logicalDevice;
 
 	public int getAspectMask() {
@@ -124,7 +127,7 @@ public class ImageViewSettings {
 	}
 
 	@Override
-	protected ImageViewSettings clone()  {
+	protected ImageViewSettings clone() {
 		var clone = new ImageViewSettings();
 		clone.aspectMask = aspectMask;
 		clone.baseArrayLayer = baseArrayLayer;
@@ -137,5 +140,14 @@ public class ImageViewSettings {
 		clone.logicalDevice = logicalDevice;
 		return clone;
 	}
-	
+
+	public static VkImageSubresourceRange createDefaultSubresourceRange(MemoryStack stack) {
+		return VkImageSubresourceRange.calloc(stack)
+				.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
+				.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
+				.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
+				.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+				.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
+	}
+
 }
