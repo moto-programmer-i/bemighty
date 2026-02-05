@@ -9,6 +9,9 @@ import org.lwjgl.vulkan.KHRSurface;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
+
+import motopgi.utils.ExceptionUtils;
+
 import static org.lwjgl.vulkan.VK14.*;
 
 public class SwapChain implements AutoCloseable  {
@@ -162,6 +165,7 @@ public class SwapChain implements AutoCloseable  {
 
 	@Override
 	public void close() throws Exception {
+		ExceptionUtils.close(imageViews);
 		vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
 	}
 }
