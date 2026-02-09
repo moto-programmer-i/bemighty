@@ -57,4 +57,8 @@ public class Semaphore implements AutoCloseable {
 		vkDestroySemaphore(logicalDevice.getDevice(), handler, null);
 	}
 
+	public long getHandler() {
+		return handler;
+	}
+
 }

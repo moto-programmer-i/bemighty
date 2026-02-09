@@ -45,10 +45,7 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param stack
 	 * @param command 描画内容
 	 */
-    public void record(Command command, MemoryStack stack, SwapChain swapChain) {
-    	// 正しい取得方法は保留
-    	var swapChainImageView = swapChain.getImageView();
-    	
+    public void record(Command command, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView) {    	
         var beginInfo = VkCommandBufferBeginInfo.calloc(stack).sType$Default();
         
         // CommandBufferの使用法を決定
@@ -59,11 +56,12 @@ public class CommandBuffer implements AutoCloseable {
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
         
-
+        
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     	try {
-    		VkRenderingInfo renderingInfo = command.render(stack, swapChain);
-    		transitionColor(swapChainImageView, stack, () -> {
+    		VkRenderingInfo renderingInfo = command.render(stack, swapChain, nextSwapChainImageView);
+    		// 暫定でtransitionColor固定。将来的にはインターフェースをはさむ？
+    		transitionColor(nextSwapChainImageView, stack, () -> {
     			vkCmdBeginRendering(buffer, renderingInfo);
         		vkCmdEndRendering(buffer);
     		});
@@ -77,6 +75,11 @@ public class CommandBuffer implements AutoCloseable {
     	return VkCommandBufferSubmitInfo.calloc(1, stack)
         .sType$Default()
         .commandBuffer(buffer);
+    }
+    
+    public void reset() {
+    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
+    			"CommandBufferのリセットに失敗しました");
     }
 	
 	@Override
@@ -185,7 +188,7 @@ public class CommandBuffer implements AutoCloseable {
             .newLayout(newLayout)
             .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
             .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-            .image(swapChainImageView.getHandler())
+            .image(swapChainImageView.getImageHandler())
             .subresourceRange(subresourceRange);
 
         VkDependencyInfo dependencyInfo = VkDependencyInfo.calloc(stack)

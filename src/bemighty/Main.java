@@ -94,17 +94,15 @@ public class Main {
 							
 							try(var render = new Render(renderSettings)) {
 								
-								final int testCount = 3;
+								final int testCount = 2;
 								for(int i = 0; i < testCount; ++i) {
-									render.render((stack, tempSwapChain) -> {
+									render.render((stack, tempSwapChain, nextSwapChainImageView) -> {
 										// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
-										
 
 								            VkClearValue clearValue = ColorUtils.createClear(clearColor, stack);
-
 								            VkRenderingAttachmentInfo.Buffer colorAttachment = VkRenderingAttachmentInfo.calloc(1, stack)
 								                .sType$Default()
-								                .imageView(tempSwapChain.getImageView().getHandler())
+								                .imageView(nextSwapChainImageView.getHandler())
 								                .imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 								                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
 								                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)

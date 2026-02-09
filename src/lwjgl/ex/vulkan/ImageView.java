@@ -66,4 +66,7 @@ public class ImageView implements AutoCloseable {
 	public long getHandler() {
 		return handler;
 	}
+	public long getImageHandler() {
+		return settings.getImageHandler();
+	}
 }

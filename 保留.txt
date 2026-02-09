@@ -1,2 +1,8 @@
+ExceptionUtilsのcloseの呼び出し方修正
 
 描画の確認が取れ次第、リサイズのためSwapchain周りを修正
+	セマフォをdestroyしなければならないらしい
+	https://github.com/LWJGL/lwjgl3/blob/6c89bd4e861407f243305fc84d60ca8d82fe9dd4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L897
+	
+
+acquireセマフォはswapChainに1つではダメなのか？

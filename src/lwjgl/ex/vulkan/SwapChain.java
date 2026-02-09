@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSurface;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import org.lwjgl.vulkan.VkExtent2D;
@@ -118,9 +119,31 @@ public class SwapChain implements AutoCloseable  {
 		}
 	}
 	
-	public ImageView getImageView() {
-		// 本来、適切なimageViewの選択が必要だが保留	
-		return imageViews[0];
+	public ImageView acquireNextImageView(MemoryStack stack, Semaphore acquire) {
+		return imageViews[acquireNextImageIndex(stack, acquire)];
+	}
+	
+	/**
+	 * ImageIndexを取得する（Vulkanの仕様はランダムらしい）
+	 * https://stackoverflow.com/a/72799450
+	 * @param stack
+	 * @param acquire
+	 * @return
+	 */
+	private int acquireNextImageIndex(MemoryStack stack, Semaphore acquire) {
+		IntBuffer imageIndexBuffer = stack.mallocInt(1);
+		int code = vkAcquireNextImageKHR(settings.getLogicalDevice().getDevice(), handler, Long.MAX_VALUE,
+				acquire.getHandler(), MemoryUtil.NULL, imageIndexBuffer);
+		
+		switch (code) {
+		// おそらく、OUT_OF_DATEのときだけ別対応が必要だが、保留
+//		case VK_ERROR_OUT_OF_DATE_KHR:
+		default:
+			Vulkan.throwExceptionIfFailed(code, "vkAcquireNextImageKHRに失敗しました");
+			
+		}
+		
+		return imageIndexBuffer.get(0);
 	}
 
 	public int getWidth() {
@@ -165,7 +188,11 @@ public class SwapChain implements AutoCloseable  {
 
 	@Override
 	public void close() throws Exception {
-		ExceptionUtils.close(imageViews);
-		vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
+		try {
+			ExceptionUtils.close(imageViews);
+		}
+		finally {
+			vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);			
+		}		
 	}
 }

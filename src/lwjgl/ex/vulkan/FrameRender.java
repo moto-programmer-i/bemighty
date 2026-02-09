@@ -14,14 +14,16 @@ import org.lwjgl.vulkan.VkSubmitInfo2;
 public class FrameRender implements AutoCloseable {
 	private final RenderSettings settings;
 	private final Fence cpuSync;
-	private final Semaphore gpuCompleted;
+	private final Semaphore forSwapChain;
+	private final Semaphore complete;
 	private final CommandBuffer commandBuffer;
 
 	public FrameRender(RenderSettings settings) {
 		this.settings = settings;
 		// AutoCloseableを変数として持つのでtry-with-resourcesができない
 		cpuSync = new Fence(settings.getLogicalDevice());
-		gpuCompleted = new Semaphore(settings.getLogicalDevice());		
+		forSwapChain = new Semaphore(settings.getLogicalDevice());
+		complete = new Semaphore(settings.getLogicalDevice());		
 		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
 
 //		try(var pool = new CommandPool(settings.getCommandPoolSettings());
@@ -34,7 +36,7 @@ public class FrameRender implements AutoCloseable {
 //		}
 	}
 	
-	public void submit(Command command, FrameRender waiting) {
+	public void submit(MemoryStack stack, ImageView nextSwapChainImageView, Command command, FrameRender waiting) {
 		/*
 		https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-05/chapter-05.md#render-loop
 		描画の主な手順は次のとおりです。
@@ -47,40 +49,44 @@ public class FrameRender implements AutoCloseable {
 		現在の画像。
 			 */
 
-        try (var stack = MemoryStack.stackPush()) {
-        	// 前の処理を待機
-        	if (waiting != null) {
-        		waiting.cpuSync.waitAndReset();
-        	} 
-        	
-        	// コマンドを記録
-        	commandBuffer.record(command, stack, settings.getSwapChain());
-            
-            var commandBufferInfoBuffers = commandBuffer.createSubmitInfoBuffer(stack);
-            var gpuCompletedInfo = gpuCompleted.createSubmitInfoBuffer(stack);
-    		var submitInfo = VkSubmitInfo2.calloc(1, stack)
-    				.sType$Default()
-    				.pCommandBufferInfos(commandBufferInfoBuffers)
-    				.pSignalSemaphoreInfos(gpuCompletedInfo);
-    		
-    		// 実行前に待機するセマフォ
-    		if (waiting != null) {
-    			var waitInfo = waiting.gpuCompleted.createSubmitInfoBuffer(stack);
-    			submitInfo.pWaitSemaphoreInfos(waitInfo);
-    		}
-    		
-    		// キューへ送信とともに、Fence（CPU処理待ち）開始
-    		Vulkan.throwExceptionIfFailed(vkQueueSubmit2(settings.getQueue().getVkQueue(), submitInfo, cpuSync.getHandler()), "Queueへのコマンドの送信に失敗しました");
-        }
+    
+    	// 前の処理を待機
+    	if (waiting != null) {
+    		waiting.reset();
+    	} 
+    	
+    	
+    	// SwapChainとSwapChainImageView両方渡すのはちょっと変だが、現状しょうがない
+    	commandBuffer.record(command, stack, settings.getSwapChain(), nextSwapChainImageView);
+        var commandBufferInfoBuffers = commandBuffer.createSubmitInfoBuffer(stack);
+        var swapChainInfo = forSwapChain.createSubmitInfoBuffer(stack);
+        var completeInfo = complete.createSubmitInfoBuffer(stack);
+		var submitInfo = VkSubmitInfo2.calloc(1, stack)
+				.sType$Default()
+				.pWaitSemaphoreInfos(swapChainInfo)
+				.pCommandBufferInfos(commandBufferInfoBuffers)
+				.pSignalSemaphoreInfos(completeInfo);
+		
+		// キューへ送信とともに、Fence（CPU処理待ち）開始
+		Vulkan.throwExceptionIfFailed(vkQueueSubmit2(settings.getQueue().getVkQueue(), submitInfo, cpuSync.getHandler()), "Queueへのコマンドの送信に失敗しました");
     }
 	
+	public void reset() {
+		cpuSync.waitAndReset();
+		commandBuffer.reset();
+	}
+	
+	public Semaphore getForSwapChain() {
+		return forSwapChain;
+	}
+
 	@Override
 	public void close() throws Exception {
 //		// Java側も逆順に解放するので、これだと解放順が逆になってしまう
 //		try(gpuCompleted;cpuSync;commandBuffer;commandPool) {};
 		
 		// 生成した順に書けば、Java側が逆順に解放してくれる
-		try(cpuSync;gpuCompleted;commandBuffer) {}
+		try(cpuSync;forSwapChain;complete;commandBuffer) {}
 	}
 
 	public static FrameRender[] createArray(int length, RenderSettings settings) {

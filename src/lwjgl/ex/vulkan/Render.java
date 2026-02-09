@@ -4,6 +4,7 @@ package lwjgl.ex.vulkan;
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/Render.java
 
 import java.util.Arrays;
+import java.util.OptionalInt;
 
 import org.lwjgl.system.MemoryStack;
 
@@ -15,7 +16,7 @@ public class Render implements AutoCloseable {
 	// 毎フレーム実行する処理であるため、速度を気にして配列にする
 	private final FrameRender[] renders;
 	private int currentFrame = 0;
-	private boolean isFirst;
+	private FrameRender past = null;
 
 	public Render(RenderSettings settings) {
 		this.settings = settings;
@@ -25,36 +26,23 @@ public class Render implements AutoCloseable {
 	}
 	
 	public void render(Command command) {
-		FrameRender waiting = renders[currentFrame];
-		if (!isFirst) {
-			waiting = null;
-			isFirst = true;
+		try(var stack = MemoryStack.stackPush()) {
+			var nextSwapChainImageView = settings.getSwapChain().acquireNextImageView(stack, renders[currentFrame].getForSwapChain());
+			
+			// 描画
+			renders[currentFrame].submit(stack, nextSwapChainImageView, command, past);
+			
+			// 次のフレームへ
+			past = renders[currentFrame];
+			currentFrame = (currentFrame + 1) % settings.getMaxInFlight();
 		}
-		
-//        int nextIndex = swapChain.acquireNextImage(vkCtx.getDevice(), presCompleteSemphs[currentFrame]);
-//        if (nextIndex < 0) {
-//            return;
-//        }
-		// テスト用にswapChainを経由せず取得
-		int nextFrame = (currentFrame + 1) % settings.getMaxInFlight();
-		
-		// 描画
-		FrameRender nextRender = renders[nextFrame];
-		nextRender.submit(command, waiting);
-		
-		// currentを更新
-		currentFrame = nextFrame;
-
-
-//        swapChain.presentImage(presentQueue, renderCompleteSemphs[imageIndex], imageIndex);
-
-        // currentFrame = (currentFrame + 1) % VkUtils.MAX_IN_FLIGHT;
-    }
+	}
 
 
 
 	@Override
 	public void close() throws Exception {
+		// ミス、あとで修正
 		ExceptionUtils.close(renders);
 		ExceptionUtils.close(commandPool);
 	}

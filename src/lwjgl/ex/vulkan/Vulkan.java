@@ -147,6 +147,8 @@ public class Vulkan implements AutoCloseable {
 		case VK_ERROR_FRAGMENTED_POOL -> "VK_ERROR_FRAGMENTED_POOL";
 		case VK_ERROR_UNKNOWN -> "VK_ERROR_UNKNOWN";
 		case VK_SUCCESS -> "VK_SUCCESS";
+		case KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR -> "VK_ERROR_OUT_OF_DATE_KHR";
+		case KHRSwapchain.VK_SUBOPTIMAL_KHR -> "VK_SUBOPTIMAL_KHR";
 		default -> "Not mapped";
 		};
 	}
