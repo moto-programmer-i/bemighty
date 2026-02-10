@@ -80,6 +80,11 @@ public class LogicalDevice implements AutoCloseable {
 		return device;
 	}
 	
+	public void waitIdle() {
+		Vulkan.throwExceptionIfFailed(vkDeviceWaitIdle(device),
+				"vkDeviceWaitIdleに失敗しました");
+	}
+	
 	@Override
 	public void close() throws Exception {
 		if (device == null) {

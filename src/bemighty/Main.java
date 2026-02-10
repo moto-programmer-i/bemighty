@@ -95,7 +95,15 @@ public class Main {
 							try(var render = new Render(renderSettings)) {
 								
 								final int testCount = 1;
+								
+								
 								for(int i = 0; i < testCount; ++i) {
+									if (window.shouldClose()) {
+										break;
+									}
+									// ウィンドウをイベント待ちへ
+									window.pollEvents();
+									
 									render.render((stack, tempSwapChain, nextSwapChainImageView) -> {
 										// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
 
@@ -119,6 +127,7 @@ public class Main {
 									});
 								}
 								
+								// ウィンドウが閉じられるまで待つ
 								window.waitUntilClose();
 							}
 						}

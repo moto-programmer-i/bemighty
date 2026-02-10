@@ -38,6 +38,8 @@ public class Render implements AutoCloseable {
 			コマンドの送信: コマンドをグラフィカル キューに送信するだけです。
 			現在の画像。
 				 */
+			
+			// バグ　もう１度waitしようとすると永遠に待ってしまう
 			renders[currentFrame].waitAndResetForFence();
 			var nextSwapChainImageView = settings.getSwapChain().acquireNextImageView(stack, renders[currentFrame].getForSwapChain());
 			renders[currentFrame].submit(stack, nextSwapChainImageView, command, past);
@@ -45,6 +47,11 @@ public class Render implements AutoCloseable {
 			// 次のフレームへ
 			past = renders[currentFrame];
 			currentFrame = (currentFrame + 1) % settings.getMaxInFlight();
+			
+			// deviceが待機状態になるのを待つ
+			// これがないとVkQueueが使用中から復帰しない
+			// vkDestroySemaphore(): can't be called on VkSemaphore 0xd000000000d that is currently in use by VkQueue 0x7f7518a340c0.
+			settings.getLogicalDevice().waitIdle();
 		}
 	}
 

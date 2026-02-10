@@ -80,7 +80,7 @@ public class FrameRender implements AutoCloseable {
     }
 	
 	public void reset() {
-		cpuSync.waitAndReset();
+//		cpuSync.waitAndReset();
 		commandBuffer.reset();
 	}
 	

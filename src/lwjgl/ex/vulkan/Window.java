@@ -94,6 +94,18 @@ public class Window implements AutoCloseable {
 			glfwPollEvents();
 		}
 	}
+	
+	public boolean shouldClose() {
+		return glfwWindowShouldClose(window);
+	}
+	
+	/**
+	 * イベントを待つ
+	 * https://www.glfw.org/docs/3.3/group__window.html#ga37bd57223967b4211d60ca1a0bf3c832
+	 */
+	public void pollEvents() {
+		glfwPollEvents();
+	}
 
 	@Override
 	public void close() throws Exception {
