@@ -187,6 +187,10 @@ public class SwapChain implements AutoCloseable  {
 		extent.height(surfaceCapabilities.maxImageExtent().height());
 		return extent;
 	}
+	
+	public LongBuffer createLongBuffer(MemoryStack stack) {
+		return stack.longs(handler);
+	}
 
 	@Override
 	public void close() throws Exception {

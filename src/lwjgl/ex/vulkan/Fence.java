@@ -42,9 +42,9 @@ public class Fence implements AutoCloseable {
 		this.logicalDevice = logicalDevice;
 		try (var stack = MemoryStack.stackPush()) {
             var info = VkFenceCreateInfo.calloc(stack)
-                    .sType$Default();
-            		// 最初からsignaled、待機終了にしたいときもあるらしいが不明なので保留
-                    // .flags(signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0);
+                    .sType$Default()
+            		// 最初からsignaled、待機終了
+                    .flags(VK_FENCE_CREATE_SIGNALED_BIT);
 
             LongBuffer lp = stack.mallocLong(1);
             Vulkan.throwExceptionIfFailed(vkCreateFence(logicalDevice.getDevice(), info, null, lp), "Fenceの作成に失敗しました");

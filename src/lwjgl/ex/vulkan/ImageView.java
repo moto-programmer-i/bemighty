@@ -14,8 +14,13 @@ import static org.lwjgl.vulkan.VK14.*;
 public class ImageView implements AutoCloseable {
 	private long handler;
 	private final ImageViewSettings settings;
+	private final int index;
 	public ImageView(ImageViewSettings settings) {
+		this(settings, 0);
+	}
+	public ImageView(ImageViewSettings settings, int index) {
 		this.settings = settings;
+		this.index = index;
 		try (var stack = MemoryStack.stackPush()) {
             LongBuffer lp = stack.mallocLong(1);
             var viewCreateInfo = VkImageViewCreateInfo.calloc(stack)
@@ -37,7 +42,12 @@ public class ImageView implements AutoCloseable {
 		}
 	}
 	
-	
+	public int getIndex() {
+		return index;
+	}
+
+
+
 	@Override
 	public void close() throws Exception {
 		if (handler == VK_NULL_HANDLE) {
@@ -51,7 +61,7 @@ public class ImageView implements AutoCloseable {
 		var array = new ImageView[length];
 		// 参考
 		// https://qiita.com/payaneco/items/ea5db7b62d092927aed8
-		Arrays.setAll(array, i -> new ImageView(settings));
+		Arrays.setAll(array, i -> new ImageView(settings, i));
 		return array;
 	}
 	
@@ -63,7 +73,7 @@ public class ImageView implements AutoCloseable {
 			// imageは別のため、settingsをcloneする必要がある
 			var settings = commonSettings.clone();
 			settings.setImageHandler(imageBuffer.get(i));
-			return new ImageView(settings);	
+			return new ImageView(settings, i);	
 		});
 		return array;
 	}

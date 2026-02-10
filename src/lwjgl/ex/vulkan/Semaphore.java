@@ -45,6 +45,10 @@ public class Semaphore implements AutoCloseable {
 		        .stageMask(stageMask)
 		        .semaphore(handler);
 	}
+	
+	public LongBuffer createLongBuffer(MemoryStack stack) {
+		return stack.longs(handler);
+	}
 
 	public long getStageMask() {
 		return stageMask;

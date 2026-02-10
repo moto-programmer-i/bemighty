@@ -47,11 +47,12 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param command 描画内容
 	 */
     public void record(Command command, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView) {    	
-        var beginInfo = VkCommandBufferBeginInfo.calloc(stack).sType$Default();
-        
-        // CommandBufferの使用法を決定
-        // （VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BITなど）
-        beginInfo.flags(settings.getUsageBit());
+        var beginInfo = VkCommandBufferBeginInfo.calloc(stack)
+        		.sType$Default()
+        		// CommandBufferの使用法を決定
+                // （VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BITなど）
+        		.flags(settings.getUsageBit());
+        		;
         
         // todo secondaryの場合の実装
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
