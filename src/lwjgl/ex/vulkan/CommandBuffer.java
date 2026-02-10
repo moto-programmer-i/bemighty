@@ -1,6 +1,7 @@
 package lwjgl.ex.vulkan;
 
 
+import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
 
 //参考
@@ -22,7 +23,7 @@ import org.lwjgl.vulkan.VkRenderingInfo;
 
 public class CommandBuffer implements AutoCloseable {
 	private final CommandBufferSettings settings;
-	private final VkCommandBuffer buffer;
+	private VkCommandBuffer buffer;
 	public CommandBuffer(CommandBufferSettings settings) {
 		this.settings = settings;
 		try (var stack = MemoryStack.stackPush()) {
@@ -84,7 +85,9 @@ public class CommandBuffer implements AutoCloseable {
 	
 	@Override
 	public void close() throws Exception {
-		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
+		// commandPoolでcloseされるらしい
+//		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
+		buffer = null;
 	}
 	
 	private void transitionColor(ImageView swapChainImageView, MemoryStack stack, Runnable rendering) {

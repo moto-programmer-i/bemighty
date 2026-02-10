@@ -17,6 +17,9 @@ import static org.lwjgl.vulkan.VK13.*;
 public class Vulkan implements AutoCloseable {
 	private static final String VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation";
 	private VulkanSettings settings;
+	private VkInstance vkInstance;
+	private VkDebugUtilsMessengerCreateInfoEXT debugUtils;
+	private long vkDebugHandle;
 
 	public Vulkan(VulkanSettings settings) {
 		this.settings = settings;
@@ -109,11 +112,17 @@ public class Vulkan implements AutoCloseable {
 	public void close() throws Exception {
 		if (vkDebugHandle != VK_NULL_HANDLE) {
 			vkDestroyDebugUtilsMessengerEXT(vkInstance, vkDebugHandle, null);
+			vkDebugHandle = VK_NULL_HANDLE;
 		}
-		vkDestroyInstance(vkInstance, null);
+		if (vkInstance != null) {
+			vkDestroyInstance(vkInstance, null);
+			vkInstance = null;
+		}
+		
 		if (debugUtils != null) {
 			debugUtils.pfnUserCallback().free();
 			debugUtils.free();
+			debugUtils = null;
 		}
 	}
 
@@ -248,12 +257,4 @@ public class Vulkan implements AutoCloseable {
 	public VulkanSettings getSettings() {
 		return settings;
 	}
-
-
-
-
-
-	private final VkInstance vkInstance;
-	private VkDebugUtilsMessengerCreateInfoEXT debugUtils;
-	private long vkDebugHandle;
 }

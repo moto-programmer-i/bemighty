@@ -2,6 +2,8 @@ package lwjgl.ex.vulkan;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
+
+import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.nio.LongBuffer;
@@ -10,7 +12,7 @@ import java.nio.LongBuffer;
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdPool.java
 
 public class CommandPool implements AutoCloseable {
-	private final long handler;
+	private long handler;
 	private final CommandPoolSettings settings;
 
 	public CommandPool(CommandPoolSettings settings) {
@@ -37,7 +39,11 @@ public class CommandPool implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
+		if (handler == VK_NULL_HANDLE) {
+			return;
+		}
 		vkDestroyCommandPool(settings.getLogicalDevice().getDevice(), handler, null);
+		handler = VK_NULL_HANDLE;
 	}
 
 	public long getHandler() {

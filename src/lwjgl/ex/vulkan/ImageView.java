@@ -5,12 +5,14 @@ import java.util.Arrays;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
+
+import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 import static org.lwjgl.vulkan.VK14.*;
 
 // 参考
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-04/src/main/java/org/vulkanb/eng/graph/vk/ImageView.java
 public class ImageView implements AutoCloseable {
-	private final long handler;
+	private long handler;
 	private final ImageViewSettings settings;
 	public ImageView(ImageViewSettings settings) {
 		this.settings = settings;
@@ -38,7 +40,11 @@ public class ImageView implements AutoCloseable {
 	
 	@Override
 	public void close() throws Exception {
+		if (handler == VK_NULL_HANDLE) {
+			return;
+		}
 		vkDestroyImageView(settings.getLogicalDevice().getDevice(), handler, null);
+		handler = VK_NULL_HANDLE;
 	}
 	
 	public static ImageView[] createArray(int length, ImageViewSettings settings) {

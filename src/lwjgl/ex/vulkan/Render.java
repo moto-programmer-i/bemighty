@@ -42,9 +42,7 @@ public class Render implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		// ミス、あとで修正
-		ExceptionUtils.close(renders);
-		ExceptionUtils.close(commandPool);
+		ExceptionUtils.close(renders, commandPool);
 	}
 
 }

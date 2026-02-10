@@ -8,6 +8,17 @@ public final class ExceptionUtils {
 	private ExceptionUtils() {
 	}
 	
+	public static void close(AutoCloseable[] array, AutoCloseable... flex) throws Exception {
+		// 配列と可変長引数をまとめて配列にいれるのが難しそうなので、
+		// ちょっと変だがそれぞれcloseする
+		// もっと良い書き方がわかれば修正
+		try {
+			close(array);
+		} finally {
+			close(flex);
+		}
+	}
+	
 	/**
 	 * まとめてcloseする（配列はtry-with-resources対象外のため）
 	 * @param flex

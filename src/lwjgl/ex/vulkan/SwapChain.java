@@ -8,6 +8,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSurface;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
+import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
+
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
@@ -17,7 +19,7 @@ import static org.lwjgl.vulkan.VK14.*;
 
 public class SwapChain implements AutoCloseable  {
 	private SwapChainSettings settings;
-	private final long handler;
+	private long handler;
 	private final ImageView[] imageViews;
 	private int width;
 	private int height;
@@ -188,11 +190,15 @@ public class SwapChain implements AutoCloseable  {
 
 	@Override
 	public void close() throws Exception {
+		if (handler == VK_NULL_HANDLE) {
+			return;
+		}
 		try {
 			ExceptionUtils.close(imageViews);
 		}
 		finally {
-			vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);			
-		}		
+			vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
+			handler = VK_NULL_HANDLE;
+		}
 	}
 }

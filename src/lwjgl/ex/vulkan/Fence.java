@@ -35,7 +35,7 @@ import static org.lwjgl.vulkan.VK14.*;
  */
 public class Fence implements AutoCloseable {
 	public static final long DEFAULT_TIMEOUT_NANOSECONDS = Long.MAX_VALUE;
-	private final long handler;
+	private long handler;
 	private final LogicalDevice logicalDevice;
 	
 	public Fence(LogicalDevice logicalDevice) {
@@ -79,9 +79,11 @@ public class Fence implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		// 最後のFenceがvkDestroyFenceできない。他の実装が間違ってることが原因？
-		// vkDestroyFence(): can't be called on VkFence 0xa000000000a that is currently in use by VkQueue 0x7f91f89f2b50.
+		if (handler == VK_NULL_HANDLE) {
+			return;
+		}
 		vkDestroyFence(logicalDevice.getDevice(), handler, null);
+		handler = VK_NULL_HANDLE;
 	}
 
 	public long getHandler() {

@@ -82,13 +82,14 @@ public class LogicalDevice implements AutoCloseable {
 	
 	@Override
 	public void close() throws Exception {
-		settings = null;
-		if (device != null) {
-			// 論理デバイスは明示的にDestroyする必要がある
-			// The Vulkan spec states: All child objects that were created with instance or with a VkPhysicalDevice retrieved from it, and that can be destroyed or freed, must have been destroyed or freed prior to destroying instance (https://vulkan.lunarg.com/doc/view/1.4.321.1/linux/antora/spec/latest/chapters/initialization.html#VUID-vkDestroyInstance-instance-00629)
-            vkDestroyDevice(device, null);
-            device = null;
+		if (device == null) {
+			return;
         }
+		// 論理デバイスは明示的にDestroyする必要がある
+		// The Vulkan spec states: All child objects that were created with instance or with a VkPhysicalDevice retrieved from it, and that can be destroyed or freed, must have been destroyed or freed prior to destroying instance (https://vulkan.lunarg.com/doc/view/1.4.321.1/linux/antora/spec/latest/chapters/initialization.html#VUID-vkDestroyInstance-instance-00629)
+        vkDestroyDevice(device, null);
+        device = null;
+        settings = null;
 	}
 	
 	public OptionalInt getGraphicsQueueIndex() {
