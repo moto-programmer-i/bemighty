@@ -90,11 +90,12 @@ public class Main {
 							renderSettings.setSwapChain(swapChain);
 							renderSettings.setQueue(queue);
 							
-
+							
+//							 Thread.sleep(2000);
 							
 							try(var render = new Render(renderSettings)) {
 								
-								final int testCount = 3;
+								final int testCount = 1;
 								
 								
 								for(int i = 0; i < testCount; ++i) {

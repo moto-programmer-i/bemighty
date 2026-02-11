@@ -20,6 +20,8 @@ public class Window implements AutoCloseable {
 	// The window handle
 	private final long window;
 	
+	private final List<ThrowableRunnable> resizeCallbacks = new ArrayList<>();
+	
 //	private List<Surface> surfaces = new ArrayList<>();
 
 	public Window(WindowSettings settings) {
@@ -59,6 +61,32 @@ public class Window implements AutoCloseable {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
 		});
+		
+
+        // ウィンドウサイズ変更時などのコールバック
+		// （SwapChain再作成のために必要）
+        glfwSetFramebufferSizeCallback(window, (long window, int width, int height) -> {
+        	// ウィンドウ最小化の場合はwidth, heightともに0
+            if (width == 0 && height == 0) {
+                // 最小化のときに実行したい場合があるかもしれない
+                return;
+            }
+
+            // チュートリアルでは即座にrecreateSwapChainしていなかったが、
+            // 現状即座に実行するように変更した
+            // https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+            //app->framebufferResized = true;
+
+            for (var resizeCallback: resizeCallbacks) {
+            	try {
+            		resizeCallback.run();
+            	}
+            	// リサイズで例外がでた場合の適切な処理が不明
+            	catch(Exception e) {
+            		e.printStackTrace();
+            	}
+            }
+        });
 
 		// Get the thread stack and push a new frame
 		try (MemoryStack stack = stackPush()) {
@@ -105,6 +133,13 @@ public class Window implements AutoCloseable {
 	 */
 	public void pollEvents() {
 		glfwPollEvents();
+	}
+	
+	/**
+	 * 最小化
+	 */
+	public void iconify() {
+		glfwIconifyWindow(window);
 	}
 
 	@Override
@@ -165,4 +200,35 @@ public class Window implements AutoCloseable {
 			size.height(heightBuffer.get(0));
 			return size;
 	}
+	
+	/**
+	 * SwapChain作成用にサイズを取得
+	 * @param stack
+	 * @return SwapChain作成に使うサイズ
+	 */
+	public VkExtent2D getFramebufferSize(MemoryStack stack) {
+		IntBuffer widthBuffer = stack.mallocInt(1);
+		IntBuffer heightBuffer = stack.mallocInt(1);
+		int width = 0;
+		int height = 0;
+		do {
+			glfwGetFramebufferSize(window, widthBuffer, heightBuffer);
+			width = widthBuffer.get(0);
+			height = heightBuffer.get(0);
+			if (width != 0 && height != 0) {
+				break;
+			}
+			glfwWaitEvents();
+		}while (true);
+		
+		var size = VkExtent2D.malloc(stack);
+		size.width(width);
+		size.height(height);
+		return size;
+	}
+	
+	void addResizeCallbacks(ThrowableRunnable callback) {
+        // 関数は元々ポインタなので参照は不要らしい
+        resizeCallbacks.add(callback);
+    }
 }

@@ -77,8 +77,8 @@ public class FrameRender implements AutoCloseable {
                 .swapchainCount(1)
                 .pSwapchains(settings.getSwapChain().createLongBuffer(stack))
                 .pImageIndices(stack.ints(nextSwapChainImageView.getIndex()));
-		Vulkan.throwExceptionIfFailed(KHRSwapchain.vkQueuePresentKHR(settings.getQueue().getVkQueue(), present),
-				"KHRSwapchain.vkQueuePresentKHRに失敗しました");
+			Vulkan.throwExceptionIfFailed(KHRSwapchain.vkQueuePresentKHR(settings.getQueue().getVkQueue(), present),
+					"KHRSwapchain.vkQueuePresentKHRに失敗しました");
 		// KHRSwapchain のエラー対応は保留
 //		int err = KHRSwapchain.vkQueuePresentKHR(queue.getVkQueue(), present);
 //        if (err == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {

@@ -2,6 +2,7 @@ package lwjgl.ex.vulkan;
 
 public class SwapChainSettings {
 	public static final int DEFAULT_IMAGE_ARRAY_LAYERS = 1;
+	public static final int DEFAULT_RECREATE_DEBOUNCE_MILLIISECONDS = 500;
 	private Window window;
 	private LogicalDevice logicalDevice;
 	private Surface surface;
@@ -9,6 +10,7 @@ public class SwapChainSettings {
 	private int imageArrayLayers = DEFAULT_IMAGE_ARRAY_LAYERS;
 	
 	private boolean vsync;
+	private int recreteDebounceMilliseconds = DEFAULT_RECREATE_DEBOUNCE_MILLIISECONDS;
 	
 	private ImageViewSettings imageViewSettings = new ImageViewSettings();
 	
@@ -57,4 +59,15 @@ public class SwapChainSettings {
 		this.imageViewSettings = imageViewSettings;
 	}
 	
+	/**
+	 * 再作成のディレイ
+	 * （リサイズの度に作成していると無駄が多くなりそうなため）
+	 * @return
+	 */
+	public int getRecreteDebounceMilliseconds() {
+		return recreteDebounceMilliseconds;
+	}
+	public void setRecreteDebounceMilliseconds(int recreteDebounceMilliseconds) {
+		this.recreteDebounceMilliseconds = recreteDebounceMilliseconds;
+	}
 }

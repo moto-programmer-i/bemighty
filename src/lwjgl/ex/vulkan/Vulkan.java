@@ -12,7 +12,7 @@ import java.nio.*;
 import java.util.*;
 
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
-import static org.lwjgl.vulkan.VK13.*;
+import static org.lwjgl.vulkan.VK14.*;
 
 public class Vulkan implements AutoCloseable {
 	private static final String VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation";
@@ -166,12 +166,17 @@ public class Vulkan implements AutoCloseable {
 	 * 
 	 * @param code
 	 * @param message
+	 * @throws SwapChainOutOfDate codeがKHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR
 	 * @throws IllegalArgumentException codeがVK_SUCCESS以外
 	 */
-	public static void throwExceptionIfFailed(int code, String message) throws IllegalArgumentException {
+	public static void throwExceptionIfFailed(int code, String message) throws SwapChainOutOfDate, IllegalArgumentException {
 		// VulkanがCのコードのため、失敗時に例外を投げるメソッドが必要
 		if (code == VK_SUCCESS) {
 			return;
+		}
+		
+		if (code == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
+			throw new SwapChainOutOfDate();
 		}
 		
 		System.err.println(codeToMessage(code));

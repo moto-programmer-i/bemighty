@@ -20,7 +20,7 @@ public class Surface implements AutoCloseable {
 
 	private final long handler;
 	private SurfaceSettings settings;
-	private final VkSurfaceCapabilitiesKHR surfaceCapabilities;
+	private VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	private int format;
 	private int colorSpace;
 
@@ -28,15 +28,17 @@ public class Surface implements AutoCloseable {
 		this.settings = settings;
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			handler = settings.getWindow().createWindowSurfaceHandler(stack, settings.getVulkan().getVkInstance());
-
-			surfaceCapabilities = VkSurfaceCapabilitiesKHR.calloc(stack);
-			Vulkan.throwExceptionIfFailed(
-					KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(settings.getPhysicalDevice().getDevice(),
-							handler, surfaceCapabilities),
-					"surface capabilitiesの取得に失敗しました");
-
+			initCapabilities(stack);
 			initFormat(stack);
 		}
+	}
+	
+	public void initCapabilities(MemoryStack stack) {
+		surfaceCapabilities = VkSurfaceCapabilitiesKHR.calloc(stack);
+		Vulkan.throwExceptionIfFailed(
+				KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(settings.getPhysicalDevice().getDevice(),
+						handler, surfaceCapabilities),
+				"surface capabilitiesの取得に失敗しました");
 	}
 
 	private void initFormat(MemoryStack stack) {
