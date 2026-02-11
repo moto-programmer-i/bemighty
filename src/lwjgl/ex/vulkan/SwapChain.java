@@ -43,14 +43,13 @@ public class SwapChain implements AutoCloseable {
 		var vkDevice = settings.getLogicalDevice().getDevice();
 		// 参考
 		// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
-		try (var stack = MemoryStack.stackPush()) {			
+		try (var stack = MemoryStack.stackPush()) {
+			// SurfaceCapabilitiesを取得しなければ、SwapChain再作成時に前のものが残ってしまい、エラーになる
 			var surfaceCapabilities = settings.getSurface().getCapabilities(stack);
 
 			var framebufferSize = settings.getWindow().getFramebufferSize(stack);
 			width = framebufferSize.width();
 			height = framebufferSize.height();
-			
-			var minImageCount = surfaceCapabilities.minImageCount();
 
 			var info = VkSwapchainCreateInfoKHR.calloc(stack).sType$Default()
 					.surface(settings.getSurface().getHandler())
@@ -75,18 +74,8 @@ public class SwapChain implements AutoCloseable {
 					.compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 
 					.imageArrayLayers(settings.getImageArrayLayers())
-
-					// 一時変数が解放されてしまうのか、0 0 になってしまう
-//							.imageExtent(calcSwapChainExtent(stack))
-					// 変数から初期化
 					.imageExtent(framebufferSize)
-
-					// なぜか変数を経由しないと1になってしまうらしい
-					// vkCreateSwapchainKHR(): pCreateInfo->minImageCount is 1 which is less than
-					// VkSurfaceCapabilitiesKHR::minImageCount (3) returned by
-					// vkGetPhysicalDeviceSurfaceCapabilitiesKHR().
-//							.minImageCount(surfaceCapabilities.minImageCount())
-					.minImageCount(minImageCount)
+					.minImageCount(surfaceCapabilities.minImageCount())
 
 					// Surfaceのformatとcolorspaceを設定
 					.imageFormat(settings.getSurface().getFormat())
@@ -105,10 +94,6 @@ public class SwapChain implements AutoCloseable {
 
 					// 表示されない領域に影響するレンダリング操作を破棄
 					.clipped(true);
-
-			// リサイズでSwapchainを作り直す場合は追加の処理が必要？
-//					https://github.com/LWJGL/lwjgl3/blob/a73648fbfcbc0945e9a0ffa2a3dca021c372f3b2/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L670
-//					info.oldSwapchain(handler);
 
 			LongBuffer buffer = stack.mallocLong(1);
 			Vulkan.throwExceptionIfFailed(vkCreateSwapchainKHR(vkDevice, info, null, buffer), "swap chainの作成に失敗しました");
