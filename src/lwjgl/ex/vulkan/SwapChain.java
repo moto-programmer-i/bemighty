@@ -43,13 +43,8 @@ public class SwapChain implements AutoCloseable {
 		var vkDevice = settings.getLogicalDevice().getDevice();
 		// 参考
 		// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
-		try (var stack = MemoryStack.stackPush()) {
-			// 再作成時は、Surfaceの再設定も必要
-			if (isRecreating) {
-				settings.getSurface().initCapabilities(stack);
-			}
-			
-			var surfaceCapabilities = settings.getSurface().getSurfaceCapabilities();
+		try (var stack = MemoryStack.stackPush()) {			
+			var surfaceCapabilities = settings.getSurface().getCapabilities(stack);
 
 			var framebufferSize = settings.getWindow().getFramebufferSize(stack);
 			width = framebufferSize.width();
