@@ -49,7 +49,7 @@ public class FrameRender implements AutoCloseable {
 		コマンドの送信: コマンドをグラフィカル キューに送信するだけです。
 		現在の画像。
 			 */
-		waitAndResetForFence();
+		cpuSync.waitAndReset();
 		var nextSwapChainImageView = settings.getSwapChain().acquireNextImageView(stack, forSwapChain);
 		
 		commandBuffer.reset();
@@ -94,19 +94,6 @@ public class FrameRender implements AutoCloseable {
 		// vkDestroySemaphore(): can't be called on VkSemaphore 0xd000000000d that is currently in use by VkQueue 0x7f7518a340c0.
 		settings.getLogicalDevice().waitIdle();
     }
-	
-	public void reset() {
-		cpuSync.waitAndReset();
-		commandBuffer.reset();
-	}
-	
-	public Semaphore getForSwapChain() {
-		return forSwapChain;
-	}
-	
-	public void waitAndResetForFence() {
-		cpuSync.waitAndReset();
-	}
 
 	@Override
 	public void close() throws Exception {
