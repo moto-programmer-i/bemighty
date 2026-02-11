@@ -94,7 +94,7 @@ public class Main {
 							
 							try(var render = new Render(renderSettings)) {
 								
-								final int testCount = 1;
+								final int testCount = 3;
 								
 								
 								for(int i = 0; i < testCount; ++i) {
