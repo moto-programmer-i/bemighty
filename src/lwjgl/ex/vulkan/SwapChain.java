@@ -27,7 +27,7 @@ public class SwapChain implements AutoCloseable {
 	private int width;
 	private int height;
 
-	private boolean isRecreating = false;
+	private boolean recreating = false;
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
 	public SwapChain(SwapChainSettings settings) {
@@ -130,8 +130,6 @@ public class SwapChain implements AutoCloseable {
 		IntBuffer imageIndexBuffer = stack.mallocInt(1);
 		int code = vkAcquireNextImageKHR(settings.getLogicalDevice().getDevice(), handler, Long.MAX_VALUE,
 				acquire.getHandler(), MemoryUtil.NULL, imageIndexBuffer);
-
-		System.out.println("acquireNextImageIndex " + Vulkan.codeToMessage(code));
 		switch (code) {
 		// おそらく、OUT_OF_DATEのときだけ別対応が必要だが、保留
 		case VK_ERROR_OUT_OF_DATE_KHR:
@@ -158,10 +156,10 @@ public class SwapChain implements AutoCloseable {
 
 	public void recreate() throws Exception {
 		// 毎回再作成は避ける
-		if (isRecreating) {
+		if (recreating) {
 			return;
 		}
-		isRecreating = true;
+		recreating = true;
 
 		// 設定待機時間に1回だけ再作成する
 		// 非同期参考 https://qiita.com/koduki/items/086d42b5a3c74ed8b59e
@@ -182,7 +180,7 @@ public class SwapChain implements AutoCloseable {
 			}
 			init();
 
-			isRecreating = false;
+			recreating = false;
 		});
 	}
 	
@@ -211,5 +209,9 @@ public class SwapChain implements AutoCloseable {
 		} finally {
 			ExceptionUtils.close(threadPool);
 		}
+	}
+
+	public boolean isRecreating() {
+		return recreating;
 	}
 }

@@ -31,10 +31,10 @@ public class Render implements AutoCloseable {
 			// 次のフレームへ
 			currentFrame = (currentFrame + 1) % settings.getMaxInFlight();
 		}  catch(SwapChainOutOfDate e) {
-			System.out.println("SwapChainOutOfDate");
-			e.printStackTrace();
-			
-			// セマフォなどのリセットをしなければならない
+			// swapchain再作成中は待つ
+			while(settings.getSwapChain().isRecreating()) {
+				settings.getLogicalDevice().waitIdle();
+			}
 		}
 	}
 

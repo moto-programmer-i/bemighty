@@ -38,6 +38,11 @@ public class FrameRender implements AutoCloseable {
 	}
 	
 	public void submit(MemoryStack stack, Command command) {
+		// SwapChain再作成中は描画ができないので、何もしない
+		if (settings.getSwapChain().isRecreating()) {
+			return;
+		}
+		
 		/*
 		https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-05/chapter-05.md#render-loop
 		描画の主な手順は次のとおりです。

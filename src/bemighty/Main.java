@@ -95,7 +95,7 @@ public class Main {
 							
 							try(var render = new Render(renderSettings)) {
 								
-								final int testCount = 1;
+								final int testCount = 3;
 								
 								
 								for(int i = 0; i < testCount; ++i) {
@@ -119,7 +119,6 @@ public class Main {
 
 								            var renderingRect = RectUtils.createRect(tempSwapChain.getWidth(), tempSwapChain.getHeight(), stack);
 
-								            System.out.println("swapchain " + tempSwapChain.getWidth());
 								            return VkRenderingInfo.calloc(stack)
 								                .sType$Default()
 								                .renderArea(renderingRect)
@@ -130,6 +129,8 @@ public class Main {
 								
 								// ウィンドウが閉じられるまで待つ
 								window.waitUntilClose();
+								
+								System.out.println("width " + swapChain.getWidth());
 							}
 						}
 					}
