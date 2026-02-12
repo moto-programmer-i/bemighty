@@ -26,15 +26,6 @@ public class FrameRender implements AutoCloseable {
 		forSwapChain = new Semaphore(settings.getLogicalDevice());
 		complete = new Semaphore(settings.getLogicalDevice());		
 		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
-
-//		try(var pool = new CommandPool(settings.getCommandPoolSettings());
-//				var poolB = new CommandPool(settings.getCommandPoolSettings())
-//				){
-//			
-//		}
-//		catch(Exception e) {
-//			
-//		}
 	}
 	
 	public void submit(MemoryStack stack, Command command) {
@@ -84,15 +75,6 @@ public class FrameRender implements AutoCloseable {
                 .pImageIndices(stack.ints(nextSwapChainImageView.getIndex()));
 			Vulkan.throwExceptionIfFailed(KHRSwapchain.vkQueuePresentKHR(settings.getQueue().getVkQueue(), present),
 					"KHRSwapchain.vkQueuePresentKHRに失敗しました");
-		// KHRSwapchain のエラー対応は保留
-//		int err = KHRSwapchain.vkQueuePresentKHR(queue.getVkQueue(), present);
-//        if (err == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
-//            resize = true;
-//        } else if (err == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
-//            // Not optimal but swap chain can still be used
-//        } else if (err != VK_SUCCESS) {
-//            throw new RuntimeException("Failed to present KHR: " + err);
-//        }
 		
 		// deviceが待機状態になるのを待つ
 		// これがないとVkQueueが使用中から復帰しない
