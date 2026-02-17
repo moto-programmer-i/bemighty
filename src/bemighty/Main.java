@@ -16,6 +16,7 @@ import org.lwjgl.vulkan.VkSubmitInfo2;
 import static org.lwjgl.vulkan.VK13.vkQueueSubmit2;
 import static org.lwjgl.vulkan.VK14.*;
 
+import lwjgl.ex.vulkan.ClearColorCommand;
 import lwjgl.ex.vulkan.ColorUtils;
 import lwjgl.ex.vulkan.CommandBuffer;
 import lwjgl.ex.vulkan.CommandBufferSettings;
@@ -95,6 +96,8 @@ public class Main {
 							
 							try(var render = new Render(renderSettings)) {
 								
+								
+								var command = new ClearColorCommand(clearColor);
 								final int testCount = 3;
 								
 								
@@ -105,26 +108,7 @@ public class Main {
 									// ウィンドウをイベント待ちへ
 									window.pollEvents();
 									
-									render.render((stack, tempSwapChain, nextSwapChainImageView) -> {
-										// https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java
-
-								            VkClearValue clearValue = ColorUtils.createClear(clearColor, stack);
-								            VkRenderingAttachmentInfo.Buffer colorAttachment = VkRenderingAttachmentInfo.calloc(1, stack)
-								                .sType$Default()
-								                .imageView(nextSwapChainImageView.getHandler())
-								                .imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-								                .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-								                .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-								                .clearValue(clearValue);
-
-								            var renderingRect = RectUtils.createRect(tempSwapChain.getWidth(), tempSwapChain.getHeight(), stack);
-
-								            return VkRenderingInfo.calloc(stack)
-								                .sType$Default()
-								                .renderArea(renderingRect)
-								                .layerCount(1)
-								                .pColorAttachments(colorAttachment);
-									});
+									render.render(command);
 								}
 								
 								// ウィンドウが閉じられるまで待つ

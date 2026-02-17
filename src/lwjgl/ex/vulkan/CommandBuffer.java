@@ -61,16 +61,21 @@ public class CommandBuffer implements AutoCloseable {
         
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     	try {
-    		VkRenderingInfo renderingInfo = command.render(stack, swapChain, nextSwapChainImageView);
-    		// 暫定でtransitionColor固定。将来的にはインターフェースをはさむ？
-    		transitionColor(nextSwapChainImageView, stack, () -> {
-    			vkCmdBeginRendering(buffer, renderingInfo);
-        		vkCmdEndRendering(buffer);
-    		});
+    		command.run(stack, this, swapChain, nextSwapChainImageView);
         }
         finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
         }
+    }
+    
+    /**
+     * Renderingを開始して終了する。
+     * vkBeginCommandBufferとvkEndCommandBufferで挟まなければ実行不可
+     * @param renderingInfo
+     */
+    public void render(VkRenderingInfo renderingInfo) {
+    	vkCmdBeginRendering(buffer, renderingInfo);
+		vkCmdEndRendering(buffer);
     }
     
     public VkCommandBufferSubmitInfo.Buffer createSubmitInfoBuffer(MemoryStack stack) {
@@ -89,64 +94,7 @@ public class CommandBuffer implements AutoCloseable {
 		// commandPoolでcloseされるらしい
 //		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
 		buffer = null;
-	}
-	
-	private void transitionColor(ImageView swapChainImageView, MemoryStack stack, Runnable rendering) {
-		// IMAGE_USAGE_COLOR_ATTACHMENT_BITが有効なときはこれにしなければならない
-		var colorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		
-		// 書き込みを指定
-		var writeAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-		
-		// 色が出力されるステージへ
-		var colorOutputStage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-		
-		// https://github.com/LWJGL/lwjgl3/blob/6c89bd4e861407f243305fc84d60ca8d82fe9dd4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L943
-		transitionImageLayout(swapChainImageView,
-				// 描画前なのでレイアウトは未定義
-                VK_IMAGE_LAYOUT_UNDEFINED,
-                
-                colorLayout,
-                
-                
-                // 依存関係なし
-                VK_ACCESS_2_NONE,
-                // 書き込みを行う
-                writeAccessMask,
-                
-                // 何も待たない
-                VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
-                
-                
-                colorOutputStage,
-                stack);
-		
-		rendering.run();
-		
-		transitionImageLayout(
-				swapChainImageView,
-				
-				
-				colorLayout,
-				// 表示状態へ
-				KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-				
-				
-				// アクセスを元に戻す
-				writeAccessMask,
-				// その後、処理をしない場合は何も待たなくてよい
-				// （シェーダーの読み込みを待つ場合は、VK_ACCESS_2_SHADER_READ_BITを指定することもあるらしい）
-				VK_ACCESS_2_NONE,
-	            
-				
-				colorOutputStage,
-	            // 同期のスコープの終了時まで
-	            VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
-	            stack
-	        );
-
-	}
-	
+	}	
 	
 	/**
 	 * レイアウトの変更。描画処理の前後で呼ばなければいけない
@@ -167,7 +115,7 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param dstStage
 	 * @param stack
 	 */
-	private void transitionImageLayout(
+	public void transitionImageLayout(
 			ImageView swapChainImageView,
 	        int oldLayout,
 	        int newLayout,
