@@ -100,5 +100,9 @@ public class LogicalDevice implements AutoCloseable {
 	public OptionalInt getGraphicsQueueIndex() {
 		return settings.getPhysicalDevice().getGraphicsQueueIndex();
 	}
+	
+	public PhysicalDevice getPhysicalDevice() {
+		return settings.getPhysicalDevice();
+	}
     
 }

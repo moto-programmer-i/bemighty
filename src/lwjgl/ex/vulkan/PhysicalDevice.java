@@ -86,6 +86,26 @@ public class PhysicalDevice {
 	public OptionalInt getGraphicsQueueIndex() {
 		return graphicsQueueIndex;
 	}
+	
+	
+	public int findMemoryTypeIndex(int typeFilter, int properties) throws IllegalArgumentException {
+		// 参考
+		// https://github.com/LWJGL/lwjgl3/blob/88e4485af4d708d4fd441a9ef80241b1164eefb4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L511
+        try (var stack = MemoryStack.stackPush()) {
+            VkPhysicalDeviceMemoryProperties memoryProperties = VkPhysicalDeviceMemoryProperties.calloc(stack);
+            vkGetPhysicalDeviceMemoryProperties(device, memoryProperties);
+            for (int i = 0, typeMask = 1; i < memoryProperties.memoryTypeCount(); ++i, typeMask <<= 1) {
+            	// デバイスでサポートされているか
+                if ((typeFilter & typeMask) != 0) {
+                	// プロパティが一致するか
+                    if ((memoryProperties.memoryTypes(i).propertyFlags() & properties) == properties) {
+                        return i;
+                    }
+                }
+            }
+        }
+        throw new IllegalArgumentException("適合するメモリタイプが存在しません");
+    }
 
 	/**
 	 * 条件に合う最初のデバイスを返す

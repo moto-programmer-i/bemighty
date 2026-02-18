@@ -1,8 +1,6 @@
 package lwjgl.ex.vulkan;
 
 
-import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
-import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
 
 //参考
 //https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
@@ -73,6 +71,7 @@ public class CommandBuffer implements AutoCloseable {
      * vkBeginCommandBufferとvkEndCommandBufferで挟まなければ実行不可
      * @param renderingInfo
      */
+    // このメソッドがpublicなのはちょっと嫌だが、代案が思いつかない
     public void render(VkRenderingInfo renderingInfo) {
     	vkCmdBeginRendering(buffer, renderingInfo);
 		vkCmdEndRendering(buffer);
@@ -148,5 +147,10 @@ public class CommandBuffer implements AutoCloseable {
             .pImageMemoryBarriers(imageBarrier);
 
         vkCmdPipelineBarrier2(buffer, dependencyInfo);
+	}
+
+
+	public VkCommandBuffer getBuffer() {
+		return buffer;
 	}
 }

@@ -1,0 +1,2 @@
+https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-06/chapter-06.md
+すべてのコマンドを1つの に記録しCommandBuffer、一度だけ送信して、コマンドの完了を1回だけ待機することができます。これは、小さなコマンドを1つずつ送信するよりもはるかに効率的です。

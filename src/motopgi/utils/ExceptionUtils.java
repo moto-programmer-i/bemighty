@@ -41,4 +41,30 @@ public final class ExceptionUtils {
 			throw exception;
 		}
 	}
+	
+	/**
+	 * まとめてcloseする（配列はtry-with-resources対象外のため）
+	 * @param flex
+	 * @throws Exception 各closeで発生した例外をまとめたもの
+	 */
+	public static void close(List<? extends AutoCloseable> list) throws Exception {
+		// それぞれcloseして例外をまとめて投げる
+		var exception = new Exception("closeに失敗しました");
+		for(var e: list) {
+			if (e == null) {
+				continue;
+			}
+			try {
+				e.close();
+			} catch (Exception ex) {
+				exception.addSuppressed(ex);
+			}
+		}
+		
+		list.clear();
+		
+		if (exception.getSuppressed().length > 0) {
+			throw exception;
+		}
+	}
 }
