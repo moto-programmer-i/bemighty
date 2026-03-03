@@ -30,6 +30,9 @@ replay_pid*
 /thirdparties/**
 !/thirdparties/**/
 
+#Slangのコンパイル結果を無視
+*.spv
+
 # ライセンスなどはいつでも含める
 !LICENSE.*
 !copying.txt
