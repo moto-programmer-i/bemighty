@@ -3,6 +3,9 @@ package bemighty;
 import java.awt.Color;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -34,16 +37,20 @@ import lwjgl.ex.vulkan.LogicalDeviceSettings;
 import lwjgl.ex.vulkan.Mesh;
 import lwjgl.ex.vulkan.Model;
 import lwjgl.ex.vulkan.PhysicalDevice;
+import lwjgl.ex.vulkan.Pipeline;
+import lwjgl.ex.vulkan.PipelineSettings;
 import lwjgl.ex.vulkan.Queue;
 import lwjgl.ex.vulkan.QueueSettings;
 import lwjgl.ex.vulkan.RectUtils;
 import lwjgl.ex.vulkan.Render;
 import lwjgl.ex.vulkan.RenderSettings;
+import lwjgl.ex.vulkan.Shader;
+import lwjgl.ex.vulkan.ShaderSettings;
+import lwjgl.ex.vulkan.ShaderStageSettings;
 import lwjgl.ex.vulkan.Surface;
 import lwjgl.ex.vulkan.SurfaceSettings;
 import lwjgl.ex.vulkan.SwapChain;
 import lwjgl.ex.vulkan.SwapChainSettings;
-import lwjgl.ex.vulkan.VertexDescriptionBufferSettings;
 import lwjgl.ex.vulkan.Vulkan;
 import lwjgl.ex.vulkan.VulkanSettings;
 import lwjgl.ex.vulkan.Window;
@@ -54,6 +61,8 @@ public class Main {
 	public static int HEIGHT = 400;
 	public static String WINDOW_NAME = "Be Mighty";
 	public static Color clearColor = Color.black;
+	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
+	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
 
 	public static void main(String[] args) throws Exception {
 		var vulkanSettings = new VulkanSettings();
@@ -75,6 +84,24 @@ public class Main {
 				var logicalDeviceSettings = new LogicalDeviceSettings();
 				logicalDeviceSettings.setPhysicalDevice(physicalDevice);
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings)) {
+
+					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
+					// shader.slangと対応させる必要がある
+					// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
+					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
+					
+					try(var shader = new Shader(shaderSettings)) {
+						var pipelineSettings = new PipelineSettings(logicalDevice, shader);
+						try(var pipeline = new Pipeline(pipelineSettings)) {
+							System.out.println(pipeline.getHandler());
+						}
+					}
+
+					
+					
+					if(true)return;
+					
 					
 					var surfaceSettings = new SurfaceSettings();
 					surfaceSettings.setVulkan(vulkan);
@@ -131,45 +158,45 @@ public class Main {
 		}
 	}
 	
-	public static Model createTestModel(LogicalDevice logicalDevice) {
-		var model = new Model();
-		
-		// 参考
-		// https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-06/src/main/java/org/vulkanb/eng/graph/ModelsCache.java
-		// createVerticesBuffers
-        var vertices = 3;
-        var verticesSettings = new BufferSettings(logicalDevice);
-        verticesSettings.setSize(vertices * VertexDescriptionBufferSettings.VALUES_XYZ * Float.BYTES);
-        verticesSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        verticesSettings.setRequestMask(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        verticesSettings.setOutUsage(BufferSettings.USAGE_TRANSFER_VERTEX);
-        var verticesSource = new Buffer(verticesSettings);
-        FloatBuffer verticesPosition = MemoryUtil.memFloatBuffer(verticesSource.map(), (int) verticesSettings.getSize());
-        // 適当に三角形(xyz)
-        int distance = 200;
-        verticesPosition.put(0);
-        verticesPosition.put(0);
-        verticesPosition.put(0);
-        verticesPosition.put(distance);
-        verticesPosition.put(0);
-        verticesPosition.put(0);
-        verticesPosition.put(0);
-        verticesPosition.put(distance);
-        verticesPosition.put(0);
-        
-        // createIndicesBuffers
-        var indices = new int[]{0, 1, 2, 0};
-        var indicesSettings = new BufferSettings(logicalDevice);
-        indicesSettings.setSize(indices.length * Integer.BYTES);
-        indicesSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        indicesSettings.setRequestMask(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        indicesSettings.setOutUsage(BufferSettings.USAGE_TRANSFER_INDEX);
-        var indicesSource = new Buffer(indicesSettings);
-        IntBuffer data = MemoryUtil.memIntBuffer(indicesSource.map(), (int) indicesSettings.getSize());
-        data.put(indices);
-        
-        model.add(new Mesh(verticesSource, indicesSource, indices.length));
-        return model;
-	}
+//	public static Model createTestModel(LogicalDevice logicalDevice) {
+//		var model = new Model();
+//		
+//		// 参考
+//		// https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-06/src/main/java/org/vulkanb/eng/graph/ModelsCache.java
+//		// createVerticesBuffers
+//        var vertices = 3;
+//        var verticesSettings = new BufferSettings(logicalDevice);
+//        verticesSettings.setSize(vertices * VertexDescriptionBufferSettings.VALUES_XYZ * Float.BYTES);
+//        verticesSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+//        verticesSettings.setRequestMask(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+//        verticesSettings.setOutUsage(BufferSettings.USAGE_TRANSFER_VERTEX);
+//        var verticesSource = new Buffer(verticesSettings);
+//        FloatBuffer verticesPosition = MemoryUtil.memFloatBuffer(verticesSource.map(), (int) verticesSettings.getSize());
+//        // 適当に三角形(xyz)
+//        int distance = 200;
+//        verticesPosition.put(0);
+//        verticesPosition.put(0);
+//        verticesPosition.put(0);
+//        verticesPosition.put(distance);
+//        verticesPosition.put(0);
+//        verticesPosition.put(0);
+//        verticesPosition.put(0);
+//        verticesPosition.put(distance);
+//        verticesPosition.put(0);
+//        
+//        // createIndicesBuffers
+//        var indices = new int[]{0, 1, 2, 0};
+//        var indicesSettings = new BufferSettings(logicalDevice);
+//        indicesSettings.setSize(indices.length * Integer.BYTES);
+//        indicesSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+//        indicesSettings.setRequestMask(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+//        indicesSettings.setOutUsage(BufferSettings.USAGE_TRANSFER_INDEX);
+//        var indicesSource = new Buffer(indicesSettings);
+//        IntBuffer data = MemoryUtil.memIntBuffer(indicesSource.map(), (int) indicesSettings.getSize());
+//        data.put(indices);
+//        
+//        model.add(new Mesh(verticesSource, indicesSource, indices.length));
+//        return model;
+//	}
 
 }

@@ -1,2 +1,16 @@
+必須のsettingsをコンストラクタに追加
+
 https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-06/chapter-06.md
 すべてのコマンドを1つの に記録しCommandBuffer、一度だけ送信して、コマンドの完了を1回だけ待機することができます。これは、小さなコマンドを1つずつ送信するよりもはるかに効率的です。
+
+
+
+VkImageMemoryBarrier2は使い回せないか？
+
+vkCmdBindVertexBuffersは毎回しなければいけないのか？
+	CommandBufferに最初にモデルをバインドして、フレーム毎の処理はdrawだけではないのか？
+
+Shaderが複数ある場合の対処不明
+
+Shaderの読み込みでreadAllBytesからmallocしており、無駄なコピーが発生する
+	適切なライブラリあるか？独自実装しかないか？

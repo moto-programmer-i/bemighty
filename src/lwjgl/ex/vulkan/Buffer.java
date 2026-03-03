@@ -9,10 +9,6 @@ import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-import static org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.nio.IntBuffer;
@@ -24,6 +20,7 @@ import java.util.function.Supplier;
 
 public class Buffer implements AutoCloseable {
 	private long handler;
+	private LongBuffer handlerBuffer = LongBuffer.allocate(1);
 	private long allocationSize;
     private long memory;
     private long mappedMemory = NULL;
@@ -41,9 +38,9 @@ public class Buffer implements AutoCloseable {
                     .size(settings.getSize())
                     .usage(settings.getUsage())
                     .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
-            LongBuffer forHandler = stack.mallocLong(1);
-            Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
-            handler = forHandler.get(0);
+            handlerBuffer = stack.mallocLong(1);
+            Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, handlerBuffer), "Bufferの作成に失敗しました");
+            handler = handlerBuffer.get(0);
 
             var memoryRequirements = VkMemoryRequirements.calloc(stack);
             vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
@@ -125,6 +122,9 @@ public class Buffer implements AutoCloseable {
 			vkDestroyBuffer(device, handler, null);
 	        handler = NULL;
 		}
+		if (handlerBuffer != null) {
+			handlerBuffer = null;
+		}
 	}
 
 	public BufferSettings getSettings() {
@@ -134,4 +134,9 @@ public class Buffer implements AutoCloseable {
 	public long getHandler() {
 		return handler;
 	}
+
+	public LongBuffer getHandlerBuffer() {
+		return handlerBuffer;
+	}
+	
 }

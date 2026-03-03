@@ -1,5 +1,7 @@
 package lwjgl.ex.vulkan;
 
+import java.nio.LongBuffer;
+
 import org.lwjgl.system.MemoryStack;
 
 import motopgi.utils.ExceptionUtils;

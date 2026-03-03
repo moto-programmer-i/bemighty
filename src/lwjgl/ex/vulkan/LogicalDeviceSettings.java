@@ -17,6 +17,7 @@ public class LogicalDeviceSettings {
 vkResetFences(): pFences[0] (VkFence 0xb000000000b) is in use.
 	 */
 	private boolean synchronization2 = true;
+	private boolean shaderDrawParameters = true;
 	
 	public PhysicalDevice getPhysicalDevice() {
 		return physicalDevice;
@@ -50,5 +51,11 @@ vkResetFences(): pFences[0] (VkFence 0xb000000000b) is in use.
 	}
 	public void setSynchronization2(boolean synchronization2) {
 		this.synchronization2 = synchronization2;
+	}
+	public boolean hasShaderDrawParameters() {
+		return shaderDrawParameters;
+	}
+	public void setShaderDrawParameters(boolean shaderDrawParameters) {
+		this.shaderDrawParameters = shaderDrawParameters;
 	}
 }

@@ -11,9 +11,16 @@ public class PhysicalDeviceFilter {
 	 * グラフィック機能があるか
 	 */
 	private boolean hasGraphicsQueueFamily = true;
-	
-	
+
+// ライブラリとしては追加すべきだが、そこまで気を回せる時間がないため保留
+//	/**
+//	 * commandBuffer.beginRenderingができるか
+//	 * https://zenn.dev/nishiki/articles/cbff357553ae0c
+//	 */
+//	private boolean dynamicRendering = true;
 	private boolean synchronization2 = true;
+	
+	private boolean shaderDrawParameters = true;
 
 	public static final Set<String> DEFAULT_EXTENSIONS;
 
@@ -48,6 +55,18 @@ public class PhysicalDeviceFilter {
 
 	public boolean isSynchronization2() {
 		return synchronization2;
+	}
+	
+	/**
+	 * Shaderが使用可能か
+	 * @return
+	 */
+	public boolean hasShaderDrawParameters() {
+		return shaderDrawParameters;
+	}
+
+	public void setShaderDrawParameters(boolean shaderDrawParameters) {
+		this.shaderDrawParameters = shaderDrawParameters;
 	}
 
 	/**

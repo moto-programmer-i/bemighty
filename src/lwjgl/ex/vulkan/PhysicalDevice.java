@@ -80,7 +80,11 @@ public class PhysicalDevice {
 	}
 	
 	public static VkPhysicalDevice getFirstVkPhysicalDevice(Vulkan vulkan) {
-		return getAllVkPhysicalDevice(vulkan).get(0);
+		try {
+			return getAllVkPhysicalDevice(vulkan).get(0);
+		} catch (IndexOutOfBoundsException e) {
+			throw new RuntimeException("グラフィックボードが見つかりません", e);
+		}
 	}
 
 	public OptionalInt getGraphicsQueueIndex() {
@@ -135,6 +139,20 @@ public class PhysicalDevice {
 			Vulkan.throwExceptionIfFailed(
 					vkEnumeratePhysicalDevices(vulkan.getVkInstance(), deviceCountBuffer, pPhysicalDevices),
 					"物理デバイスの取得に失敗しました");
+			
+			// 機能をチェックするのに各構造体を作らなければならない
+			// pNextにどんどんつなぐというVulkan意味不明設計
+			var extendedDynamicStateFeaturesEXT = VkPhysicalDeviceExtendedDynamicStateFeaturesEXT.calloc(stack).sType$Default();
+			var queryVulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack).sType$Default()
+					.synchronization2(filter.isSynchronization2())
+					.pNext(extendedDynamicStateFeaturesEXT.address());
+			var queryVulkan11Features = VkPhysicalDeviceVulkan11Features.calloc(stack).sType$Default()
+					.shaderDrawParameters(filter.hasShaderDrawParameters())
+					.pNext(queryVulkan13Features.address());
+			var queryDeviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack).sType$Default()
+					//  型をそのまま渡すとIndexOutOfBoundsExceptionがでるというVulkan意味不明設計
+//					.pNext(queryVulkan11Features);
+					.pNext(queryVulkan11Features.address());
 
 			int capacity = pPhysicalDevices.capacity();
 			for (int i = 0; i < capacity; ++i) {
@@ -147,26 +165,26 @@ public class PhysicalDevice {
 				}
 				
 				// Featuresで絞り込み
+				vkGetPhysicalDeviceFeatures2(device, queryDeviceFeatures2);
+				
+				// 現状、commandBuffer.beginRenderingで書いてしまっているため、これが使えない場合は想定していない
+				// ライブラリ化するなら対応必須
+				if (!queryVulkan13Features.dynamicRendering()) {
+	                continue;
+	            }
+				
 				if(filter.isSynchronization2()) {
-					// 機能をチェックするのに各構造体を作らなければならない
-					var queryExtendedDynamicStateFeatures = VkPhysicalDeviceExtendedDynamicStateFeaturesEXT.calloc(stack)
-			                .sType$Default();
-					var queryVulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack)
-			                .sType$Default()
-			                .pNext(queryExtendedDynamicStateFeatures.address());
-					var queryDeviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack)
-			                .sType$Default()
-			                .pNext(queryVulkan13Features.address());
-		            vkGetPhysicalDeviceFeatures2(device, queryDeviceFeatures2);
-
-			            // 保留
-//			            if (!query_vulkan13_features.dynamicRendering()) {
-//			                throw new RuntimeException("Dynamic Rendering feature is missing");
-//			            }
-			            if (!queryVulkan13Features.synchronization2()) {
-			                // GPUに同期機能（Synchronization2）がない
-			            	continue;
-			            }
+					// GPUに同期機能（Synchronization2）がない
+		            if (!queryVulkan13Features.synchronization2()) {
+		            	continue;
+		            }
+				}
+				
+				if(filter.hasShaderDrawParameters()) {
+					// GPUにShader描画機能がない
+					if(!queryVulkan11Features.shaderDrawParameters()) {
+						continue;
+					}
 				}
 				 
 

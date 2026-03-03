@@ -67,5 +67,16 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="thirdparties/lwjgl3/lwjgl-shaderc.jar" sourcepath="thirdparties/lwjgl3/lwjgl-shaderc-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/bemighty/thirdparties/lwjgl3/lwjgl-shaderc-javadoc.jar!/"/>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="thirdparties/lwjgl3/lwjgl-shaderc-natives-linux.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

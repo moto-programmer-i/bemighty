@@ -18,15 +18,16 @@ public class ClearColorCommand implements Command {
 	public ClearColorCommand(Color clearColor) {
 		this.clearColor = clearColor;
 	}
-
 	
-
-	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
+	public static VkRenderingInfo createRenderingInfo(Color clearColor, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView) {
 		VkClearValue clearValue = ColorUtils.createClear(clearColor, stack);
         VkRenderingAttachmentInfo.Buffer colorAttachment = VkRenderingAttachmentInfo.calloc(1, stack)
             .sType$Default()
             .imageView(nextSwapChainImageView.getHandler())
+            
+            // 参考（https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-06/src/main/java/org/vulkanb/eng/graph/scn/ScnRender.java）
+            // では KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR になっているが、ありえない
+            // LWJGLがenumを崩したのが悪い
             .imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
             .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
             .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
@@ -34,11 +35,19 @@ public class ClearColorCommand implements Command {
 
         var renderingRect = RectUtils.createRect(swapChain.getWidth(), swapChain.getHeight(), stack);
 
-        var renderingInfo = VkRenderingInfo.calloc(stack)
+        return VkRenderingInfo.calloc(stack)
             .sType$Default()
             .renderArea(renderingRect)
             .layerCount(1)
             .pColorAttachments(colorAttachment);
+	}
+
+	
+
+	@Override
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
+		
+        var renderingInfo =  createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
         
         transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
         	commandBuffer.render(renderingInfo);

@@ -8,6 +8,7 @@ import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
 import org.lwjgl.vulkan.VkPhysicalDeviceExtendedDynamicStateFeaturesEXT;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
+import org.lwjgl.vulkan.VkPhysicalDeviceVulkan11Features;
 import org.lwjgl.vulkan.VkPhysicalDeviceVulkan13Features;
 
 import static org.lwjgl.vulkan.VK10.vkDestroyDevice;
@@ -62,9 +63,14 @@ public class LogicalDevice implements AutoCloseable {
                         // 従来のRenderPassの代わりに、dynamicRenderingが標準になった
                         .dynamicRendering(true)
                         ;
+            	var vulkan11Features = VkPhysicalDeviceVulkan11Features.calloc(stack)
+                        .sType$Default()
+                        .pNext(vulkan13Features.address())
+                        .shaderDrawParameters(settings.hasShaderDrawParameters())
+                        ;
             	var deviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack)
                         .sType$Default()
-                        .pNext(vulkan13Features.address());
+                        .pNext(vulkan11Features.address());
 
             	deviceCreateInfo.pNext(deviceFeatures2.address());
         	}
