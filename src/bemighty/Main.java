@@ -133,8 +133,8 @@ public class Main {
 								// ウィンドウをイベント待ちへ
 								window.pollEvents();
 								
-								// 一旦例外がでてるのでコメントへ、頂点描画対応中
-//								render.render(command);
+								
+								render.render(command);
 							}
 							
 							// ウィンドウが閉じられるまで待つ
