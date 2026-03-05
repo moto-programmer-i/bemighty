@@ -5,6 +5,12 @@ public class WindowSettings {
 	private int height;
 	private String name;
 	private int swapInterval = 1;
+	
+	public WindowSettings(int width, int height, String name) {
+		this.width = width;
+		this.height = height;
+		this.name = name;
+	}
 	public int getWidth() {
 		return width;
 	}

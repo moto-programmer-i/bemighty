@@ -16,6 +16,11 @@ public class SurfaceSettings {
 	private Window window;
 	private int format = DEFAULT_FORMAT;
 	
+	public SurfaceSettings(Vulkan vulkan, PhysicalDevice physicalDevice, Window window) {
+		this.vulkan = vulkan;
+		this.physicalDevice = physicalDevice;
+		this.window = window;
+	}
 	public Vulkan getVulkan() {
 		return vulkan;
 	}

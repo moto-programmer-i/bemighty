@@ -19,6 +19,9 @@ vkResetFences(): pFences[0] (VkFence 0xb000000000b) is in use.
 	private boolean synchronization2 = true;
 	private boolean shaderDrawParameters = true;
 	
+	public LogicalDeviceSettings(PhysicalDevice physicalDevice) {
+		this.physicalDevice = physicalDevice;
+	}
 	public PhysicalDevice getPhysicalDevice() {
 		return physicalDevice;
 	}

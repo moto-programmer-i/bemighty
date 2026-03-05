@@ -68,35 +68,26 @@ public class Main {
 		var vulkanSettings = new VulkanSettings();
 		vulkanSettings.setName(WINDOW_NAME);
 
-		var windowSettings = new WindowSettings();
-		windowSettings.setWidth(WIDTH);
-		windowSettings.setHeight(HEIGHT);
-		windowSettings.setName(WINDOW_NAME);
+		var windowSettings = new WindowSettings(WIDTH, HEIGHT, WINDOW_NAME);
 		try(var window = new Window(windowSettings)) {
-//			window.swapBuffers();
+
 			
 //			Requested layer "VK_LAYER_KHRONOS_validation" failed to load!
 //			libVkLayer_khronos_validation.so: 共有オブジェクトファイルを開けません: そのようなファイルやディレクトリはありません
+			// が出た場合の対処はLWJGLメモ.txt参照
 			
 			try(var vulkan = new Vulkan(vulkanSettings)) {
 				var vkPhysicalDevice = PhysicalDevice.getFirstVkPhysicalDevice(vulkan);
 				var physicalDevice = new PhysicalDevice(vkPhysicalDevice);
-				var logicalDeviceSettings = new LogicalDeviceSettings();
-				logicalDeviceSettings.setPhysicalDevice(physicalDevice);
-				var surfaceSettings = new SurfaceSettings();
-				surfaceSettings.setVulkan(vulkan);
-				surfaceSettings.setPhysicalDevice(physicalDevice);
-				surfaceSettings.setWindow(window);
+				var logicalDeviceSettings = new LogicalDeviceSettings(physicalDevice);
+				var surfaceSettings = new SurfaceSettings(vulkan, physicalDevice, window);
 				
 				// 並列にインスタンスを作成するべきだが、今はこのまま
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
 						var surface = new Surface(surfaceSettings)
 						) {
 					
-					var swapChainSettings = new SwapChainSettings();
-					swapChainSettings.setLogicalDevice(logicalDevice);
-					swapChainSettings.setSurface(surface);
-					swapChainSettings.setWindow(window);
+					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
 					// shader.slangと対応させる必要がある
@@ -108,14 +99,10 @@ public class Main {
 							var shader = new Shader(shaderSettings)) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
 						
-						var queueSettings = new QueueSettings();
-						queueSettings.setLogicalDevice(logicalDevice);
+						var queueSettings = new QueueSettings(logicalDevice);
 						Queue queue = new Queue(queueSettings);
 						
-						var renderSettings = new RenderSettings();
-						renderSettings.setLogicalDevice(logicalDevice);
-						renderSettings.setSwapChain(swapChain);
-						renderSettings.setQueue(queue);
+						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue);
 						
 						try(var pipeline = new Pipeline(pipelineSettings);
 								var render = new Render(renderSettings)

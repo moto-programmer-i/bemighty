@@ -14,6 +14,12 @@ public class SwapChainSettings {
 	
 	private ImageViewSettings imageViewSettings = new ImageViewSettings();
 	
+	public SwapChainSettings(Window window, LogicalDevice logicalDevice, Surface surface) {
+		this.window = window;
+		// imageViewSettingsも設定の必要がある
+		setLogicalDevice(logicalDevice);
+		setSurface(surface);
+	}
 	public Window getWindow() {
 		return window;
 	}

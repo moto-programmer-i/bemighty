@@ -7,6 +7,12 @@ public class QueueSettings {
 	private LogicalDevice logicalDevice;
 	private int queueFamilyIndex;
 	private int queueIndex = DEFAULT_QUEUE_INDEX;
+	
+	
+	
+	public QueueSettings(LogicalDevice logicalDevice) {
+		setLogicalDevice(logicalDevice);
+	}
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
 	}
