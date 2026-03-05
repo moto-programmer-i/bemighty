@@ -106,7 +106,7 @@ public class Main {
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings)) {
-						var pipelineSettings = new PipelineSettings(logicalDevice, shader);
+						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
 						
 						var queueSettings = new QueueSettings();
 						queueSettings.setLogicalDevice(logicalDevice);
@@ -120,9 +120,8 @@ public class Main {
 						try(var pipeline = new Pipeline(pipelineSettings);
 								var render = new Render(renderSettings)
 								) {
-							System.out.println(pipeline.getHandler());
 							
-							var command = new ClearColorCommand(clearColor);
+							var command = new DrawTriangleCommand(clearColor, pipeline);
 							final int testCount = 1;
 							
 							
@@ -138,7 +137,7 @@ public class Main {
 							}
 							
 							// ウィンドウが閉じられるまで待つ
-//							window.waitUntilClose();
+							window.waitUntilClose();
 							
 							System.out.println("width " + swapChain.getWidth());
 						}

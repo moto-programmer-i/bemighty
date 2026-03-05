@@ -54,7 +54,7 @@ public class ClearColorCommand implements Command {
         });
 	}
 	
-	private void transitionColor(CommandBuffer commandBuffer, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable clearColor) {
+	public static void transitionColor(CommandBuffer commandBuffer, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable clearColor) {
 		// IMAGE_USAGE_COLOR_ATTACHMENT_BITが有効なときはこれにしなければならない
 		var colorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		
@@ -109,5 +109,4 @@ public class ClearColorCommand implements Command {
 	        );
 
 	}
-
 }

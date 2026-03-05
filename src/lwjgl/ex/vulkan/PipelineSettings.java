@@ -44,9 +44,12 @@ public class PipelineSettings {
 	
 	
 	
-	public PipelineSettings(LogicalDevice logicalDevice, Shader shader) {
+	public PipelineSettings(LogicalDevice logicalDevice, Shader shader, SurfaceSettings surfaceSettings) {
 		this.logicalDevice = logicalDevice;
 		this.shader = shader;
+		
+		// colorFormatはSurfaceと一致させる必要がある
+		colorFormat = surfaceSettings.getFormat();
 	}
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
@@ -55,9 +58,11 @@ public class PipelineSettings {
 	public int getColorFormat() {
 		return colorFormat;
 	}
-	public void setColorFormat(int colorFormat) {
-		this.colorFormat = colorFormat;
-	}
+	// Surfaceとマッチさせる必要があるため、変更を防ぐ
+	// VkRenderingInfo::pColorAttachments[0].imageView format (VK_FORMAT_B8G8R8A8_UNORM) must match the corresponding format in VkPipelineRenderingCreateInfo::pColorAttachmentFormats[0] (VK_FORMAT_UNDEFINED).
+//	public void setColorFormat(int colorFormat) {
+//		this.colorFormat = colorFormat;
+//	}
 	
 	public Shader getShader() {
 		return shader;

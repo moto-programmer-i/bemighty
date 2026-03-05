@@ -116,6 +116,17 @@ public class CommandBuffer implements AutoCloseable {
     	setScissor(RectUtils.createRectBuffer(swapchain.getWidth(), swapchain.getHeight(), stack));
     }
     
+    /**
+     * https://javadoc.lwjgl.org/org/lwjgl/vulkan/VK10.html#vkCmdDraw(org.lwjgl.vulkan.VkCommandBuffer,int,int,int,int)
+     * @param vertexCount
+     * @param instanceCount
+     * @param firstVertex
+     * @param firstInstance
+     */
+    public void draw(int vertexCount, int instanceCount, int firstVertex, int firstInstance) {
+    	vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+    
     public void drawModel(Model model, MemoryStack stack) {
     	 for (var mesh : model.getMeshes()) {
     		 // 毎回bindしなければいけないのか？
