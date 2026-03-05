@@ -83,74 +83,64 @@ public class Main {
 				var physicalDevice = new PhysicalDevice(vkPhysicalDevice);
 				var logicalDeviceSettings = new LogicalDeviceSettings();
 				logicalDeviceSettings.setPhysicalDevice(physicalDevice);
-				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings)) {
-
+				var surfaceSettings = new SurfaceSettings();
+				surfaceSettings.setVulkan(vulkan);
+				surfaceSettings.setPhysicalDevice(physicalDevice);
+				surfaceSettings.setWindow(window);
+				
+				// 並列にインスタンスを作成するべきだが、今はこのまま
+				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
+						var surface = new Surface(surfaceSettings)
+						) {
+					
+					var swapChainSettings = new SwapChainSettings();
+					swapChainSettings.setLogicalDevice(logicalDevice);
+					swapChainSettings.setSurface(surface);
+					swapChainSettings.setWindow(window);
+					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
 					// shader.slangと対応させる必要がある
 					// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
 					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
 					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
 					
-					try(var shader = new Shader(shaderSettings)) {
+					try(var swapChain = new SwapChain(swapChainSettings);
+							var shader = new Shader(shaderSettings)) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader);
-						try(var pipeline = new Pipeline(pipelineSettings)) {
+						
+						var queueSettings = new QueueSettings();
+						queueSettings.setLogicalDevice(logicalDevice);
+						Queue queue = new Queue(queueSettings);
+						
+						var renderSettings = new RenderSettings();
+						renderSettings.setLogicalDevice(logicalDevice);
+						renderSettings.setSwapChain(swapChain);
+						renderSettings.setQueue(queue);
+						
+						try(var pipeline = new Pipeline(pipelineSettings);
+								var render = new Render(renderSettings)
+								) {
 							System.out.println(pipeline.getHandler());
-						}
-					}
-
-					
-					
-					if(true)return;
-					
-					
-					var surfaceSettings = new SurfaceSettings();
-					surfaceSettings.setVulkan(vulkan);
-					surfaceSettings.setPhysicalDevice(physicalDevice);
-					surfaceSettings.setWindow(window);
-					
-					// vulkanインスタンスclose時にまとめてcloseしていいか不明、良いならやる
-					try(var surface = new Surface(surfaceSettings)) {
-						
-						var settings = new QueueSettings();
-						settings.setLogicalDevice(logicalDevice);
-						Queue queue = new Queue(settings);
-						
-						var swapChainSettings = new SwapChainSettings();
-						swapChainSettings.setLogicalDevice(logicalDevice);
-						swapChainSettings.setSurface(surface);
-						swapChainSettings.setWindow(window);
-						try(var swapChain = new SwapChain(swapChainSettings)) {
 							
-							var renderSettings = new RenderSettings();
-							renderSettings.setLogicalDevice(logicalDevice);
-							renderSettings.setSwapChain(swapChain);
-							renderSettings.setQueue(queue);
+							var command = new ClearColorCommand(clearColor);
+							final int testCount = 1;
 							
 							
-//							 Thread.sleep(2000);
-							
-							try(var render = new Render(renderSettings)) {
-								
-								
-								var command = new ClearColorCommand(clearColor);
-								final int testCount = 3;
-								
-								
-								for(int i = 0; i < testCount; ++i) {
-									if (window.shouldClose()) {
-										break;
-									}
-									// ウィンドウをイベント待ちへ
-									window.pollEvents();
-									
-									render.render(command);
+							for(int i = 0; i < testCount; ++i) {
+								if (window.shouldClose()) {
+									break;
 								}
+								// ウィンドウをイベント待ちへ
+								window.pollEvents();
 								
-								// ウィンドウが閉じられるまで待つ
-								window.waitUntilClose();
-								
-								System.out.println("width " + swapChain.getWidth());
+								// 一旦例外がでてるのでコメントへ、頂点描画対応中
+//								render.render(command);
 							}
+							
+							// ウィンドウが閉じられるまで待つ
+//							window.waitUntilClose();
+							
+							System.out.println("width " + swapChain.getWidth());
 						}
 					}
 				}
