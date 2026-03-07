@@ -31,18 +31,18 @@ public class DrawTriangleCommand implements Command  {
 	@Override
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain,
 			ImageView nextSwapChainImageView) {
-		// renderingInfo作成とtransitionまでは、ClearColorと共通
-		var renderingInfo = ClearColorCommand.createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
-		ClearColorCommand.transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
-			commandBuffer.render(renderingInfo, () -> {
-				commandBuffer.bind(pipeline);
-				commandBuffer.setViewportFrom(swapChain, stack);
-				commandBuffer.setScissorFrom(swapChain, stack);
-				
-				// チュートリアル用描画
-				commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);			
-			});			
-		});
+//		// renderingInfo作成とtransitionまでは、ClearColorと共通
+//		var renderingInfo = ClearColorCommand.createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
+//		ClearColorCommand.transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
+//			commandBuffer.render(renderingInfo, () -> {
+//				commandBuffer.bind(pipeline);
+//				commandBuffer.setViewportFrom(swapChain, stack);
+//				commandBuffer.setScissorFrom(swapChain, stack);
+//				
+//				// チュートリアル用描画
+//				commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);			
+//			});			
+//		});
 	}
 
 	public int getVertexCount() {

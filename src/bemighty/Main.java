@@ -64,7 +64,7 @@ public class Main {
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {		
 		var vulkanSettings = new VulkanSettings();
 		vulkanSettings.setName(WINDOW_NAME);
 
@@ -108,25 +108,25 @@ public class Main {
 								var render = new Render(renderSettings)
 								) {
 							
-							var command = new DrawTriangleCommand(clearColor, pipeline);
-							final int testCount = 1;
-							
-							
-							for(int i = 0; i < testCount; ++i) {
-								if (window.shouldClose()) {
-									break;
+//							var command = new DrawTriangleCommand(clearColor, pipeline);
+							try (var command = new ClearColorCommand(clearColor)) {
+								final int testCount = 1;
+								for(int i = 0; i < testCount; ++i) {
+									if (window.shouldClose()) {
+										break;
+									}
+									// ウィンドウをイベント待ちへ
+									window.pollEvents();
+									
+									
+									render.render(command);
 								}
-								// ウィンドウをイベント待ちへ
-								window.pollEvents();
 								
+								// ウィンドウが閉じられるまで待つ
+								window.waitUntilClose();
 								
-								render.render(command);
+								System.out.println("width " + swapChain.getWidth());	
 							}
-							
-							// ウィンドウが閉じられるまで待つ
-							window.waitUntilClose();
-							
-							System.out.println("width " + swapChain.getWidth());
 						}
 					}
 				}

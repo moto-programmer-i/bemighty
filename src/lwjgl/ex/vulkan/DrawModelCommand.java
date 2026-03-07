@@ -39,16 +39,16 @@ public class DrawModelCommand implements Command {
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain,
 			ImageView nextSwapChainImageView) {
 
-		var renderingInfo = ClearColorCommand.createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
-
-		transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
-			commandBuffer.render(renderingInfo, () -> {
-				commandBuffer.bind(pipeline);
-				commandBuffer.setViewportFrom(swapChain, stack);
-				commandBuffer.setScissorFrom(swapChain, stack);
-				commandBuffer.drawModel(model, stack);
-			});
-		});
+//		var renderingInfo = ClearColorCommand.createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
+//
+//		transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
+//			commandBuffer.render(renderingInfo, () -> {
+//				commandBuffer.bind(pipeline);
+//				commandBuffer.setViewportFrom(swapChain, stack);
+//				commandBuffer.setScissorFrom(swapChain, stack);
+//				commandBuffer.drawModel(model, stack);
+//			});
+//		});
 	}
 
 	private void transitionColor(CommandBuffer commandBuffer, MemoryStack stack, SwapChain swapChain,
