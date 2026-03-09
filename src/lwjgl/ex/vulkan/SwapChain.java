@@ -3,9 +3,12 @@ package lwjgl.ex.vulkan;
 import java.awt.Dimension;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -29,6 +32,8 @@ public class SwapChain implements AutoCloseable {
 
 	private boolean recreating = false;
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
+	
+	private final List<Consumer<SwapChain>> recreateListeners = new ArrayList<>();
 
 	public SwapChain(SwapChainSettings settings) {
 		this.settings = settings;
@@ -181,6 +186,8 @@ public class SwapChain implements AutoCloseable {
 			init();
 
 			recreating = false;
+			
+			recreateListeners.parallelStream().forEach(e -> e.accept(this));
 		});
 	}
 	
@@ -208,10 +215,15 @@ public class SwapChain implements AutoCloseable {
 			closeSwapChain();
 		} finally {
 			ExceptionUtils.close(threadPool);
+			recreateListeners.clear();
 		}
 	}
 
 	public boolean isRecreating() {
 		return recreating;
+	}
+	
+	public boolean addRecreateListener(Consumer<SwapChain> listener) {
+		return recreateListeners.add(listener);
 	}
 }

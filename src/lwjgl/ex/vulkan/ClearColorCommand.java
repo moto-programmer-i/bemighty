@@ -32,7 +32,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	private final Rect2D renderArea;
 	private final VkRenderingInfo renderingInfo;
 
-	public ClearColorCommand(Color color) {
+	public ClearColorCommand(Color color, SwapChain swapChain) {
 		this.color = color;
 		clearColorValue = ColorUtils.createClearColorValue(color);
 		clearValue = ColorUtils.createClearValue(clearColorValue);
@@ -48,6 +48,10 @@ public class ClearColorCommand implements Command, AutoCloseable{
 //	            .renderArea(renderArea.getRect2D())
 	            .layerCount(1)
 	            .pColorAttachments(colorAttachment);
+		
+		// 描画範囲初期化
+		updateRenderArea(swapChain);
+		swapChain.addRecreateListener(this::updateRenderArea);
 	}
 	
 	public void updateRenderArea(SwapChain swapChain) {
@@ -60,9 +64,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	@Override
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
 		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
-		colorAttachment.imageView(nextSwapChainImageView.getHandler());
-		updateRenderArea(swapChain);
-		
+		colorAttachment.imageView(nextSwapChainImageView.getHandler());		
 			
         transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
         	commandBuffer.render(renderingInfo);

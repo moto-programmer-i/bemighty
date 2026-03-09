@@ -109,7 +109,7 @@ public class Main {
 								) {
 							
 //							var command = new DrawTriangleCommand(clearColor, pipeline);
-							try (var command = new ClearColorCommand(clearColor)) {
+							try (var command = new ClearColorCommand(clearColor, swapChain)) {
 								final int testCount = 1;
 								for(int i = 0; i < testCount; ++i) {
 									if (window.shouldClose()) {
