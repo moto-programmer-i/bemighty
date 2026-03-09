@@ -62,40 +62,40 @@ public class DrawModelCommand implements Command {
 		// 色が出力されるステージへ
 		var colorOutputStage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		commandBuffer.transitionImageLayout(nextSwapChainImageView,
-				// 描画前なのでレイアウトは未定義
-				VK_IMAGE_LAYOUT_UNDEFINED,
-
-				colorLayout,
-
-				// 依存関係なし
-				VK_ACCESS_2_NONE,
-				// 書き込みを行う
-				writeAccessMask,
-
-				// 参考が同じステージを指定しているが、これで良いのかは不明
-				colorOutputStage, colorOutputStage,
-
-				stack);
-
-		clearColor.run();
-
-		commandBuffer.transitionImageLayout(nextSwapChainImageView,
-
-				colorLayout,
-				// 表示状態へ
-				KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-
-				// アクセスを元に戻す
-				// （参考だとREADとORをとっているが、理由不明）
-				VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | writeAccessMask,
-				// その後、処理をしない場合は何も待たなくてよい
-				// （シェーダーの読み込みを待つ場合は、VK_ACCESS_2_SHADER_READ_BITを指定することもあるらしい）
-				VK_ACCESS_2_NONE,
-
-				colorOutputStage,
-				// 同期のスコープの終了時まで
-				VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, stack);
+//		commandBuffer.transitionImageLayout(nextSwapChainImageView,
+//				// 描画前なのでレイアウトは未定義
+//				VK_IMAGE_LAYOUT_UNDEFINED,
+//
+//				colorLayout,
+//
+//				// 依存関係なし
+//				VK_ACCESS_2_NONE,
+//				// 書き込みを行う
+//				writeAccessMask,
+//
+//				// 参考が同じステージを指定しているが、これで良いのかは不明
+//				colorOutputStage, colorOutputStage,
+//
+//				stack);
+//
+//		clearColor.run();
+//
+//		commandBuffer.transitionImageLayout(nextSwapChainImageView,
+//
+//				colorLayout,
+//				// 表示状態へ
+//				KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+//
+//				// アクセスを元に戻す
+//				// （参考だとREADとORをとっているが、理由不明）
+//				VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | writeAccessMask,
+//				// その後、処理をしない場合は何も待たなくてよい
+//				// （シェーダーの読み込みを待つ場合は、VK_ACCESS_2_SHADER_READ_BITを指定することもあるらしい）
+//				VK_ACCESS_2_NONE,
+//
+//				colorOutputStage,
+//				// 同期のスコープの終了時まで
+//				VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, stack);
 
 	}
 

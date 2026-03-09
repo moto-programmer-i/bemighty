@@ -24,8 +24,7 @@ import org.lwjgl.vulkan.VkViewport;
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class CommandBuffer implements AutoCloseable {
-	
-	
+	private final VkDependencyInfo dependencyInfo = VkDependencyInfo.create().sType$Default();
 	private final CommandBufferSettings settings;
 	private VkCommandBuffer buffer;
 	public CommandBuffer(CommandBufferSettings settings) {
@@ -152,6 +151,10 @@ public class CommandBuffer implements AutoCloseable {
 	
 	@Override
 	public void close() throws Exception {
+		if(buffer == null) {
+			return;
+		}
+		try(dependencyInfo){};
 		// commandPoolでcloseされるらしい
 //		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
 		buffer = null;
@@ -177,36 +180,16 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param stack
 	 */
 	public void transitionImageLayout(
-			ImageView swapChainImageView,
-	        int oldLayout,
-	        int newLayout,
-	        long srcAccessMask,
-	        long dstAccessMask,
-	        long srcStage,
-	        long dstStage,
-	        MemoryStack stack
+			VkImageMemoryBarrier2.Buffer barrier,
+			ImageView swapChainImageView
 			) {
-		
-		
 		// 参考
 		// https://chaosplant.tech/do/vulkan/6-2/
 		// https://github.com/LWJGL/lwjgl3/blob/6c89bd4e861407f243305fc84d60ca8d82fe9dd4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L1073C5-L1073C49
-        var imageBarrier = VkImageMemoryBarrier2.calloc(1, stack)
-            .sType$Default()
-            .srcStageMask(srcStage)
-            .srcAccessMask(srcAccessMask)
-            .dstStageMask(dstStage)
-            .dstAccessMask(dstAccessMask)
-            .oldLayout(oldLayout)
-            .newLayout(newLayout)
-            .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-            .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-            .image(swapChainImageView.getImageHandler())
-            .subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
+		// 当然メソッドの外で設定可能だが、この方が間違えなさそうなため
+		barrier.image(swapChainImageView.getImageHandler());
 
-        VkDependencyInfo dependencyInfo = VkDependencyInfo.calloc(stack)
-            .sType$Default()
-            .pImageMemoryBarriers(imageBarrier);
+        dependencyInfo.pImageMemoryBarriers(barrier);
 
         vkCmdPipelineBarrier2(buffer, dependencyInfo);
 	}

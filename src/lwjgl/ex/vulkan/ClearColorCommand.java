@@ -8,6 +8,7 @@ import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VkClearColorValue;
 import org.lwjgl.vulkan.VkClearValue;
 import org.lwjgl.vulkan.VkExtent2D;
+import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 import org.lwjgl.vulkan.VkRenderingInfo;
@@ -24,6 +25,36 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	
 	// 色が出力されるステージへ
 	public static final long COLOR_OUTPUT_STAGE = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+	
+	private final VkImageMemoryBarrier2.Buffer startBarrier = ImageViewSettings.createDefaultBarrier()
+			// 描画前なのでレイアウトは未定義
+            .oldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+            .newLayout(COLOR_LAYOUT)
+            
+            // 依存関係なし
+            .srcAccessMask(VK_ACCESS_2_NONE)
+            // 書き込みを行う
+            .dstAccessMask(WRITE_ACCESS_MASK)
+            
+            // 何も待たない
+            .srcStageMask(VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT)
+            .dstStageMask(COLOR_OUTPUT_STAGE);
+	
+	private final VkImageMemoryBarrier2.Buffer endBarrier = ImageViewSettings.createDefaultBarrier()
+            .oldLayout(COLOR_LAYOUT)
+            // 表示状態へ
+            .newLayout(KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+            
+            // アクセスを元に戻す
+            .srcAccessMask(WRITE_ACCESS_MASK)
+            // その後、処理をしない場合は何も待たなくてよい
+        	// （シェーダーの読み込みを待つ場合は、VK_ACCESS_2_SHADER_READ_BITを指定することもあるらしい）
+            .dstAccessMask(VK_ACCESS_2_NONE)
+            
+            // 何も待たない
+            .srcStageMask(COLOR_OUTPUT_STAGE)
+            // 同期のスコープの終了時まで
+            .dstStageMask(VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);	
 	
 	private Color color;
 	private final VkClearColorValue clearColorValue;
@@ -65,58 +96,11 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
 		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
 		colorAttachment.imageView(nextSwapChainImageView.getHandler());		
-			
-        transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
-        	commandBuffer.render(renderingInfo);
-        });
-	}
-	
-	public static void transitionColor(CommandBuffer commandBuffer, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable clearColor) {
 		
-		// https://github.com/LWJGL/lwjgl3/blob/6c89bd4e861407f243305fc84d60ca8d82fe9dd4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L943
-		commandBuffer.transitionImageLayout(nextSwapChainImageView,
-				// 描画前なのでレイアウトは未定義
-                VK_IMAGE_LAYOUT_UNDEFINED,
-                
-                COLOR_LAYOUT,
-                
-                
-                // 依存関係なし
-                VK_ACCESS_2_NONE,
-                // 書き込みを行う
-                WRITE_ACCESS_MASK,
-                
-                // 何も待たない
-                VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
-                
-                
-                COLOR_OUTPUT_STAGE,
-                stack);
-		
-		clearColor.run();
-		
-		commandBuffer.transitionImageLayout(
-				nextSwapChainImageView,
-				
-				
-				COLOR_LAYOUT,
-				// 表示状態へ
-				KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-				
-				
-				// アクセスを元に戻す
-				WRITE_ACCESS_MASK,
-				// その後、処理をしない場合は何も待たなくてよい
-				// （シェーダーの読み込みを待つ場合は、VK_ACCESS_2_SHADER_READ_BITを指定することもあるらしい）
-				VK_ACCESS_2_NONE,
-	            
-				
-				COLOR_OUTPUT_STAGE,
-	            // 同期のスコープの終了時まで
-	            VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
-	            stack
-	        );
-
+		// transinsionでrenderを挟まなければならない
+        commandBuffer.transitionImageLayout(startBarrier, nextSwapChainImageView);
+        commandBuffer.render(renderingInfo);
+        commandBuffer.transitionImageLayout(endBarrier, nextSwapChainImageView);
 	}
 
 	@Override
@@ -124,7 +108,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 		if (color == null) {
 			return;
 		}
-		try(clearColorValue;clearValue;colorAttachment;renderArea;renderingInfo){}
+		try(startBarrier;endBarrier;clearColorValue;clearValue;colorAttachment;renderArea;renderingInfo){}
 		color = null;
 	}
 }

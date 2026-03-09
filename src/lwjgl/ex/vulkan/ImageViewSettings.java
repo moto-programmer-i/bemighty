@@ -1,10 +1,12 @@
 package lwjgl.ex.vulkan;
 
+import static org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.util.Objects;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkImageSubresourceRange;
 
 // 参考
@@ -149,4 +151,10 @@ public class ImageViewSettings {
 		return clone;
 	}
 
+	public static VkImageMemoryBarrier2.Buffer createDefaultBarrier() {
+		return VkImageMemoryBarrier2.calloc(1).sType$Default()
+		.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+        .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+        .subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
+	}
 }
