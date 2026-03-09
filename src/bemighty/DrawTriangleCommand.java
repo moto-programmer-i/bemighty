@@ -14,35 +14,34 @@ import lwjgl.ex.vulkan.SwapChain;
 /**
  * チュートリアルの三角形描写。いらなくなったら削除
  */
-public class DrawTriangleCommand implements Command  {
+public class DrawTriangleCommand implements Command, AutoCloseable  {
 	// チュートリアル三角形の値
 	private int vertexCount = 3;
 	private int instanceCount = 1;
 	private int firstVertex = 1;
 	private int firstInstance = 1; 
 	
-	private Color clearColor;
+	private final ClearColorCommand clearColor;
 	private Pipeline pipeline;
-	public DrawTriangleCommand(Color clearColor, Pipeline pipeline) {
-		this.clearColor = clearColor;
+	public DrawTriangleCommand(Color background, SwapChain swapChain, Pipeline pipeline) {
+		this.clearColor = new ClearColorCommand(background, swapChain);
 		this.pipeline = pipeline;
 	}
 
 	@Override
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain,
 			ImageView nextSwapChainImageView) {
-//		// renderingInfo作成とtransitionまでは、ClearColorと共通
-//		var renderingInfo = ClearColorCommand.createRenderingInfo(clearColor, stack, swapChain, nextSwapChainImageView);
-//		ClearColorCommand.transitionColor(commandBuffer, stack, swapChain, nextSwapChainImageView, () -> {
-//			commandBuffer.render(renderingInfo, () -> {
-//				commandBuffer.bind(pipeline);
-//				commandBuffer.setViewportFrom(swapChain, stack);
-//				commandBuffer.setScissorFrom(swapChain, stack);
-//				
-//				// チュートリアル用描画
-//				commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);			
-//			});			
-//		});
+		// transitionまでは、ClearColorと共通
+		clearColor.run(stack, commandBuffer, swapChain, nextSwapChainImageView, () -> {
+			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
+				commandBuffer.bind(pipeline);
+				commandBuffer.setViewportFrom(swapChain, stack);
+				commandBuffer.setScissorFrom(swapChain, stack);
+					
+				// チュートリアル用描画
+				commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+			});
+		});
 	}
 
 	public int getVertexCount() {
@@ -75,6 +74,11 @@ public class DrawTriangleCommand implements Command  {
 
 	public void setFirstInstance(int firstInstance) {
 		this.firstInstance = firstInstance;
+	}
+
+	@Override
+	public void close() throws Exception {
+		try(clearColor){};
 	}
 
 }

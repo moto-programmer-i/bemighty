@@ -2,6 +2,7 @@ package lwjgl.ex.vulkan;
 
 import static org.lwjgl.vulkan.VK14.*;
 import java.awt.Color;
+import java.util.function.BiConsumer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
@@ -90,16 +91,31 @@ public class ClearColorCommand implements Command, AutoCloseable{
 		renderArea.extent(swapChain.getWidth(), swapChain.getHeight());
 		renderingInfo.renderArea(renderArea.getRect2D());
 	}
+	
 
 
 	@Override
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
+		run(stack, commandBuffer, swapChain, nextSwapChainImageView, () -> {
+			commandBuffer.render(renderingInfo);	
+		});
+	}
+	
+	/**
+	 * 
+	 * @param stack
+	 * @param commandBuffer
+	 * @param swapChain
+	 * @param nextSwapChainImageView
+	 * @param render transitionの間の処理
+	 */
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable render) {
 		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
 		colorAttachment.imageView(nextSwapChainImageView.getHandler());		
 		
 		// transinsionでrenderを挟まなければならない
         commandBuffer.transitionImageLayout(startBarrier, nextSwapChainImageView);
-        commandBuffer.render(renderingInfo);
+        render.run();
         commandBuffer.transitionImageLayout(endBarrier, nextSwapChainImageView);
 	}
 
@@ -110,5 +126,9 @@ public class ClearColorCommand implements Command, AutoCloseable{
 		}
 		try(startBarrier;endBarrier;clearColorValue;clearValue;colorAttachment;renderArea;renderingInfo){}
 		color = null;
+	}
+
+	public VkRenderingInfo getRenderingInfo() {
+		return renderingInfo;
 	}
 }

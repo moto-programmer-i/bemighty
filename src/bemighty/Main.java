@@ -60,7 +60,7 @@ public class Main {
 	public static int WIDTH = 400;
 	public static int HEIGHT = 400;
 	public static String WINDOW_NAME = "Be Mighty";
-	public static Color clearColor = Color.black;
+	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
 
@@ -108,8 +108,8 @@ public class Main {
 								var render = new Render(renderSettings)
 								) {
 							
-//							var command = new DrawTriangleCommand(clearColor, pipeline);
-							try (var command = new ClearColorCommand(clearColor, swapChain)) {
+
+							try (var command = new DrawTriangleCommand(BACKGROUND, swapChain, pipeline)) {
 								final int testCount = 1;
 								for(int i = 0; i < testCount; ++i) {
 									if (window.shouldClose()) {
