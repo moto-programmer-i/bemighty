@@ -187,13 +187,10 @@ public class CommandBuffer implements AutoCloseable {
 	        MemoryStack stack
 			) {
 		
-		// 毎回作る意味はないかも？要検証
 		
 		// 参考
 		// https://chaosplant.tech/do/vulkan/6-2/
 		// https://github.com/LWJGL/lwjgl3/blob/6c89bd4e861407f243305fc84d60ca8d82fe9dd4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L1073C5-L1073C49
-		var subresourceRange = ImageViewSettings.createDefaultSubresourceRange(stack);
-
         var imageBarrier = VkImageMemoryBarrier2.calloc(1, stack)
             .sType$Default()
             .srcStageMask(srcStage)
@@ -205,7 +202,7 @@ public class CommandBuffer implements AutoCloseable {
             .srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
             .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
             .image(swapChainImageView.getImageHandler())
-            .subresourceRange(subresourceRange);
+            .subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
 
         VkDependencyInfo dependencyInfo = VkDependencyInfo.calloc(stack)
             .sType$Default()

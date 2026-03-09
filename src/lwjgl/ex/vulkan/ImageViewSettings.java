@@ -17,6 +17,14 @@ public class ImageViewSettings {
 	public static final int DEFAULT_BASE_MIP_LEVEL = 0;
 	public static final int DEFAULT_LEVEL_COUNT = 1;
 	public static final int DEFAULT_VIEW_TYPE = VK_IMAGE_VIEW_TYPE_2D;
+	
+	public static final VkImageSubresourceRange DEFAULT_IMAGE_SUBRESOURCE_RANGE = 
+			VkImageSubresourceRange.create()
+			.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
+			.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
+			.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
+			.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+			.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
 
 	private int aspectMask = DEFAULT_ASPECT_MASK;
 	private int baseArrayLayer = DEFAULT_BASE_ARRAY_LAYER;
@@ -139,15 +147,6 @@ public class ImageViewSettings {
 		clone.imageHandler = imageHandler;
 		clone.logicalDevice = logicalDevice;
 		return clone;
-	}
-
-	public static VkImageSubresourceRange createDefaultSubresourceRange(MemoryStack stack) {
-		return VkImageSubresourceRange.calloc(stack)
-				.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
-				.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
-				.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
-				.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
-				.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
 	}
 
 }
