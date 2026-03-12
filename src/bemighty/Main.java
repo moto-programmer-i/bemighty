@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
 
+import org.lwjgl.assimp.AIMesh;
+import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
@@ -22,19 +24,19 @@ import org.lwjgl.vulkan.VkSubmitInfo2;
 
 import static org.lwjgl.vulkan.VK14.*;
 
-import lwjgl.ex.vulkan.Buffer;
-import lwjgl.ex.vulkan.BufferSettings;
+import lwjgl.ex.vulkan.StagingBuffer;
+import lwjgl.ex.vulkan.StagingBufferSettings;
 import lwjgl.ex.vulkan.ClearColorCommand;
 import lwjgl.ex.vulkan.ColorUtils;
 import lwjgl.ex.vulkan.CommandBuffer;
 import lwjgl.ex.vulkan.CommandBufferSettings;
 import lwjgl.ex.vulkan.CommandPool;
 import lwjgl.ex.vulkan.CommandPoolSettings;
+import lwjgl.ex.vulkan.DrawModelCommand;
 import lwjgl.ex.vulkan.Fence;
 import lwjgl.ex.vulkan.FrameRender;
 import lwjgl.ex.vulkan.LogicalDevice;
 import lwjgl.ex.vulkan.LogicalDeviceSettings;
-import lwjgl.ex.vulkan.Mesh;
 import lwjgl.ex.vulkan.Model;
 import lwjgl.ex.vulkan.PhysicalDevice;
 import lwjgl.ex.vulkan.Pipeline;
@@ -44,6 +46,7 @@ import lwjgl.ex.vulkan.QueueSettings;
 import lwjgl.ex.vulkan.RectUtils;
 import lwjgl.ex.vulkan.Render;
 import lwjgl.ex.vulkan.RenderSettings;
+import lwjgl.ex.vulkan.SceneCommand;
 import lwjgl.ex.vulkan.Shader;
 import lwjgl.ex.vulkan.ShaderSettings;
 import lwjgl.ex.vulkan.ShaderStageSettings;
@@ -63,8 +66,32 @@ public class Main {
 	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
+	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
 
-	public static void main(String[] args) throws Exception {		
+	public static void main(String[] args) throws Exception {
+		// 頂点の重複を削除できてない。なぜ？
+		 int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
+		
+		try(var testModel = Assimp.aiImportFile(TEST_MODEL.toString(), importFileFlag)) {
+//			System.out.println(testModel.mNumMeshes());
+			int numMeshes = testModel.mNumMeshes();
+	        var meshes = testModel.mMeshes();
+	        for (int i = 0; i < numMeshes; i++) {
+	        	// create?????
+	            try(var mesh = AIMesh.create(meshes.get(i))) {
+	            	var vertices = mesh.mVertices();
+//	            	System.out.println("頂点数 " + mesh.mNumVertices());
+		            for(int v = 0; v < mesh.mNumVertices(); ++v) {
+		            	var vertex = vertices.get(v);
+			            System.out.println("(" + vertex.x() + ", " + vertex.y() + ", " + vertex.z() + ")");
+		            }
+	            }
+	            System.out.println("------------------------------------");
+	        }
+			
+		}
+		
+		if(true)return;
 		var vulkanSettings = new VulkanSettings();
 		vulkanSettings.setName(WINDOW_NAME);
 
@@ -108,24 +135,25 @@ public class Main {
 								var render = new Render(renderSettings)
 								) {
 							
-
-							try (var command = new DrawTriangleCommand(BACKGROUND, swapChain, pipeline)) {
-								final int testCount = 1;
-								for(int i = 0; i < testCount; ++i) {
-									if (window.shouldClose()) {
-										break;
+							// 頂点の重複を削除できてない。なぜ？
+//							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
+							try(var testModel = Assimp.aiImportFile(TEST_MODEL.toString(), importFileFlag)) {
+								try (var command = new SceneCommand(testModel, BACKGROUND, swapChain, pipeline)) {
+									final int testCount = 1;
+									for(int i = 0; i < testCount; ++i) {
+										if (window.shouldClose()) {
+											break;
+										}
+										// ウィンドウをイベント待ちへ
+										window.pollEvents();
+										
+										render.render(command);
 									}
-									// ウィンドウをイベント待ちへ
-									window.pollEvents();
 									
-									
-									render.render(command);
+									// ウィンドウが閉じられるまで待つ
+									window.waitUntilClose();	
 								}
 								
-								// ウィンドウが閉じられるまで待つ
-								window.waitUntilClose();
-								
-								System.out.println("width " + swapChain.getWidth());	
 							}
 						}
 					}

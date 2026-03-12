@@ -1,3 +1,7 @@
+https://chaosplant.tech/do/vulkan/5-13/
+小さい数値データはプッシュ定数
+大きなバッファやテクスチャ画像などのデータはデスクリプタ
+
 ----------------------------------------------------------------------
 ■QueueFamilyProperties
 https://chaosplant.tech/do/vulkan/2-3/

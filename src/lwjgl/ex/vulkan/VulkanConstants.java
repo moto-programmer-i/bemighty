@@ -18,6 +18,11 @@ public final class VulkanConstants {
 	public static final int DEFAULT_FIRST_INSTANCE = 0;
 	
 	/**
+	 * 頂点など、x, y, zの変数の数
+	 */
+	public static final int XYZ_COUNT = 3;
+	
+	/**
 	 * カウント 1 
 	 * VulkanはAPIが基本的に配列を想定しており、1つだけ送る場合に要素数1を送る必要がある
 	 */
@@ -28,6 +33,13 @@ public final class VulkanConstants {
 	 * 例 https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBindVertexBuffers.html
 	 */
 	public static final int DEFAULT_FIRST_BINDING = 0;
+	
+	/**
+	 * vkMapMemoryの引数flagsだが、詳細不明。多分なにもしない？
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/vkMapMemory.html
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/VkMemoryMapFlagBits.html
+	 */
+	public static final int DEFAULT_MEMORY_MAP_FLAG_BITS = 0;
 	
 
 	private VulkanConstants() {

@@ -91,6 +91,13 @@ public class CommandBuffer implements AutoCloseable {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
     }
     
+    public void bindVertices(LongBuffer vertices) {
+    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, vertices, DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
+    }
+    public void bindIndex(PointerBuffer index) {
+    	vkCmdBindIndexBuffer(buffer, index.address(), DEFAULT_LONG_OFFSETS, VK_INDEX_TYPE_UINT32);
+    }
+    
     public void setViewport(VkViewport.Buffer viewport) {
     	vkCmdSetViewport(buffer, DEFAULT_VIEWPORT, viewport);
     }
@@ -126,16 +133,28 @@ public class CommandBuffer implements AutoCloseable {
     	vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
     }
     
-    public void drawModel(Model model, MemoryStack stack) {
-    	 for (var mesh : model.getMeshes()) {
-    		 // 毎回bindしなければいけないのか？
-             vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, mesh.getVertices().getHandlerBuffer(), DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
-             
-             // 複数bindされた場合どうするのか不明
-             vkCmdBindIndexBuffer(buffer, mesh.getIndices().getHandler(), DEFAULT_INT_OFFSETS, VK_INDEX_TYPE_UINT32);
-             vkCmdDrawIndexed(buffer, mesh.getNumIndices(), DEFAULT_COUNT, DEFAULT_FIRST_INDEX, DEFAULT_INT_OFFSETS, DEFAULT_FIRST_INSTANCE);
-         }
+    /**
+     * https://javadoc.lwjgl.org/org/lwjgl/vulkan/VK10.html#vkCmdDrawIndexed(org.lwjgl.vulkan.VkCommandBuffer,int,int,int,int,int)
+     * @param indexCount
+     * @param instanceCount
+     * @param firstIndex
+     * @param vertexOffset
+     * @param firstInstance
+     */
+    public void drawIndexed(int indexCount, int instanceCount, int firstIndex, int vertexOffset, int firstInstance) {
+    	vkCmdDrawIndexed(buffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
+    
+//    public void drawModel(Model model, MemoryStack stack) {
+//    	 for (var mesh : model.getMeshes()) {
+//    		 // 毎回bindしなければいけないのか？
+//             vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, mesh.getVertices().getHandlerBuffer(), DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
+//             
+//             // 複数bindされた場合どうするのか不明
+//             vkCmdBindIndexBuffer(buffer, mesh.getIndices().getHandler(), DEFAULT_INT_OFFSETS, VK_INDEX_TYPE_UINT32);
+//             vkCmdDrawIndexed(buffer, mesh.getNumIndices(), DEFAULT_COUNT, DEFAULT_FIRST_INDEX, DEFAULT_INT_OFFSETS, DEFAULT_FIRST_INSTANCE);
+//         }
+//    }
     
     
     public VkCommandBufferSubmitInfo.Buffer createSubmitInfoBuffer(MemoryStack stack) {

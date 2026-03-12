@@ -16,6 +16,7 @@ module bemighty {
 	
 	requires org.lwjgl.vulkan;
 	requires java.desktop;
+	requires org.lwjgl.assimp;
 	
 	// requires lwjgl.ex.window; 
 	
