@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
 import org.lwjgl.assimp.Assimp;
+import org.lwjgl.system.MemoryUtil;
+
 import static org.lwjgl.vulkan.VK14.*;
 
 import motopgi.utils.AutoCloseableList;
@@ -21,10 +23,19 @@ public class Model implements AutoCloseable {
 	// 頂点の重複を削除できてない。なぜ？
 	public static final int DEFAULT_IMPORT_FILE_FLAG = Assimp.aiProcess_JoinIdenticalVertices;
 	
+	/**
+	 * vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
+	 */
+	public static final int USAGE_VERTEX_DESTINATION = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	
 	private LogicalDevice logicalDevice;
 	private AIScene model;
 	private AutoCloseableList<AIMesh> meshes = new AutoCloseableList<>();
-	private long verticesSize = 0;
+	private long verticesBytes = 0;
+	// 複数モデルの場合は保留
+	private float[] vertices;
+	
+	private StagingBuffer vertexBuffer;
 	
 	public Model(Path modelPath, LogicalDevice logicalDevice) {
 		this(modelPath, logicalDevice, DEFAULT_IMPORT_FILE_FLAG);
@@ -43,26 +54,46 @@ public class Model implements AutoCloseable {
         	meshes.add(mesh);
         	
         	// 頂点のサイズを追加
-        	verticesSize += Float.BYTES * XYZ_COUNT * mesh.mNumVertices();
+        	var numVertices = mesh.mNumVertices();
+        	vertices = new float[(int) XYZ_COUNT * numVertices];
+        	verticesBytes += Float.BYTES * vertices.length;
         	
-        	
+        	// mesh複数の場合は保留
+        	var verticesBuffer = mesh.mVertices();
+        	for(int v = 0, index = 0; v < numVertices; ++v) {
+        		var vertex = verticesBuffer.get(v);
+        		vertices[index++] = vertex.x();
+        		vertices[index++] = vertex.y();
+        		vertices[index++] = vertex.z();
+        	}
         }
+        
+        // GPUへ送信
+        vertexBuffer = new StagingBuffer(createVertexBufferSettings());
 	}
 	
-	private StagingBufferSettings createVertexBufferSettings(long size) {
-		var settings = new StagingBufferSettings(logicalDevice);
-		settings.setSize(size);
-		settings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	private StagingBufferSettings createVertexBufferSettings() {
+		var settings = new StagingBufferSettings(logicalDevice, (destination) -> {
+			MemoryUtil.memCopy(vertices, destination);
+		});
+		settings.setSize(verticesBytes);
+		settings.setUsage(USAGE_VERTEX_DESTINATION);
 		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
 		return settings;
 	}
 	
+	
+	
+	public long getVerticesBytes() {
+		return verticesBytes;
+	}
+
 	@Override
 	public void close() throws Exception {
 		if(model == null) {
 			return;
 		}
-		ExceptionUtils.close(meshes, model);
+		ExceptionUtils.close(vertexBuffer, meshes, model);
 		model = null;
 	}
 }

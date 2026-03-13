@@ -71,27 +71,28 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		// 頂点の重複を削除できてない。なぜ？
 		 int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
+		 
+		 
 		
-		try(var testModel = Assimp.aiImportFile(TEST_MODEL.toString(), importFileFlag)) {
-//			System.out.println(testModel.mNumMeshes());
-			int numMeshes = testModel.mNumMeshes();
-	        var meshes = testModel.mMeshes();
-	        for (int i = 0; i < numMeshes; i++) {
-	        	// create?????
-	            try(var mesh = AIMesh.create(meshes.get(i))) {
-	            	var vertices = mesh.mVertices();
-//	            	System.out.println("頂点数 " + mesh.mNumVertices());
-		            for(int v = 0; v < mesh.mNumVertices(); ++v) {
-		            	var vertex = vertices.get(v);
-			            System.out.println("(" + vertex.x() + ", " + vertex.y() + ", " + vertex.z() + ")");
-		            }
-	            }
-	            System.out.println("------------------------------------");
-	        }
-			
-		}
+//		try(var testModel = Assimp.aiImportFile(TEST_MODEL.toString(), importFileFlag)) {
+////			System.out.println(testModel.mNumMeshes());
+//			int numMeshes = testModel.mNumMeshes();
+//	        var meshes = testModel.mMeshes();
+//	        for (int i = 0; i < numMeshes; i++) {
+//	        	// create?????
+//	            try(var mesh = AIMesh.create(meshes.get(i))) {
+//	            	var vertices = mesh.mVertices();
+////	            	System.out.println("頂点数 " + mesh.mNumVertices());
+//		            for(int v = 0; v < mesh.mNumVertices(); ++v) {
+//		            	var vertex = vertices.get(v);
+//			            System.out.println("(" + vertex.x() + ", " + vertex.y() + ", " + vertex.z() + ")");
+//		            }
+//	            }
+//	            System.out.println("------------------------------------");
+//	        }
+//		}
+//		if(true)return;
 		
-		if(true)return;
 		var vulkanSettings = new VulkanSettings();
 		vulkanSettings.setName(WINDOW_NAME);
 
@@ -113,6 +114,16 @@ public class Main {
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
 						var surface = new Surface(surfaceSettings)
 						) {
+					
+					try(var testModel = new Model(TEST_MODEL, logicalDevice)) {
+						System.out.println(testModel.getVerticesBytes());
+					}
+					if(true)return;
+					
+					
+					
+					
+					
 					
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					

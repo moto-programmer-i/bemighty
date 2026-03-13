@@ -23,11 +23,12 @@ import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class StagingBuffer implements AutoCloseable {
 	private long handler;
-	private LongBuffer forHandler = LongBuffer.allocate(1);
+	private LongBuffer forHandler = MemoryUtil.memAllocLong(1);
 	private long allocationSize;
-//    private long memory;
+    private long memory;
 //    private long mappedMemory = NULL;
-    private PointerBuffer forMappedMemory;
+//    private PointerBuffer forMappedMemory;
+    private LongBuffer forMemory = MemoryUtil.memAllocLong(1);
     
     private StagingBufferSettings settings;
 
@@ -56,16 +57,18 @@ public class StagingBuffer implements AutoCloseable {
                     .usage(settings.getUsage())
                     .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
             
-            var memoryRequirements = VkMemoryRequirements.calloc(stack);
-            vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
-            var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
-                    .sType$Default()
-                    .allocationSize(memoryRequirements.size())
-                    .memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getSourceMemoryPropertyFlags()));
+//          Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
+//          handler = forHandler.get(0);
+//            
+//            var memoryRequirements = VkMemoryRequirements.calloc(stack);
+//            vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
+//            var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
+//                    .sType$Default()
+//                    .allocationSize(memoryRequirements.size())
+//                    .memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getSourceMemoryPropertyFlags()));
+//            
             
-            
-//            Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
-//            handler = forHandler.get(0);
+
 //            
 
 //
@@ -87,12 +90,31 @@ public class StagingBuffer implements AutoCloseable {
 //
 //    		copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
             
-            // 転送先へ
-            bufferCreateInfo.usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | settings.getUsage());
-            memoryAllocateInfo.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
+            bufferCreateInfo.usage(settings.getUsage());
+            
+            
             Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
-            var values = new float[1];
-//            MemoryUtil.memCopy(values, MemoryUtil.memAddress(forHandler));
+            handler = forHandler.get(0);
+              
+              var memoryRequirements = VkMemoryRequirements.calloc(stack);
+              vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
+              var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
+                      .sType$Default()
+                      .allocationSize(memoryRequirements.size())
+                      .memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
+            Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory), "メモリの割り当てに失敗しました");
+            allocationSize = memoryAllocateInfo.allocationSize();
+            memory = forMemory.get(0);
+            
+            // 転送先へ
+//            memoryAllocateInfo.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
+            
+            // バッファに書き込み
+            // MemoryUtil.memCopy(values, MemoryUtil.memAddress(forHandler));
+            // のvaluesの型が様々なので、こうせざるを得なかった
+            settings.getCopy().accept(MemoryUtil.memAddress(forHandler));
+            
+            // 一応エラーはでないが、マッピングなしで本当に転送できているかは不明
         }
 	}
 	
@@ -131,9 +153,13 @@ public class StagingBuffer implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		var device = settings.getLogicalDevice().getDevice();
-		if (forMappedMemory != null) {
-			memFree(forMappedMemory);
-			forMappedMemory = null;
+//		if (forMappedMemory != null) {
+//			memFree(forMappedMemory);
+//			forMappedMemory = null;
+//		}
+		if (memory != NULL) {
+			vkFreeMemory(device, memory, null);
+			memory = NULL;
 		}
 		if (handler != NULL) {
 			vkDestroyBuffer(device, handler, null);

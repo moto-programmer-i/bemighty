@@ -2,8 +2,10 @@ package lwjgl.ex.vulkan;
 
 import java.nio.LongBuffer;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 import static org.lwjgl.vulkan.VK14.*;
@@ -31,14 +33,18 @@ public class StagingBufferSettings implements Cloneable {
 	private int sourceMemoryPropertyFlags = MEMORY_PROPERTY_FLAGS_SOURCE;
 	private int destinationMemoryPropertyFlags = MEMORY_PROPERTY_FLAGS_DESTINATION;
 	
-//	private Consumer<PointerBuffer> sourceMapping;
+	private LongConsumer copy;
 
 //	private int outUsage;
 	
-//	public StagingBufferSettings(LogicalDevice logicalDevice, Consumer<PointerBuffer> sourceMapping) {
-		public StagingBufferSettings(LogicalDevice logicalDevice) {
+	/**
+	 * 
+	 * @param logicalDevice
+	 * @param copy Bufferコピー処理。例：MemoryUtil.memCopy(values, long);
+	 */
+	public StagingBufferSettings(LogicalDevice logicalDevice, LongConsumer copy) {
 		this.logicalDevice = logicalDevice;
-//		this.sourceMapping = sourceMapping;
+		this.copy = copy;
 	}
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
@@ -76,7 +82,7 @@ public class StagingBufferSettings implements Cloneable {
 	public void setDestinationMemoryPropertyFlags(int destinationMemoryPropertyFlags) {
 		this.destinationMemoryPropertyFlags = destinationMemoryPropertyFlags;
 	}
-//	public Consumer<PointerBuffer> getSourceMapping() {
-//		return sourceMapping;
-//	}
+	public LongConsumer getCopy() {
+		return copy;
+	}
 }
