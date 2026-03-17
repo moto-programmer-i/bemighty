@@ -114,17 +114,6 @@ public class Main {
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
 						var surface = new Surface(surfaceSettings)
 						) {
-					
-					try(var testModel = new Model(TEST_MODEL, logicalDevice)) {
-						System.out.println(testModel.getVerticesBytes());
-					}
-					if(true)return;
-					
-					
-					
-					
-					
-					
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
@@ -148,7 +137,7 @@ public class Main {
 							
 							// 頂点の重複を削除できてない。なぜ？
 //							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
-							try(var testModel = Assimp.aiImportFile(TEST_MODEL.toString(), importFileFlag)) {
+							try(var testModel = new Model(TEST_MODEL, logicalDevice)) {
 								try (var command = new SceneCommand(testModel, BACKGROUND, swapChain, pipeline)) {
 									final int testCount = 1;
 									for(int i = 0; i < testCount; ++i) {

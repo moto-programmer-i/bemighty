@@ -91,11 +91,15 @@ public class CommandBuffer implements AutoCloseable {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
     }
     
-    public void bindVertices(LongBuffer vertices) {
-    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, vertices, DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
-    }
-    public void bindIndex(PointerBuffer index) {
-    	vkCmdBindIndexBuffer(buffer, index.address(), DEFAULT_LONG_OFFSETS, VK_INDEX_TYPE_UINT32);
+//    public void bindVertices(LongBuffer vertices) {
+//    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, vertices, DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
+//    }
+//    public void bindIndex(PointerBuffer index) {
+//    	vkCmdBindIndexBuffer(buffer, index.address(), DEFAULT_LONG_OFFSETS, VK_INDEX_TYPE_UINT32);
+//    }
+    public void bind(Model model) {
+    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, model.getVertexBufferInGPU(), DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
+    	vkCmdBindIndexBuffer(buffer, model.getIndexBufferHandlerInGPU(), DEFAULT_LONG_OFFSETS, VK_INDEX_TYPE_UINT32);
     }
     
     public void setViewport(VkViewport.Buffer viewport) {

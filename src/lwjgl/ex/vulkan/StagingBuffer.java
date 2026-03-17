@@ -105,6 +105,8 @@ public class StagingBuffer implements AutoCloseable {
             Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory), "メモリの割り当てに失敗しました");
             allocationSize = memoryAllocateInfo.allocationSize();
             memory = forMemory.get(0);
+            Vulkan.throwExceptionIfFailed(vkBindBufferMemory(device, handler, memory, DEFAULT_LONG_OFFSETS), "メモリの紐づけに失敗しました");
+
             
             // 転送先へ
 //            memoryAllocateInfo.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
@@ -112,7 +114,7 @@ public class StagingBuffer implements AutoCloseable {
             // バッファに書き込み
             // MemoryUtil.memCopy(values, MemoryUtil.memAddress(forHandler));
             // のvaluesの型が様々なので、こうせざるを得なかった
-            settings.getCopy().accept(MemoryUtil.memAddress(forHandler));
+            settings.getCopy().accept(memory);
             
             // 一応エラーはでないが、マッピングなしで本当に転送できているかは不明
         }
@@ -177,5 +179,9 @@ public class StagingBuffer implements AutoCloseable {
 	public long getHandler() {
 		return handler;
 	}
-	
+
+
+	public LongBuffer getForHandler() {
+		return forHandler;
+	}
 }

@@ -17,33 +17,15 @@ public class SceneCommand implements Command, AutoCloseable {
 		private int vertexOffset = DEFAULT_INT_OFFSETS;
 		private int firstInstance = DEFAULT_FIRST_INSTANCE;
 		
+		private Model model;
 		private final ClearColorCommand clearColor;
 		private Pipeline pipeline;
-		
-		private LongBuffer vertices;
-		private PointerBuffer index;
 ;
 		
-		public SceneCommand(AIScene model, Color background, SwapChain swapChain, Pipeline pipeline) {
+		public SceneCommand(Model model, Color background, SwapChain swapChain, Pipeline pipeline) {
+			this.model = model;
 			this.clearColor = new ClearColorCommand(background, swapChain);
 			this.pipeline = pipeline;
-			
-			// かなり効率悪そうなので、いずれ中間ファイルで対処する
-			// 一旦最初のメッシュ
-			// https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
-			var mesh = AIMesh.create(model.mMeshes().get(0));
-			vertices = LongBuffer.allocate(mesh.mNumVertices());
-			for(int i = 0; i < vertices.capacity(); ++i) {
-				vertices.put(mesh.mVertices().get(i).address());
-			}
-			
-			// 一旦 indexは適当にいれる
-			var indexCount = 8;
-			index = MemoryUtil.memAllocPointer(indexCount);
-			for(int i = 0; i < indexCount; ++i) {
-				index.put(mesh.mVertices().get(i).address());
-			}
-			
 		}
 
 		@Override
@@ -55,10 +37,9 @@ public class SceneCommand implements Command, AutoCloseable {
 					commandBuffer.bind(pipeline);
 					commandBuffer.setViewportFrom(swapChain, stack);
 					commandBuffer.setScissorFrom(swapChain, stack);
-					commandBuffer.bindVertices(vertices);
-					commandBuffer.bindIndex(index);
+					commandBuffer.bind(model);
 //					commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, *descriptorSets[frameIndex], nullptr);
-					commandBuffer.drawIndexed(index.capacity(), instanceCount, firstIndex,  vertexOffset, firstInstance);
+					commandBuffer.drawIndexed(model.getIndices().length, instanceCount, firstIndex,  vertexOffset, firstInstance);
 				});
 			});
 		}

@@ -1,6 +1,7 @@
 package lwjgl.ex.vulkan;
 
 
+import java.nio.LongBuffer;
 import java.nio.file.Path;
 
 import org.lwjgl.assimp.AIMesh;
@@ -23,19 +24,19 @@ public class Model implements AutoCloseable {
 	// 頂点の重複を削除できてない。なぜ？
 	public static final int DEFAULT_IMPORT_FILE_FLAG = Assimp.aiProcess_JoinIdenticalVertices;
 	
-	/**
-	 * vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
-	 */
-	public static final int USAGE_VERTEX_DESTINATION = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	
 	private LogicalDevice logicalDevice;
 	private AIScene model;
 	private AutoCloseableList<AIMesh> meshes = new AutoCloseableList<>();
-	private long verticesBytes = 0;
-	// 複数モデルの場合は保留
-	private float[] vertices;
 	
+	// 複数モデルの場合は保留
+	
+	private float[] vertices;
+	private long verticesBytes = 0;
 	private StagingBuffer vertexBuffer;
+	
+	private int[] indices;
+	private long indicesBytes = 0;
+	private StagingBuffer indexBuffer;
 	
 	public Model(Path modelPath, LogicalDevice logicalDevice) {
 		this(modelPath, logicalDevice, DEFAULT_IMPORT_FILE_FLAG);
@@ -66,10 +67,17 @@ public class Model implements AutoCloseable {
         		vertices[index++] = vertex.y();
         		vertices[index++] = vertex.z();
         	}
+        	
+        	
+        	// indexのサイズを追加
+        	// 一旦べたがき
+        	indices = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+        	indicesBytes += Integer.BYTES * indices.length;
         }
         
         // GPUへ送信
         vertexBuffer = new StagingBuffer(createVertexBufferSettings());
+        indexBuffer = new StagingBuffer(createIndexBufferSettings());
 	}
 	
 	private StagingBufferSettings createVertexBufferSettings() {
@@ -78,22 +86,49 @@ public class Model implements AutoCloseable {
 		});
 		settings.setSize(verticesBytes);
 		settings.setUsage(USAGE_VERTEX_DESTINATION);
-		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
+//		settings.setUsage(USAGE_SOURCE);
+		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
+//		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
+		return settings;
+	}
+	
+	private StagingBufferSettings createIndexBufferSettings() {
+		var settings = new StagingBufferSettings(logicalDevice, (destination) -> {
+			MemoryUtil.memCopy(indices, destination);
+		});
+		settings.setSize(verticesBytes);
+		settings.setUsage(USAGE_INDEX_DESTINATION);
+//		settings.setUsage(USAGE_SOURCE);
+		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
+//		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
 		return settings;
 	}
 	
 	
-	
-	public long getVerticesBytes() {
-		return verticesBytes;
-	}
 
 	@Override
 	public void close() throws Exception {
 		if(model == null) {
 			return;
 		}
-		ExceptionUtils.close(vertexBuffer, meshes, model);
+		ExceptionUtils.close(indexBuffer, vertexBuffer, meshes, model);
 		model = null;
 	}
+	
+	public LongBuffer getVertexBufferInGPU() {
+		return vertexBuffer.getForHandler();
+	}
+	
+	public long getIndexBufferHandlerInGPU() {
+		return indexBuffer.getHandler();
+	}
+
+	public float[] getVertices() {
+		return vertices;
+	}
+
+	public int[] getIndices() {
+		return indices;
+	}
+	
 }

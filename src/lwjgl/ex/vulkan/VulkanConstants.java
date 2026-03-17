@@ -3,6 +3,8 @@ package lwjgl.ex.vulkan;
 import java.awt.Point;
 import java.nio.LongBuffer;
 
+import org.lwjgl.system.MemoryUtil;
+
 public final class VulkanConstants {
 	public static final int DEFAULT_VIEWPORT = 0;
 	public static final float DEFAULT_MIN_DEPTH = 0.0f;
@@ -11,7 +13,7 @@ public final class VulkanConstants {
 	public static final int DEFAULT_INT_OFFSETS = 0;
 	public static final long DEFAULT_LONG_OFFSETS = 0L;
 	public static final Point DEFAULT_OFFSET_POINT = new Point(DEFAULT_INT_OFFSETS, DEFAULT_INT_OFFSETS);
-	public static final LongBuffer DEFAULT_ARRAY_OF_BUFFER_OFFSETS = LongBuffer.allocate(1).put(0, DEFAULT_LONG_OFFSETS);
+	public static final LongBuffer DEFAULT_ARRAY_OF_BUFFER_OFFSETS = MemoryUtil.memAllocLong(1).put(0, DEFAULT_LONG_OFFSETS);
 	
 
 	public static final int DEFAULT_FIRST_INDEX = 0;
