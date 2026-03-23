@@ -14,6 +14,13 @@ import static org.lwjgl.vulkan.VK10.vkDestroyDevice;
 import static org.lwjgl.vulkan.VK13.*;
 
 public class PhysicalDevice {
+	/**
+	 * Depth用のフォーマット。チュートリアル参照
+	 * https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
+	 * vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint
+	 */
+	public static final int[] DEPTH_FORMAT = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+	
 	private final VkPhysicalDevice device;
 	
 	// 実装するか未定
@@ -33,6 +40,8 @@ public class PhysicalDevice {
 	private final List<QueueFamilyProperties> queueFamilyPropertiesList = new ArrayList<QueueFamilyProperties>();
 	
 	private OptionalInt graphicsQueueIndex = OptionalInt.empty();
+	
+	private float maxSamplerAnisotropy;
 
 	/**
 	 * getFirstPhysicalDeviceから初期化
@@ -66,8 +75,12 @@ public class PhysicalDevice {
 
 		        	queueFamilyPropertiesList.add(thisQueueFamilyProperties);
 	            }
-	        	
 	        }
+	        
+	        var properties = VkPhysicalDeviceProperties.calloc(stack);
+	        vkGetPhysicalDeviceProperties(device, properties);
+	        // 他も必要になったら変数を増やすか、properties自体を保持するように変更する
+	        maxSamplerAnisotropy = properties.limits().maxSamplerAnisotropy();
 		}
 	}
 	
@@ -263,5 +276,47 @@ public class PhysicalDevice {
         var queueFamilyPropertiesBuffer = VkQueueFamilyProperties.malloc(pQueueFamilyPropertyCount.get(0));
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, queueFamilyPropertiesBuffer);
         return queueFamilyPropertiesBuffer;
+	}
+
+	/**
+	 * 
+	 * https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/VkSamplerCreateInfo.html
+	 * @return
+	 */
+	public float getMaxSamplerAnisotropy() {
+		return maxSamplerAnisotropy;
+	}
+	
+	// https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
+	
+	public int findDepthFormat() {
+		return findSupportedFormat(
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				DEPTH_FORMAT);
+	}
+	
+	
+	public int findSupportedFormat(int tiling, int features, int...candidates ) {
+		try (var stack = MemoryStack.stackPush()) {
+			// VkFormatProperties2の方が推奨になっているが、拡張情報がとれるだけのようなので、ここでは不要？
+			// https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/vkGetPhysicalDeviceFormatProperties2.html
+			var properties = VkFormatProperties.malloc(stack);
+			for (int format: candidates) {
+				// 本来、format一覧を返すメソッドがあるべきだが、Vulkanの設計ミスによりない
+				vkGetPhysicalDeviceFormatProperties(device, format, properties);
+				
+
+				if ((tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures() & features) == features)
+						|| (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures() & features) == features) 
+						)
+				{
+					return format;
+				}
+			}
+		}
+
+		throw new IllegalArgumentException("フォーマットの取得に失敗しました " + Arrays.toString(candidates));
 	}
 }

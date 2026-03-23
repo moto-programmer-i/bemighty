@@ -12,6 +12,7 @@ import org.lwjgl.vulkan.VkMemoryRequirements;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK14.*;
 
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.function.Supplier;
@@ -25,12 +26,12 @@ public class StagingBuffer implements AutoCloseable {
 	private long handler;
 	private LongBuffer forHandler = MemoryUtil.memAllocLong(1);
 	private long allocationSize;
-    private long memory;
+	private long memory;
 //    private long mappedMemory = NULL;
 //    private PointerBuffer forMappedMemory;
-    private LongBuffer forMemory = MemoryUtil.memAllocLong(1);
-    
-    private StagingBufferSettings settings;
+	private LongBuffer forMemory = MemoryUtil.memAllocLong(1);
+
+	private StagingBufferSettings settings;
 
 	public StagingBuffer(StagingBufferSettings settings) {
 		this.settings = settings;
@@ -48,109 +49,58 @@ public class StagingBuffer implements AutoCloseable {
 //		    .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties)};
 //		bufferMemory = vk::raii::DeviceMemory(device, allocInfo);
 //		buffer.bindMemory(bufferMemory, 0);
+
+		try (var stack = MemoryStack.stackPush()) {
+			var device = settings.getLogicalDevice().getDevice();
+			var bufferCreateInfo = VkBufferCreateInfo.calloc(stack).sType$Default().size(settings.getSize())
+					.usage(settings.getUsage()).sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+
+			bufferCreateInfo.usage(settings.getUsage());
+			Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler),
+					"Bufferの作成に失敗しました");
+			handler = forHandler.get(0);
+
 			
-        try (var stack = MemoryStack.stackPush()) {
-            var device = settings.getLogicalDevice().getDevice();
-            var bufferCreateInfo = VkBufferCreateInfo.calloc(stack)
-                    .sType$Default()
-                    .size(settings.getSize())
-                    .usage(settings.getUsage())
-                    .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
-            
-//          Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
-//          handler = forHandler.get(0);
-//            
-//            var memoryRequirements = VkMemoryRequirements.calloc(stack);
-//            vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
-//            var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
-//                    .sType$Default()
-//                    .allocationSize(memoryRequirements.size())
-//                    .memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getSourceMemoryPropertyFlags()));
-//            
-            
+			memory = bindMemory(handler, settings, stack, forMemory);
+			Vulkan.throwExceptionIfFailed(vkBindBufferMemory(device, handler, memory, DEFAULT_LONG_OFFSETS),
+					"メモリの紐づけに失敗しました");
 
-//            
+			// 参考
+			// https://github.com/LWJGL/lwjgl3/blob/4ef1eebe4af235b2934a165e82aeefcaf8d9b893/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L460
 
-//
-//            LongBuffer forMemory = stack.mallocLong(1);
-//            Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory), "メモリの割り当てに失敗しました");
-//            allocationSize = memoryAllocateInfo.allocationSize();
-//            var memory = forMemory.get(0);
-//            Vulkan.throwExceptionIfFailed(vkBindBufferMemory(device, handler, memory, DEFAULT_LONG_OFFSETS), "メモリの紐づけに失敗しました");
-//            
-//            // マッピング開始
-//            forMappedMemory = memAllocPointer((int)settings.getSize());
-//            // https://docs.vulkan.org/refpages/latest/refpages/source/vkMapMemory.html
-//            Vulkan.throwExceptionIfFailed(vkMapMemory(device, memory, DEFAULT_LONG_OFFSETS, settings.getSize(), DEFAULT_MEMORY_MAP_FLAG_BITS, forMappedMemory), "メモリのマッピングに失敗しました");
-//            settings.getSourceMapping().accept(forMappedMemory);
-//            vkUnmapMemory(device, memory);
-//            vkFreeMemory(device, memory, null);
-//            
-//            createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, vertexBuffer, vertexBufferMemory);
-//
-//    		copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-            
-            bufferCreateInfo.usage(settings.getUsage());
-            
-            
-            Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler), "Bufferの作成に失敗しました");
-            handler = forHandler.get(0);
-              
-              var memoryRequirements = VkMemoryRequirements.calloc(stack);
-              vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
-              var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack)
-                      .sType$Default()
-                      .allocationSize(memoryRequirements.size())
-                      .memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
-            Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory), "メモリの割り当てに失敗しました");
-            allocationSize = memoryAllocateInfo.allocationSize();
-            memory = forMemory.get(0);
-            Vulkan.throwExceptionIfFailed(vkBindBufferMemory(device, handler, memory, DEFAULT_LONG_OFFSETS), "メモリの紐づけに失敗しました");
-
-            
-            // 転送先へ
-//            memoryAllocateInfo.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
-            
-            // バッファに書き込み
-            // MemoryUtil.memCopy(values, MemoryUtil.memAddress(forHandler));
-            // のvaluesの型が様々なので、こうせざるを得なかった
-            settings.getCopy().accept(memory);
-            
-            // 一応エラーはでないが、マッピングなしで本当に転送できているかは不明
-        }
+			// Mapとコピー
+			if (!settings.isMap()) {
+				return;
+			}
+			PointerBuffer forMap = stack.mallocPointer(1);
+			Vulkan.throwExceptionIfFailed(vkMapMemory(device, memory, 0, settings.getSize(), 0, forMap),
+					"vkMapMemoryエラー");
+			settings.getCopy().accept(forMap);
+			if (settings.isUnMap()) {
+				vkUnmapMemory(device, memory);
+			}
+		}
 	}
 	
-    
-//    /**
-//     * GPUのバッファへコピーする
-//     * @param stack
-//     * @param commandBuffer
-//     * @return 中間バッファ（staging buffer）
-//     */
-//    public Buffer recordStagingCommand(MemoryStack stack, CommandBuffer commandBuffer) {
-//    	// 元のバッファから出力先バッファを作成
-//		var outSettings = settings.clone();
-//		outSettings.setUsage(settings.getOutUsage());
-//		outSettings.setRequestMask(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-//		var out = new Buffer(outSettings);
-//
-//		// 最初からバッファにデータをロードしておいて、
-//		// ステージングバッファをそのまま管理するべきなのでは？
-//		// 正しい方法不明
-//		
-////        map();
-////        // long size -> int sizeへの変換が本当に正しいのか不明
-////        var stagingBuffer = MemoryUtil.memIntBuffer(mappedMemory, (int) settings.getSize());
-////        stagingBuffer.put(data);
-////        unMap();
-//    	
-//        var copyRegion = VkBufferCopy.calloc(1, stack)
-//                // .srcOffset(0).dstOffset(0)
-//        		// allocationSizeではないのか？不明
-//                .size(settings.getSize());
-//        vkCmdCopyBuffer(commandBuffer.getBuffer(), handler, out.getHandler(), copyRegion);
-//        return out;
-//    }
+	public static long bindMemory(long handler, StagingBufferSettings settings, MemoryStack stack) {
+		return bindMemory(handler, settings, stack, stack.mallocLong(1));
+	}
+	
+	public static long bindMemory(long handler, StagingBufferSettings settings, MemoryStack stack, LongBuffer forMemory) {
+		var device = settings.getLogicalDevice().getDevice();
+		var memoryRequirements = VkMemoryRequirements.calloc(stack);
+		vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
+		var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack).sType$Default()
+				.allocationSize(memoryRequirements.size())
+				.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(
+						memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
+		Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory),
+				"メモリの割り当てに失敗しました");
+//		allocationSize = memoryAllocateInfo.allocationSize();
+		return forMemory.get(0);
+	}
+
+
 
 	@Override
 	public void close() throws Exception {
@@ -165,7 +115,7 @@ public class StagingBuffer implements AutoCloseable {
 		}
 		if (handler != NULL) {
 			vkDestroyBuffer(device, handler, null);
-	        handler = NULL;
+			handler = NULL;
 		}
 		if (forHandler != null) {
 			forHandler = null;
@@ -179,7 +129,6 @@ public class StagingBuffer implements AutoCloseable {
 	public long getHandler() {
 		return handler;
 	}
-
 
 	public LongBuffer getForHandler() {
 		return forHandler;

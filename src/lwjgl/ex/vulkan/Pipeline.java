@@ -13,6 +13,7 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
 import org.lwjgl.vulkan.VkPipelineColorBlendStateCreateInfo;
+import org.lwjgl.vulkan.VkPipelineDepthStencilStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineInputAssemblyStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
@@ -22,8 +23,11 @@ import org.lwjgl.vulkan.VkPipelineRenderingCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineViewportStateCreateInfo;
+import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
+import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
 import static org.lwjgl.vulkan.VK14.*;
+import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class Pipeline implements AutoCloseable {
 	private PipelineSettings settings;
@@ -34,10 +38,15 @@ public class Pipeline implements AutoCloseable {
 	public Pipeline(PipelineSettings settings) {
 		this.settings = settings;
 		try (var stack = MemoryStack.stackPush()) {
-			var vertexInput = VkPipelineVertexInputStateCreateInfo.calloc(stack).sType$Default();
+			var vertexInput = VkPipelineVertexInputStateCreateInfo.calloc(stack).sType$Default()
+					.pVertexBindingDescriptions(settings.getVertexDescriptionHelper().createBinding(stack))
+					.pVertexAttributeDescriptions(settings.getVertexDescriptionHelper().createAttribute(stack))
+					;
 
             var inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack).sType$Default()
-                    .topology(settings.getTopology());
+                    .topology(settings.getTopology())
+                    // https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineInputAssemblyStateCreateInfo.html
+                    .primitiveRestartEnable(false);
 
             var viewport = VkPipelineViewportStateCreateInfo.calloc(stack)
                     .sType$Default()
@@ -46,13 +55,23 @@ public class Pipeline implements AutoCloseable {
                     .scissorCount(1);
 
             var rasterization = VkPipelineRasterizationStateCreateInfo.calloc(stack).sType$Default()
+            		.depthClampEnable(false)
+         		    .rasterizerDiscardEnable(false)
                     .polygonMode(settings.getPolygonMode())
                     .cullMode(settings.getCullMode())
                     .frontFace(settings.getFrontFace())
                     .lineWidth(settings.getLineWidth());
 
             var multisample = VkPipelineMultisampleStateCreateInfo.calloc(stack).sType$Default()
-                    .rasterizationSamples(settings.getRasterizationSamples());
+                    .rasterizationSamples(settings.getRasterizationSamples())
+                    .sampleShadingEnable(false);
+            
+            var depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack).sType$Default()
+    		    .depthTestEnable(true)
+    		    .depthWriteEnable(true)
+    		    .depthCompareOp(VK_COMPARE_OP_LESS)
+    		    .depthBoundsTestEnable(false)
+    		    .stencilTestEnable(false);
 
             var dynamic = VkPipelineDynamicStateCreateInfo.calloc(stack).sType$Default()
                     .pDynamicStates(stack.ints(
@@ -65,16 +84,22 @@ public class Pipeline implements AutoCloseable {
                     .colorWriteMask(settings.getColorWriteMask())
                     .blendEnable(settings.isBlendEnable());
             var colorBlend = VkPipelineColorBlendStateCreateInfo.calloc(stack).sType$Default()
+            		.logicOpEnable(false)
+         		    .logicOp(VK_LOGIC_OP_COPY)
                     .pAttachments(blendAttachment);
 
             IntBuffer colorFormats = stack.mallocInt(1);
             colorFormats.put(0, settings.getColorFormat());
+            var depthFormat = settings.getLogicalDevice().getPhysicalDevice().findDepthFormat();
             var rendCreateInfo = VkPipelineRenderingCreateInfo.calloc(stack).sType$Default()
                     // 1以外になる場合がでたら対処
                     .colorAttachmentCount(1)
-                    .pColorAttachmentFormats(colorFormats);
+                    .pColorAttachmentFormats(colorFormats)
+                    .depthAttachmentFormat(depthFormat)
+                    ;
 
-            var layout = VkPipelineLayoutCreateInfo.calloc(stack).sType$Default();
+            var layout = VkPipelineLayoutCreateInfo.calloc(stack).sType$Default()
+            		.pSetLayouts(settings.getVertexDescriptionHelper().getForLayouts());
 
             LongBuffer forLayout = stack.mallocLong(1);
             Vulkan.throwExceptionIfFailed(vkCreatePipelineLayout(settings.getLogicalDevice().getDevice(), layout, null, forLayout),
@@ -95,9 +120,11 @@ public class Pipeline implements AutoCloseable {
                     .pRasterizationState(rasterization)
                     .pColorBlendState(colorBlend)
                     .pMultisampleState(multisample)
+                    .pDepthStencilState(depthStencil)
                     .pDynamicState(dynamic)
                     .layout(layoutHandler)
-                    .pNext(rendCreateInfo);
+                    .pNext(rendCreateInfo)
+                    ;
 
     		cache = new PipelineCache(settings.getLogicalDevice());
             
@@ -134,10 +161,15 @@ public class Pipeline implements AutoCloseable {
 		return handler;
 	}
 
-	
-
 	public PipelineSettings getSettings() {
 		return settings;
 	}
+
+	public long getLayoutHandler() {
+		return layoutHandler;
+	}
 	
+	public VertexDescriptionHelper getVertexDescriptionHelper() {
+		return settings.getVertexDescriptionHelper();
+	}
 }

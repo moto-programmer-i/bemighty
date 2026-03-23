@@ -45,4 +45,8 @@ public class Render implements AutoCloseable {
 		ExceptionUtils.close(renders, commandPool);
 	}
 
+	public CommandPool getCommandPool() {
+		return commandPool;
+	}
+
 }

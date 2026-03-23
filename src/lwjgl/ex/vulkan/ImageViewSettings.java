@@ -43,6 +43,10 @@ public class ImageViewSettings {
 
 	private LogicalDevice logicalDevice;
 
+	public ImageViewSettings(LogicalDevice logicalDevice) {
+		this.logicalDevice = logicalDevice;
+	}
+
 	public int getAspectMask() {
 		return aspectMask;
 	}
@@ -138,7 +142,7 @@ public class ImageViewSettings {
 
 	@Override
 	protected ImageViewSettings clone() {
-		var clone = new ImageViewSettings();
+		var clone = new ImageViewSettings(logicalDevice);
 		clone.aspectMask = aspectMask;
 		clone.baseArrayLayer = baseArrayLayer;
 		clone.format = format;

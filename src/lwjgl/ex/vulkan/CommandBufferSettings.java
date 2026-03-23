@@ -17,9 +17,15 @@ public class CommandBufferSettings implements Cloneable {
 	private int usageBit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	private int count = DEFAULT_COUNT;
 	
+	public CommandBufferSettings() {
+	}
+	public CommandBufferSettings(CommandPool commandPool) {
+		this.commandPool = commandPool;
+	}
 	public CommandPool getCommandPool() {
 		return commandPool;
 	}
+	
 	public void setCommandPool(CommandPool commandPool) {
 		this.commandPool = commandPool;
 	}
@@ -64,8 +70,7 @@ public class CommandBufferSettings implements Cloneable {
 	@Override
 	protected CommandBufferSettings clone() {
 		// cloneの厳密な実装法不明、実用上は問題ないはず
-		var clone = new CommandBufferSettings();
-		clone.commandPool = commandPool;
+		var clone = new CommandBufferSettings(commandPool);
 		clone.primary = primary;
 		clone.usageBit = usageBit;
 		clone.count = count;

@@ -46,7 +46,7 @@ import lwjgl.ex.vulkan.QueueSettings;
 import lwjgl.ex.vulkan.RectUtils;
 import lwjgl.ex.vulkan.Render;
 import lwjgl.ex.vulkan.RenderSettings;
-import lwjgl.ex.vulkan.SceneCommand;
+import lwjgl.ex.vulkan.DrawModelCommand;
 import lwjgl.ex.vulkan.Shader;
 import lwjgl.ex.vulkan.ShaderSettings;
 import lwjgl.ex.vulkan.ShaderStageSettings;
@@ -54,6 +54,7 @@ import lwjgl.ex.vulkan.Surface;
 import lwjgl.ex.vulkan.SurfaceSettings;
 import lwjgl.ex.vulkan.SwapChain;
 import lwjgl.ex.vulkan.SwapChainSettings;
+import lwjgl.ex.vulkan.VertexDescriptionHelper;
 import lwjgl.ex.vulkan.Vulkan;
 import lwjgl.ex.vulkan.VulkanSettings;
 import lwjgl.ex.vulkan.Window;
@@ -114,6 +115,7 @@ public class Main {
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
 						var surface = new Surface(surfaceSettings)
 						) {
+					
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
@@ -123,8 +125,11 @@ public class Main {
 					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
-							var shader = new Shader(shaderSettings)) {
+							var shader = new Shader(shaderSettings);
+							var vertexDescriptionHelper = new VertexDescriptionHelper(logicalDevice, VertexDescriptionHelper.DEFAULT_FORMATS)
+									) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
+						pipelineSettings.setVertexDescriptionHelper(vertexDescriptionHelper);
 						
 						var queueSettings = new QueueSettings(logicalDevice);
 						Queue queue = new Queue(queueSettings);
@@ -135,10 +140,17 @@ public class Main {
 								var render = new Render(renderSettings)
 								) {
 							
+							if (true) return;
+							
+							
 							// 頂点の重複を削除できてない。なぜ？
 //							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
-							try(var testModel = new Model(TEST_MODEL, logicalDevice)) {
-								try (var command = new SceneCommand(testModel, BACKGROUND, swapChain, pipeline)) {
+							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper)) {
+								
+								
+								if (true) return;
+								
+								try (var command = new DrawModelCommand(testModel, BACKGROUND, swapChain, pipeline)) {
 									final int testCount = 1;
 									for(int i = 0; i < testCount; ++i) {
 										if (window.shouldClose()) {

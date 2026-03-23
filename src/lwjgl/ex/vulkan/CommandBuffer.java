@@ -2,6 +2,8 @@ package lwjgl.ex.vulkan;
 
 
 
+import static org.lwjgl.vulkan.VK13.vkQueueSubmit2;
+
 //参考
 //https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 
@@ -11,7 +13,9 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
+import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
@@ -20,6 +24,7 @@ import org.lwjgl.vulkan.VkDependencyInfo;
 import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderingInfo;
+import org.lwjgl.vulkan.VkSubmitInfo2;
 import org.lwjgl.vulkan.VkViewport;
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 
@@ -89,6 +94,10 @@ public class CommandBuffer implements AutoCloseable {
     
     public void bind(Pipeline pipeline) {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
+    }
+    
+    public void bindDescriptorSets(Pipeline pipeline) {
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), VertexDescriptionHelper.FIRST_SET, pipeline.getVertexDescriptionHelper().getForDescriptorSet(), null);
     }
     
 //    public void bindVertices(LongBuffer vertices) {
@@ -215,6 +224,31 @@ public class CommandBuffer implements AutoCloseable {
         dependencyInfo.pImageMemoryBarriers(barrier);
 
         vkCmdPipelineBarrier2(buffer, dependencyInfo);
+	}
+	
+	public void transitionImageLayout(VkImageMemoryBarrier2.Buffer barrier) {
+		// imageの設定忘れに注意
+		if (barrier.image() == MemoryUtil.NULL) {
+			throw new IllegalArgumentException("VkImageMemoryBarrier2.imageがnullです");
+		}
+        dependencyInfo.pImageMemoryBarriers(barrier);
+        vkCmdPipelineBarrier2(buffer, dependencyInfo);
+	}
+	
+	// imageのクラスを作るべきか保留
+	public void copyBufferToImage(StagingBuffer source, long destinationImageHandler, int destinationImageLayout, VkBufferImageCopy.Buffer pRegions) {
+		vkCmdCopyBufferToImage(buffer, source.getHandler(), destinationImageHandler, destinationImageLayout, pRegions);
+	}
+	
+	public void submit(MemoryStack stack, Queue queue) {
+		Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");
+		
+		var submitInfo = VkSubmitInfo2.calloc(1, stack).sType$Default()
+				.pCommandBufferInfos(createSubmitInfoBuffer(stack))
+				;
+		// キューへ送信とともに、Fence（CPU処理待ち）開始
+		Vulkan.throwExceptionIfFailed(vkQueueSubmit2(queue.getVkQueue(), submitInfo, MemoryUtil.NULL), "Queueへのコマンドの送信に失敗しました");
+		queue.waitIdle();
 	}
 
 

@@ -12,11 +12,11 @@ public class SwapChainSettings {
 	private boolean vsync;
 	private int recreteDebounceMilliseconds = DEFAULT_RECREATE_DEBOUNCE_MILLIISECONDS;
 	
-	private ImageViewSettings imageViewSettings = new ImageViewSettings();
+	private ImageViewSettings imageViewSettings;
 	
 	public SwapChainSettings(Window window, LogicalDevice logicalDevice, Surface surface) {
 		this.window = window;
-		// imageViewSettingsも設定の必要がある
+		imageViewSettings = new ImageViewSettings(logicalDevice);
 		setLogicalDevice(logicalDevice);
 		setSurface(surface);
 	}

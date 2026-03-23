@@ -15,14 +15,15 @@ public class RenderSettings {
 	private LogicalDevice logicalDevice;
 	private SwapChain swapChain;
 	private Queue queue;
+	private final CommandPoolSettings commandPoolSettings;
 	private final CommandBufferSettings commandBufferSettings = new CommandBufferSettings();
-	private final CommandPoolSettings commandPoolSettings = new CommandPoolSettings();
 	private final QueueSettings queueSettings;
 	
 	
 
 	public RenderSettings(LogicalDevice logicalDevice, SwapChain swapChain, Queue queue) {
 		queueSettings = new QueueSettings(logicalDevice);
+		commandPoolSettings = new CommandPoolSettings(logicalDevice);
 		setLogicalDevice(logicalDevice);
 		this.swapChain = swapChain;
 		this.queue = queue;

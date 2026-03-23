@@ -10,7 +10,6 @@ public class PipelineSettings {
 	// ほぼ複数必要だが、現在は対処法が不明
     private Shader shader;
     
-	private int colorFormat;
 	private float lineWidth = DEFAULT_LINE_WIDTH;
 	
 	// LWJGLの設計ミスによりint
@@ -41,7 +40,9 @@ public class PipelineSettings {
 	private boolean colorBlendingLogicOpEnable = false;
 	private int colorBlendingLogicOp = VK_LOGIC_OP_COPY;
 	
+	private SurfaceSettings surfaceSettings;
 	
+	private VertexDescriptionHelper vertexDescriptionHelper;
 	
 	
 	public PipelineSettings(LogicalDevice logicalDevice, Shader shader, SurfaceSettings surfaceSettings) {
@@ -49,14 +50,15 @@ public class PipelineSettings {
 		this.shader = shader;
 		
 		// colorFormatはSurfaceと一致させる必要がある
-		colorFormat = surfaceSettings.getFormat();
+		this.surfaceSettings = surfaceSettings;
 	}
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
 	}
 
 	public int getColorFormat() {
-		return colorFormat;
+		// colorFormatはSurfaceと一致させる必要がある
+		return surfaceSettings.getFormat();
 	}
 	// Surfaceとマッチさせる必要があるため、変更を防ぐ
 	// VkRenderingInfo::pColorAttachments[0].imageView format (VK_FORMAT_B8G8R8A8_UNORM) must match the corresponding format in VkPipelineRenderingCreateInfo::pColorAttachmentFormats[0] (VK_FORMAT_UNDEFINED).
@@ -162,5 +164,11 @@ public class PipelineSettings {
 	}
 	public void setColorBlendingLogicOp(int colorBlendingLogicOp) {
 		this.colorBlendingLogicOp = colorBlendingLogicOp;
+	}
+	public VertexDescriptionHelper getVertexDescriptionHelper() {
+		return vertexDescriptionHelper;
+	}
+	public void setVertexDescriptionHelper(VertexDescriptionHelper vertexDescriptionHelper) {
+		this.vertexDescriptionHelper = vertexDescriptionHelper;
 	}
 }

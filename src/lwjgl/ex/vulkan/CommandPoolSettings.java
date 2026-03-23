@@ -3,6 +3,11 @@ package lwjgl.ex.vulkan;
 public class CommandPoolSettings {
 	private LogicalDevice logicalDevice;
 	private int queueFamilyIndex;
+	
+	public CommandPoolSettings(LogicalDevice logicalDevice) {
+		setLogicalDevice(logicalDevice);
+	}
+	
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
 	}

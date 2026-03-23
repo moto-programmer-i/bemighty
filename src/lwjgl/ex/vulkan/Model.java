@@ -1,11 +1,13 @@
 package lwjgl.ex.vulkan;
 
 
+import java.nio.FloatBuffer;
 import java.nio.LongBuffer;
 import java.nio.file.Path;
 
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
+import org.lwjgl.assimp.AITexture;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
 
@@ -37,13 +39,14 @@ public class Model implements AutoCloseable {
 	private int[] indices;
 	private long indicesBytes = 0;
 	private StagingBuffer indexBuffer;
+	private AutoCloseableList<Texture> textures = new AutoCloseableList<>();
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice) {
-		this(modelPath, logicalDevice, DEFAULT_IMPORT_FILE_FLAG);
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper) {
+		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, DEFAULT_IMPORT_FILE_FLAG);
 	}
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, int importFileFlag) {
-		this.model = Assimp.aiImportFile(modelPath.toString(), DEFAULT_IMPORT_FILE_FLAG);
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, int importFileFlag) {
+		this.model = Assimp.aiImportFile(modelPath.toString(), importFileFlag);
 		this.logicalDevice = logicalDevice;
 		
 		int numMeshes = model.mNumMeshes();
@@ -75,32 +78,52 @@ public class Model implements AutoCloseable {
         	indicesBytes += Integer.BYTES * indices.length;
         }
         
+        // Textureの取得
+        int numTextures = model.mNumTextures();
+        for(int i = 0; i < numTextures; ++i) {
+        	var texture = AITexture.create(model.mTextures().get(i));
+        	textures.add(new Texture(texture, logicalDevice, commandPool, queue, descriptionHelper));
+//        	System.out.println("capacity " + texture.pcDataCompressed().capacity());
+//        	System.out.println("mWidth " + texture.mWidth());
+//        	System.out.println("mHeight " + texture.mHeight());
+        }
+        
+        
         // GPUへ送信
         vertexBuffer = new StagingBuffer(createVertexBufferSettings());
         indexBuffer = new StagingBuffer(createIndexBufferSettings());
 	}
 	
 	private StagingBufferSettings createVertexBufferSettings() {
-		var settings = new StagingBufferSettings(logicalDevice, (destination) -> {
-			MemoryUtil.memCopy(vertices, destination);
+		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
+			var vertexBuffer = buffer.getFloatBuffer(0, (int)verticesBytes);
+			vertexBuffer.put(vertices);
 		});
 		settings.setSize(verticesBytes);
-		settings.setUsage(USAGE_VERTEX_DESTINATION);
+//		settings.setUsage(USAGE_VERTEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
-		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
+		settings.setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+//		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
+		
+		// これは遅いらしいが、動作確認のため一旦こうする
+		settings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 		return settings;
 	}
 	
 	private StagingBufferSettings createIndexBufferSettings() {
-		var settings = new StagingBufferSettings(logicalDevice, (destination) -> {
-			MemoryUtil.memCopy(indices, destination);
+		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
+			var indexBuffer = buffer.getIntBuffer(0, (int)indicesBytes);
+			indexBuffer.put(indices);
 		});
-		settings.setSize(verticesBytes);
-		settings.setUsage(USAGE_INDEX_DESTINATION);
+		settings.setSize(indicesBytes);
+//		settings.setUsage(USAGE_INDEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
-		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
+		settings.setUsage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+//		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
+		// これは遅いらしいが、動作確認のため一旦こうする
+		settings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 		return settings;
 	}
 	
@@ -111,7 +134,7 @@ public class Model implements AutoCloseable {
 		if(model == null) {
 			return;
 		}
-		ExceptionUtils.close(indexBuffer, vertexBuffer, meshes, model);
+		ExceptionUtils.close(textures, indexBuffer, vertexBuffer, meshes, model);
 		model = null;
 	}
 	
