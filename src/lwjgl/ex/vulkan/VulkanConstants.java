@@ -57,7 +57,11 @@ public final class VulkanConstants {
 	 * https://qiita.com/dgtanaka/items/2ec0fd88236daa5c3cc7
 	 */
 	public static final float DEFAULT_BIAS = 0.0f;
-	
+
+	/**
+	 * 1ピクセルのバイト数
+	 */
+	public static final int ARGB_BYTES = 4;
 
 	private VulkanConstants() {
 	}

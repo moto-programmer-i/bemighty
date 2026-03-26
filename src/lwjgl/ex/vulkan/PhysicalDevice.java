@@ -42,6 +42,8 @@ public class PhysicalDevice {
 	private OptionalInt graphicsQueueIndex = OptionalInt.empty();
 	
 	private float maxSamplerAnisotropy;
+	
+	private int[] memoryProperties;
 
 	/**
 	 * getFirstPhysicalDeviceから初期化
@@ -79,8 +81,25 @@ public class PhysicalDevice {
 	        
 	        var properties = VkPhysicalDeviceProperties.calloc(stack);
 	        vkGetPhysicalDeviceProperties(device, properties);
+	        
+	        
+	        
 	        // 他も必要になったら変数を増やすか、properties自体を保持するように変更する
 	        maxSamplerAnisotropy = properties.limits().maxSamplerAnisotropy();
+//	        var nameBytes = new byte[properties.deviceName().capacity()];
+//	        properties.deviceName().get(nameBytes);
+//	        System.out.println(new String(nameBytes));
+	        
+	        // PhysicalDeviceMemoryPropertiesを事前に確保
+	        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties = VkPhysicalDeviceMemoryProperties.calloc(stack);
+            vkGetPhysicalDeviceMemoryProperties(device, physicalDeviceMemoryProperties);
+            memoryProperties = new int[physicalDeviceMemoryProperties.memoryTypeCount()];
+            for (int i = 0; i < memoryProperties.length; ++i) {
+            	// 他も必要になったら変数を増やすか、properties自体を保持するように変更する
+            	memoryProperties[i] = physicalDeviceMemoryProperties.memoryTypes(i).propertyFlags();
+            }
+            // 開発環境では[0, 1, 1, 6, 14, 7]
+//            System.out.println("memoryProperties " + Arrays.toString(memoryProperties));
 		}
 	}
 	
@@ -108,16 +127,12 @@ public class PhysicalDevice {
 	public int findMemoryTypeIndex(int typeFilter, int properties) throws IllegalArgumentException {
 		// 参考
 		// https://github.com/LWJGL/lwjgl3/blob/88e4485af4d708d4fd441a9ef80241b1164eefb4/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L511
-        try (var stack = MemoryStack.stackPush()) {
-            VkPhysicalDeviceMemoryProperties memoryProperties = VkPhysicalDeviceMemoryProperties.calloc(stack);
-            vkGetPhysicalDeviceMemoryProperties(device, memoryProperties);
-            for (int i = 0, typeMask = 1; i < memoryProperties.memoryTypeCount(); ++i, typeMask <<= 1) {
-            	// デバイスでサポートされているか
-                if ((typeFilter & typeMask) != 0) {
-                	// プロパティが一致するか
-                    if ((memoryProperties.memoryTypes(i).propertyFlags() & properties) == properties) {
-                        return i;
-                    }
+        for (int i = 0, typeMask = 1; i < memoryProperties.length; ++i, typeMask <<= 1) {
+        	// デバイスでサポートされているか
+            if ((typeFilter & typeMask) != 0) {
+            	// プロパティが一致するか
+                if ((memoryProperties[i] & properties) == properties) {
+                    return i;
                 }
             }
         }
@@ -180,9 +195,18 @@ public class PhysicalDevice {
 				// Featuresで絞り込み
 				vkGetPhysicalDeviceFeatures2(device, queryDeviceFeatures2);
 				
+				// なぜかこれだけ扱いが別。設計ミス？
+				var querydeviceFeatures = queryDeviceFeatures2.features();
+				
 				// 現状、commandBuffer.beginRenderingで書いてしまっているため、これが使えない場合は想定していない
 				// ライブラリ化するなら対応必須
 				if (!queryVulkan13Features.dynamicRendering()) {
+	                continue;
+	            }
+				
+				// 現状、samplerAnisotropy（画像の表示に使用中）前提で書いてしまっているため、これが使えない場合は想定していない
+				// ライブラリ化するなら対応必須
+				if (!querydeviceFeatures.samplerAnisotropy()) {
 	                continue;
 	            }
 				

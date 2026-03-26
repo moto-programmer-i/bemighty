@@ -71,6 +71,10 @@ public class LogicalDevice implements AutoCloseable {
             	var deviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(stack)
                         .sType$Default()
                         .pNext(vulkan11Features.address());
+            	
+            	// なぜかこれだけ扱いが別。設計ミス？
+            	deviceFeatures2.features()
+            		.samplerAnisotropy(true);
 
             	deviceCreateInfo.pNext(deviceFeatures2.address());
         	}

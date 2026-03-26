@@ -1,6 +1,7 @@
 package bemighty;
 
 import java.awt.Color;
+import java.io.ByteArrayOutputStream;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.FileSystems;
@@ -139,8 +140,6 @@ public class Main {
 						try(var pipeline = new Pipeline(pipelineSettings);
 								var render = new Render(renderSettings)
 								) {
-							
-							if (true) return;
 							
 							
 							// 頂点の重複を削除できてない。なぜ？

@@ -1,8 +1,12 @@
+AssimpUtils.writeImageToPointerのフォーマット対応
+
 Modelの頂点重複、indexベタ書き
 
 settings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 	遅いらしい
-	
+
+TextureのtransitionImageLayoutあたり、まとめてsubmitはできないのか？
+
 VkRect2D callocにする意味ないかも？
 
 https://github.com/lwjglgamedev/vulkanbook/blob/master/bookcontents/chapter-06/chapter-06.md
@@ -21,3 +25,7 @@ Shaderが複数ある場合の対処不明
 
 Shaderの読み込みでreadAllBytesからmallocしており、無駄なコピーが発生する
 	適切なライブラリあるか？独自実装しかないか？
+
+
+
+dynamicRendering、samplerAnisotropyが対応していない場合の対処

@@ -52,16 +52,21 @@ public class StagingBuffer implements AutoCloseable {
 
 		try (var stack = MemoryStack.stackPush()) {
 			var device = settings.getLogicalDevice().getDevice();
-			var bufferCreateInfo = VkBufferCreateInfo.calloc(stack).sType$Default().size(settings.getSize())
-					.usage(settings.getUsage()).sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+			var bufferCreateInfo = VkBufferCreateInfo.calloc(stack).sType$Default()
+					.size(settings.getSize())
+					.usage(settings.getUsage())
+					.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
 			bufferCreateInfo.usage(settings.getUsage());
 			Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler),
 					"Bufferの作成に失敗しました");
 			handler = forHandler.get(0);
+			
+			var memoryRequirements = VkMemoryRequirements.calloc(stack);
+			vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
 
 			
-			memory = bindMemory(handler, settings, stack, forMemory);
+			memory = allocateMemory(handler, settings.getLogicalDevice(), settings.getDestinationMemoryPropertyFlags(), memoryRequirements, stack, forMemory);
 			Vulkan.throwExceptionIfFailed(vkBindBufferMemory(device, handler, memory, DEFAULT_LONG_OFFSETS),
 					"メモリの紐づけに失敗しました");
 
@@ -82,19 +87,14 @@ public class StagingBuffer implements AutoCloseable {
 		}
 	}
 	
-	public static long bindMemory(long handler, StagingBufferSettings settings, MemoryStack stack) {
-		return bindMemory(handler, settings, stack, stack.mallocLong(1));
-	}
 	
-	public static long bindMemory(long handler, StagingBufferSettings settings, MemoryStack stack, LongBuffer forMemory) {
-		var device = settings.getLogicalDevice().getDevice();
-		var memoryRequirements = VkMemoryRequirements.calloc(stack);
-		vkGetBufferMemoryRequirements(device, handler, memoryRequirements);
+	
+	public static long allocateMemory(long handler, LogicalDevice logicalDevice, int memoryProperty, VkMemoryRequirements memoryRequirements,MemoryStack stack, LongBuffer forMemory) {
 		var memoryAllocateInfo = VkMemoryAllocateInfo.calloc(stack).sType$Default()
 				.allocationSize(memoryRequirements.size())
-				.memoryTypeIndex(settings.getLogicalDevice().getPhysicalDevice().findMemoryTypeIndex(
-						memoryRequirements.memoryTypeBits(), settings.getDestinationMemoryPropertyFlags()));
-		Vulkan.throwExceptionIfFailed(vkAllocateMemory(device, memoryAllocateInfo, null, forMemory),
+				.memoryTypeIndex(logicalDevice.getPhysicalDevice().findMemoryTypeIndex(
+						memoryRequirements.memoryTypeBits(), memoryProperty));
+		Vulkan.throwExceptionIfFailed(vkAllocateMemory(logicalDevice.getDevice(), memoryAllocateInfo, null, forMemory),
 				"メモリの割り当てに失敗しました");
 //		allocationSize = memoryAllocateInfo.allocationSize();
 		return forMemory.get(0);

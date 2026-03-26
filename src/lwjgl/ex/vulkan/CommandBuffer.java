@@ -29,9 +29,11 @@ import org.lwjgl.vulkan.VkViewport;
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class CommandBuffer implements AutoCloseable {
+	private final VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.create().sType$Default();
 	private final VkDependencyInfo dependencyInfo = VkDependencyInfo.create().sType$Default();
 	private final CommandBufferSettings settings;
 	private VkCommandBuffer buffer;
+	
 	public CommandBuffer(CommandBufferSettings settings) {
 		this.settings = settings;
 		try (var stack = MemoryStack.stackPush()) {
@@ -45,6 +47,11 @@ public class CommandBuffer implements AutoCloseable {
                     "CommandBufferの作成に失敗しました");
 
             buffer = new VkCommandBuffer(pb.get(0), settings.getCommandPool().getSettings().getLogicalDevice().getDevice());
+            
+             
+    		// CommandBufferの使用法を決定
+            // （VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BITなど）
+            beginInfo.flags(settings.getUsageBit());
         }
 	}
 	
@@ -55,13 +62,6 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param command 描画内容
 	 */
     public void record(Command command, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView) {    	
-        var beginInfo = VkCommandBufferBeginInfo.calloc(stack)
-        		.sType$Default()
-        		// CommandBufferの使用法を決定
-                // （VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BITなど）
-        		.flags(settings.getUsageBit());
-        		;
-        
         // todo secondaryの場合の実装
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
@@ -74,6 +74,10 @@ public class CommandBuffer implements AutoCloseable {
         finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
         }
+    }
+    
+    public void begin() {
+        Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     }
     
     /**
@@ -186,7 +190,7 @@ public class CommandBuffer implements AutoCloseable {
 		if(buffer == null) {
 			return;
 		}
-		try(dependencyInfo){};
+		try(beginInfo;dependencyInfo){};
 		// commandPoolでcloseされるらしい
 //		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
 		buffer = null;
@@ -246,7 +250,7 @@ public class CommandBuffer implements AutoCloseable {
 		var submitInfo = VkSubmitInfo2.calloc(1, stack).sType$Default()
 				.pCommandBufferInfos(createSubmitInfoBuffer(stack))
 				;
-		// キューへ送信とともに、Fence（CPU処理待ち）開始
+		// キューへ送信
 		Vulkan.throwExceptionIfFailed(vkQueueSubmit2(queue.getVkQueue(), submitInfo, MemoryUtil.NULL), "Queueへのコマンドの送信に失敗しました");
 		queue.waitIdle();
 	}

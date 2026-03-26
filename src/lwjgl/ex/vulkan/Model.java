@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
+import org.lwjgl.assimp.AIString;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.assimp.Assimp;
 import org.lwjgl.system.MemoryUtil;
@@ -39,7 +40,7 @@ public class Model implements AutoCloseable {
 	private int[] indices;
 	private long indicesBytes = 0;
 	private StagingBuffer indexBuffer;
-	private AutoCloseableList<Texture> textures = new AutoCloseableList<>();
+	private AutoCloseableList<Texture> textures;
 	
 	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper) {
 		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, DEFAULT_IMPORT_FILE_FLAG);
@@ -79,14 +80,7 @@ public class Model implements AutoCloseable {
         }
         
         // Textureの取得
-        int numTextures = model.mNumTextures();
-        for(int i = 0; i < numTextures; ++i) {
-        	var texture = AITexture.create(model.mTextures().get(i));
-        	textures.add(new Texture(texture, logicalDevice, commandPool, queue, descriptionHelper));
-//        	System.out.println("capacity " + texture.pcDataCompressed().capacity());
-//        	System.out.println("mWidth " + texture.mWidth());
-//        	System.out.println("mHeight " + texture.mHeight());
-        }
+        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper);
         
         
         // GPUへ送信
