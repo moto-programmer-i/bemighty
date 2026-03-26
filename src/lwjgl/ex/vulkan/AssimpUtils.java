@@ -90,9 +90,13 @@ public final class AssimpUtils {
 		for (int y = 0; y < image.getHeight(); ++y) {
 			for(int x = 0; x < image.getWidth(); ++x) {
 				var argb = image.getRGB(x, y);
+				// a r g b の各バイトを書く
 				for(int bytes = 0; bytes < ARGB_BYTES; ++bytes) {
+					// write(int)は下位8バイトだけ書かれる
 					output.write(argb);	
 					argb >>= Byte.BYTES;
+				
+					// これで正しいのか不明、順番が逆の可能性も大
 				}
 			}
 		}
