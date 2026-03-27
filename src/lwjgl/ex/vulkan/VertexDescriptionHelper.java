@@ -122,6 +122,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	}
 	
 	private void initDescriptor(LogicalDevice logicalDevice) {
+	// どこまでstackを使えるのか不明
 		try(var stack = MemoryStack.stackPush()) {
 			// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
 			var poolSize = VkDescriptorPoolSize.calloc(DEFAULT_DESCRIPTOR_COUNT, stack);
@@ -137,7 +138,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 					.maxSets(DEFAULT_DESCRIPTOR_COUNT)
 					.pPoolSizes(poolSize);
 			
-//					descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
+	//					descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
 			Vulkan.throwExceptionIfFailed(vkCreateDescriptorPool(logicalDevice.getDevice(), poolInfo, null, forDescriptorPool), "DescriptorPoolの作成に失敗しました");
 			
 			var bindings = VkDescriptorSetLayoutBinding.calloc(DEFAULT_DESCRIPTOR_COUNT, stack);
@@ -145,6 +146,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 			//  vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
 			bindings.get(INDEX_VERTEX)
 				.binding(INDEX_VERTEX)
+				.descriptorCount(1)
 				.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
 			
@@ -152,6 +154,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 			// vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr)};
 			bindings.get(INDEX_FRAGMENT)
 				.binding(INDEX_FRAGMENT)
+				.descriptorCount(1)
 				.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 				.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
 			
@@ -166,7 +169,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 			Vulkan.throwExceptionIfFailed(vkAllocateDescriptorSets(logicalDevice.getDevice(), allocate, forDescriptorSet),
 	                "DescriptorSetsの割り当てに失敗しました");
 			
-			uniformBuffer = uniformObject.createBuffer(stack, logicalDevice);
+			uniformBuffer = uniformObject.createBuffer(logicalDevice);
 		}
 	}
 
@@ -181,9 +184,14 @@ public class VertexDescriptionHelper implements AutoCloseable {
 		}
 		
 	}
-
+	
+	
+	// 今のところDescriptorSetは1つなのでBufferを返す意味がないが、vkCmdBindDescriptorSetsの要求がBufferなので仕方なく
 	public LongBuffer getForDescriptorSet() {
 		return forDescriptorSet;
+	}
+	public long getDescriptorSetHandler() {
+		return forDescriptorSet.get(0);
 	}
 
 	public StagingBuffer getUniformBuffer() {

@@ -1,5 +1,6 @@
 package lwjgl.ex.vulkan;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferImageCopy;
@@ -22,6 +23,7 @@ import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.awt.image.BufferedImage;
+import java.nio.LongBuffer;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.ImageViewSettings.*;
@@ -45,6 +47,8 @@ public class Texture implements AutoCloseable {
 	
 	private BufferedImage image;
 	private LogicalDevice logicalDevice;
+	
+	private long samplerHandler;
 	
 	
 	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper) {
@@ -129,9 +133,10 @@ public class Texture implements AutoCloseable {
 	        		.compareOp(VK_COMPARE_OP_ALWAYS);
 	        var forSampler = stack.mallocLong(1);
 	        Vulkan.throwExceptionIfFailed(vkCreateSampler(logicalDevice.getDevice(), samplerCreate, null,forSampler), "Samplerの作成に失敗しました");
+	        samplerHandler = forSampler.get(0);
 	        
 	        var descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack)
-	        	.sampler(forSampler.get(0))
+	        	.sampler(samplerHandler)
 	        	.imageView(textureImageView.getHandler())
 	        	.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	        
@@ -141,12 +146,16 @@ public class Texture implements AutoCloseable {
 	        
 	        var descriptorSet = VkWriteDescriptorSet.calloc(DEFAULT_DESCRIPTOR_COUNT, stack).sType$Default();
 	        descriptorSet.get(INDEX_VERTEX)
-	        	.dstSet(descriptionHelper.getForDescriptorSet().get(INDEX_VERTEX))
+	        	.sType$Default()
+	        	.dstSet(descriptionHelper.getDescriptorSetHandler())
+	        	.dstBinding(INDEX_VERTEX)
 	        	.descriptorCount(1)
 	        	.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 	        	.pBufferInfo(descriptorBufferInfo);
-	        descriptorSet.get(INDEX_VERTEX)
-		    	.dstSet(descriptionHelper.getForDescriptorSet().get(INDEX_FRAGMENT))
+	        descriptorSet.get(INDEX_FRAGMENT)
+	        	.sType$Default()
+		    	.dstSet(descriptionHelper.getDescriptorSetHandler())
+	        	.dstBinding(INDEX_FRAGMENT)
 		    	.descriptorCount(1)
 		    	.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 		    	.pImageInfo(descriptorImageInfo);
@@ -216,6 +225,10 @@ public class Texture implements AutoCloseable {
 		if (imageMemory != NULL) {
 			vkFreeMemory(device, imageMemory, null);
 			imageMemory = NULL;
+		}
+		if (samplerHandler != NULL) {
+			vkDestroySampler(device, samplerHandler, null);
+			samplerHandler = NULL;
 		}
 		if (imageHandler != NULL) {
 			vkDestroyImage(device, imageHandler, null);

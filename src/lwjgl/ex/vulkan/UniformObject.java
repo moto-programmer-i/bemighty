@@ -31,7 +31,7 @@ public class UniformObject {
 		return data;
 	}
 	
-	public StagingBuffer createBuffer(MemoryStack stack, LogicalDevice logicalDevice) {
+	public StagingBuffer createBuffer(LogicalDevice logicalDevice) {
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
 			var uniformBuffer = buffer.getFloatBuffer(0, BYTES);
 			uniformBuffer.put(data);
