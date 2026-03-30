@@ -1,14 +1,12 @@
 package lwjgl.ex.vulkan;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.assimp.AITexture;
+
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkExtent3D;
 import org.lwjgl.vulkan.VkImageCreateInfo;
-import org.lwjgl.vulkan.VkImageMemoryBarrier;
 import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkImageSubresourceLayers;
 import org.lwjgl.vulkan.VkMemoryRequirements;
@@ -18,12 +16,9 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet;
 import motopgi.utils.ExceptionUtils;
 
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.VK10.vkDestroyBuffer;
-import static org.lwjgl.vulkan.VK10.vkFreeMemory;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.awt.image.BufferedImage;
-import java.nio.LongBuffer;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.ImageViewSettings.*;
@@ -31,23 +26,21 @@ import static lwjgl.ex.vulkan.VertexDescriptionHelper.*;
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
 
 public class Texture implements AutoCloseable {
-	public static final int DEFAULT_IMAGE_DEPTH = 1;
-	public static final int DEFAULT_IMAGE_MIP_LEVEL = 1;
-	public static final int DEFAULT_IMAGE_ARRAY_LAYER = 1;
 	/**
 	 * おそらくARGB分で4バイト
 	 */
 	public static final int PIXEL_BYTES = 4;
 	
+	public static final int DEFAULT_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
+	
 	private StagingBuffer textureBuffer;
-	private long imageHandler;
-	private long imageMemory;
 	private CommandBuffer commandBuffer;
 	private ImageView textureImageView;
 	
 	private BufferedImage image;
 	private LogicalDevice logicalDevice;
 	
+	private Handler imageHandler;
 	private long samplerHandler;
 	
 	
@@ -70,41 +63,13 @@ public class Texture implements AutoCloseable {
 		// これは遅いらしいが、動作確認のため一旦こうする
 		bufferSettings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 		
-		textureBuffer = new StagingBuffer(bufferSettings);		
+		textureBuffer = new StagingBuffer(bufferSettings);
+
+		// createImage(texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
+		imageHandler = ImageView.createImage(new ImageSettings(logicalDevice, image.getWidth(), image.getHeight(), DEFAULT_FORMAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+		
 		
 		try(var stack = MemoryStack.stackPush()) {
-			// createImage(texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
-			var imageInfo = VkImageCreateInfo.calloc(stack).sType$Default()
-				.imageType(VK_IMAGE_TYPE_2D)
-				.format(VK_FORMAT_R8G8B8A8_SRGB)
-				.extent(VkExtent3D.malloc(stack).width(image.getWidth()).height(image.getHeight()).depth(DEFAULT_IMAGE_DEPTH))
-				.mipLevels(DEFAULT_IMAGE_MIP_LEVEL)
-				.arrayLayers(DEFAULT_IMAGE_ARRAY_LAYER)
-				.samples(VK_SAMPLE_COUNT_1_BIT)
-				.tiling(VK_IMAGE_TILING_OPTIMAL)
-				.usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
-				.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
-			
-			var device = logicalDevice.getDevice();
-			
-			var forImage = stack.mallocLong(1);
-			Vulkan.throwExceptionIfFailed(vkCreateImage(device, imageInfo, null, forImage), "Textureの作成に失敗しました");
-			imageHandler = forImage.get(0);
-			var memoryRequirements = VkMemoryRequirements.calloc(stack);
-			vkGetImageMemoryRequirements(device, imageHandler, memoryRequirements);
-			
-			
-			
-			// Imageの方ではMEMORY_PROPERTY_FLAGS_VISIBLEが対応していなかった
-//			bufferSettings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
-			
-			// 恐らくImageのインスタンスを送っている？？？
-			// 本来、Imageのインスタンスを送るときに画像データも送るべき
-			var forImageMemory = stack.mallocLong(1);
-			imageMemory = StagingBuffer.allocateMemory(imageHandler, logicalDevice, MEMORY_PROPERTY_FLAGS_DESTINATION, memoryRequirements, stack, forImageMemory);
-			Vulkan.throwExceptionIfFailed(vkBindImageMemory(device, imageHandler, imageMemory, DEFAULT_LONG_OFFSETS), "Imageインスタンスのメモリへの紐づけに失敗しました");
-
-
 			// まとめてsubmitできないのか？
 			transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, queue, stack);
 			copyBufferToImage(stack, queue);
@@ -113,8 +78,8 @@ public class Texture implements AutoCloseable {
 			
 			// createImageView
 			var textureImageViewSettings = new ImageViewSettings(logicalDevice);
-	        textureImageViewSettings.setFormat(imageInfo.format());
-	        textureImageViewSettings.setImageHandler(imageHandler);
+	        textureImageViewSettings.setFormat(DEFAULT_FORMAT);
+	        textureImageViewSettings.setImageHandler(imageHandler.getHandler());
 	        textureImageView = new ImageView(textureImageViewSettings);
 	        
 	     // https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
@@ -175,7 +140,7 @@ public class Texture implements AutoCloseable {
 		var barrier = VkImageMemoryBarrier2.calloc(1, stack).sType$Default()
 			.oldLayout(oldLayout)
 			.newLayout(newLayout)
-			.image(imageHandler)
+			.image(imageHandler.getHandler())
 			.subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
 		
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
@@ -214,7 +179,7 @@ public class Texture implements AutoCloseable {
 		    .imageExtent(VkExtent3D.calloc(stack).set(image.getWidth(), image.getHeight(), 1))
 		    ;
 		
-		commandBuffer.copyBufferToImage(textureBuffer, imageHandler, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region);
+		commandBuffer.copyBufferToImage(textureBuffer, imageHandler.getHandler(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region);
 		commandBuffer.submit(stack, queue);
 	}
 
@@ -222,23 +187,15 @@ public class Texture implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		var device = logicalDevice.getDevice();
-		if (imageMemory != NULL) {
-			vkFreeMemory(device, imageMemory, null);
-			imageMemory = NULL;
-		}
 		if (samplerHandler != NULL) {
 			vkDestroySampler(device, samplerHandler, null);
 			samplerHandler = NULL;
 		}
-		if (imageHandler != NULL) {
-			vkDestroyImage(device, imageHandler, null);
-			imageHandler = NULL;
-		}
-		ExceptionUtils.close(textureImageView, commandBuffer, textureBuffer);
+		ExceptionUtils.close(textureImageView, imageHandler, commandBuffer, textureBuffer);
 	}
 
 
-	public long getImageHandler() {
+	public Handler getImageHandler() {
 		return imageHandler;
 	}
 

@@ -131,4 +131,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	public VkRenderingInfo getRenderingInfo() {
 		return renderingInfo;
 	}
+
+	
+	
 }

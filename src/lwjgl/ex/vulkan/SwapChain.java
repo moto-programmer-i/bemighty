@@ -34,6 +34,8 @@ public class SwapChain implements AutoCloseable {
 	private final ExecutorService threadPool = Executors.newCachedThreadPool();
 	
 	private final List<Consumer<SwapChain>> recreateListeners = new ArrayList<>();
+	
+	private ImageView depthImageView;
 
 	public SwapChain(SwapChainSettings settings) {
 		this.settings = settings;
@@ -116,6 +118,11 @@ public class SwapChain implements AutoCloseable {
 					"Swapchainイメージの取得に失敗しました");
 
 			imageViews = ImageView.createArray(imageCount, swapchainImagesBuffer, settings.getImageViewSettings());
+			
+			// createDepthResources()
+			var depthFormat = settings.getLogicalDevice().getPhysicalDevice().findDepthFormat();
+			var imageSettings = new ImageSettings(settings.getLogicalDevice(), width, height, depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			depthImageView = ImageView.from(imageSettings, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 		}
 
 	}
@@ -201,7 +208,7 @@ public class SwapChain implements AutoCloseable {
 			return;
 		}
 		try {
-			ExceptionUtils.close(imageViews);
+			ExceptionUtils.close(imageViews, depthImageView);
 		} finally {
 			vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
 			handler = VK_NULL_HANDLE;
@@ -226,4 +233,9 @@ public class SwapChain implements AutoCloseable {
 	public boolean addRecreateListener(Consumer<SwapChain> listener) {
 		return recreateListeners.add(listener);
 	}
+
+	public ImageView getDepthImageView() {
+		return depthImageView;
+	}
+	
 }

@@ -27,6 +27,14 @@ public class ImageViewSettings {
 			.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
 			.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
 			.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
+	
+	public static final VkImageSubresourceRange DEPTH_SUBRESOURCE_RANGE = 
+			VkImageSubresourceRange.create()
+			.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT)
+			.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
+			.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
+			.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+			.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
 
 	private int aspectMask = DEFAULT_ASPECT_MASK;
 	private int baseArrayLayer = DEFAULT_BASE_ARRAY_LAYER;
@@ -42,6 +50,7 @@ public class ImageViewSettings {
 	private long imageHandler;
 
 	private LogicalDevice logicalDevice;
+	
 
 	public ImageViewSettings(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;

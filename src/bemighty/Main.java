@@ -147,8 +147,6 @@ public class Main {
 							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper)) {
 								
 								
-								if (true) return;
-								
 								try (var command = new DrawModelCommand(testModel, BACKGROUND, swapChain, pipeline)) {
 									final int testCount = 1;
 									for(int i = 0; i < testCount; ++i) {
