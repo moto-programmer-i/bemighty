@@ -3,6 +3,11 @@ package lwjgl.ex.vulkan;
 public class SwapChainSettings {
 	public static final int DEFAULT_IMAGE_ARRAY_LAYERS = 1;
 	public static final int DEFAULT_RECREATE_DEBOUNCE_MILLIISECONDS = 500;
+	// ここにいれるべきでない可能性があるが、一旦ここで
+	public static final float DEFAULT_CAMERA_NEAR = 0.1f;
+	public static final float DEFAULT_CAMERA_FAR = 100f;
+	public static final float DEFAULT_CAMERA_ANGLE = 0.5f;
+	
 	private Window window;
 	private LogicalDevice logicalDevice;
 	private Surface surface;
@@ -13,6 +18,11 @@ public class SwapChainSettings {
 	private int recreteDebounceMilliseconds = DEFAULT_RECREATE_DEBOUNCE_MILLIISECONDS;
 	
 	private ImageViewSettings imageViewSettings;
+	
+	// カメラのクリッピングをどこに設定するべきか不明
+	private float cameraAngle = DEFAULT_CAMERA_ANGLE;
+	private float cameraNear = DEFAULT_CAMERA_NEAR;
+	private float cameraFar = DEFAULT_CAMERA_NEAR;
 	
 	public SwapChainSettings(Window window, LogicalDevice logicalDevice, Surface surface) {
 		this.window = window;
@@ -75,5 +85,23 @@ public class SwapChainSettings {
 	}
 	public void setRecreteDebounceMilliseconds(int recreteDebounceMilliseconds) {
 		this.recreteDebounceMilliseconds = recreteDebounceMilliseconds;
+	}
+	public float getCameraNear() {
+		return cameraNear;
+	}
+	public void setCameraNear(float cameraNear) {
+		this.cameraNear = cameraNear;
+	}
+	public float getCameraFar() {
+		return cameraFar;
+	}
+	public void setCameraFar(float cameraFar) {
+		this.cameraFar = cameraFar;
+	}
+	public float getCameraAngle() {
+		return cameraAngle;
+	}
+	public void setCameraAngle(float cameraAngle) {
+		this.cameraAngle = cameraAngle;
 	}
 }

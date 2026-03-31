@@ -16,6 +16,8 @@ import static org.lwjgl.vulkan.VK14.*;
 
 import motopgi.utils.AutoCloseableList;
 import motopgi.utils.ExceptionUtils;
+import motopgi.utils.FloatVector3;
+
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
 
@@ -40,13 +42,14 @@ public class Model implements AutoCloseable {
 	private int[] indices;
 	private long indicesBytes = 0;
 	private StagingBuffer indexBuffer;
+	private UniformObject uniformObject;
 	private AutoCloseableList<Texture> textures;
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper) {
-		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, DEFAULT_IMPORT_FILE_FLAG);
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, SwapChain swapChain) {
+		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, swapChain, DEFAULT_IMPORT_FILE_FLAG);
 	}
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, int importFileFlag) {
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, SwapChain swapChain, int importFileFlag) {
 		this.model = Assimp.aiImportFile(modelPath.toString(), importFileFlag);
 		this.logicalDevice = logicalDevice;
 		
@@ -79,8 +82,17 @@ public class Model implements AutoCloseable {
         	indicesBytes += Integer.BYTES * indices.length;
         }
         
+        uniformObject = new UniformObject(logicalDevice);
+        // 初期化
+        uniformObject.modelToUnit();
+        swapChain.setView(uniformObject);
+        
+        // 描画範囲初期化
+        onSwapChainRecreate(swapChain);
+     	swapChain.addRecreateListener(this::onSwapChainRecreate);
+        
         // Textureの取得
-        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper);
+        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);
         
         
         // GPUへ送信
@@ -128,7 +140,7 @@ public class Model implements AutoCloseable {
 		if(model == null) {
 			return;
 		}
-		ExceptionUtils.close(textures, indexBuffer, vertexBuffer, meshes, model);
+		ExceptionUtils.close(uniformObject, textures, indexBuffer, vertexBuffer, meshes, model);
 		model = null;
 	}
 	
@@ -146,6 +158,11 @@ public class Model implements AutoCloseable {
 
 	public int[] getIndices() {
 		return indices;
+	}
+
+	public void onSwapChainRecreate(SwapChain swapChain) {
+		swapChain.setProjection(uniformObject);
+		uniformObject.update();
 	}
 	
 }

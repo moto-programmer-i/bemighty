@@ -1,5 +1,8 @@
+#extension GL_EXT_debug_printf : enable
+
 // 参考
 // https://docs.vulkan.org/tutorial/latest/_attachments/27_shader_depth.slang
+
 
 struct VSInput {
     float3 inPosition;
@@ -24,9 +27,15 @@ struct VSOutput
 [shader("vertex")]
 VSOutput vertMain(VSInput input) {
     VSOutput output;
-    output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
+    // デバッグのためコメントアウト
+    // output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
+    // 変換なしなら何かがでるが、おかしい
+    output.pos = float4(input.inPosition, 1.0);
+    
     output.fragColor = input.inColor;
     output.fragTexCoord = input.inTexCoord;
+    
+    
     return output;
 }
 

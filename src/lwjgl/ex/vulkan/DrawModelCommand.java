@@ -60,7 +60,7 @@ public class DrawModelCommand implements Command, AutoCloseable {
 					.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 					.imageView(swapChain.getDepthImageView().getHandler())
 		            .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-		            .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
+		            .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
 		            .clearValue(
 		            		VkClearValue.calloc(stack).depthStencil(
 		            				VkClearDepthStencilValue.calloc(stack).depth(depth)
@@ -73,6 +73,7 @@ public class DrawModelCommand implements Command, AutoCloseable {
 	@Override
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain,
 			ImageView nextSwapChainImageView) {
+		
 		// transitionまでは、ClearColorと共通
 		clearColor.run(stack, commandBuffer, swapChain, nextSwapChainImageView, () -> {
 			

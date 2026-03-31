@@ -54,8 +54,6 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	private int[] offsets;
 	private int bytes = 0;
 	
-	private UniformObject uniformObject = new UniformObject();
-	private StagingBuffer uniformBuffer;
 	
 	private LongBuffer forDescriptorSet = MemoryUtil.memAllocLong(1);
 	private LongBuffer forDescriptorPool = MemoryUtil.memAllocLong(1);
@@ -168,21 +166,14 @@ public class VertexDescriptionHelper implements AutoCloseable {
 					.descriptorPool(forDescriptorPool.get(0));
 			Vulkan.throwExceptionIfFailed(vkAllocateDescriptorSets(logicalDevice.getDevice(), allocate, forDescriptorSet),
 	                "DescriptorSetsの割り当てに失敗しました");
-			
-			uniformBuffer = uniformObject.createBuffer(logicalDevice);
 		}
 	}
 
 	@Override
 	public void close() throws Exception {
-		try {
-			vkDestroyDescriptorSetLayout(logicalDevice.getDevice(), forLayouts.get(0), null);
-			// Poolを削除すればDescriptorSetも消える
-			vkDestroyDescriptorPool(logicalDevice.getDevice(), forDescriptorPool.get(0), null);
-		} finally {
-			ExceptionUtils.close(uniformBuffer);	
-		}
-		
+		vkDestroyDescriptorSetLayout(logicalDevice.getDevice(), forLayouts.get(0), null);
+		// Poolを削除すればDescriptorSetも消える
+		vkDestroyDescriptorPool(logicalDevice.getDevice(), forDescriptorPool.get(0), null);
 	}
 	
 	
@@ -192,10 +183,6 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	}
 	public long getDescriptorSetHandler() {
 		return forDescriptorSet.get(0);
-	}
-
-	public StagingBuffer getUniformBuffer() {
-		return uniformBuffer;
 	}
 
 	public LongBuffer getForLayouts() {

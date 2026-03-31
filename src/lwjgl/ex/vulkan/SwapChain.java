@@ -20,10 +20,16 @@ import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
 import motopgi.utils.ExceptionUtils;
+import motopgi.utils.FloatVector3;
 
 import static org.lwjgl.vulkan.VK14.*;
 
 public class SwapChain implements AutoCloseable {
+	// カメラのクラスを用意するべきか？
+	private FloatVector3 camera = new FloatVector3(0f, 0.5f, -10f);
+	private FloatVector3 cameraDirection = new FloatVector3(0f, 0f, 1f);
+	private FloatVector3 cameraUp = new FloatVector3(0f, 0f, 1f);
+	
 	private final SwapChainSettings settings;
 	private long handler;
 	private ImageView[] imageViews;
@@ -236,6 +242,19 @@ public class SwapChain implements AutoCloseable {
 
 	public ImageView getDepthImageView() {
 		return depthImageView;
+	}
+	
+	public void setView(UniformObject uniformObject) {
+		uniformObject.setView(camera, cameraDirection, cameraUp);
+	}
+	
+	public void setProjection(UniformObject uniformObject) {
+		// kx : ky = 横 : 縦 でないと歪む
+		// https://chaosplant.tech/do/vulkan/5-14/#pasuwotukeru-1
+		var ratio = (float)height / width;
+		var kx = settings.getCameraAngle();
+		var ky = kx * ratio;
+		uniformObject.perspective(kx, ky, settings.getCameraNear(), settings.getCameraFar());
 	}
 	
 }

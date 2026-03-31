@@ -30,6 +30,7 @@ public class StagingBuffer implements AutoCloseable {
 //    private long mappedMemory = NULL;
 //    private PointerBuffer forMappedMemory;
 	private LongBuffer forMemory = MemoryUtil.memAllocLong(1);
+	PointerBuffer forMap = MemoryUtil.memAllocPointer(1);
 
 	private StagingBufferSettings settings;
 
@@ -77,7 +78,6 @@ public class StagingBuffer implements AutoCloseable {
 			if (!settings.isMap()) {
 				return;
 			}
-			PointerBuffer forMap = stack.mallocPointer(1);
 			Vulkan.throwExceptionIfFailed(vkMapMemory(device, memory, 0, settings.getSize(), 0, forMap),
 					"vkMapMemoryエラー");
 			settings.getCopy().accept(forMap);
@@ -85,6 +85,11 @@ public class StagingBuffer implements AutoCloseable {
 				vkUnmapMemory(device, memory);
 			}
 		}
+	}
+	
+	public void update() {
+		// これでいいのか不明
+		settings.getCopy().accept(forMap);
 	}
 	
 	

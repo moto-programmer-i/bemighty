@@ -44,7 +44,7 @@ public class Texture implements AutoCloseable {
 	private long samplerHandler;
 	
 	
-	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper) {
+	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, UniformObject uniformObject) {
 		this.image = image;
 		this.logicalDevice = logicalDevice;
 		commandBuffer = new CommandBuffer(new CommandBufferSettings(commandPool));
@@ -54,7 +54,6 @@ public class Texture implements AutoCloseable {
 			AssimpUtils.writeImageToPointer(image, buffer);
 		});
 		bufferSettings.setSize(AssimpUtils.calcSize(image));
-		System.out.println("image buffer size " + bufferSettings.getSize());
 		
 		// 2の方はlongになっているが、不明
 		// VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT
@@ -82,6 +81,10 @@ public class Texture implements AutoCloseable {
 	        textureImageViewSettings.setImageHandler(imageHandler.getHandler());
 	        textureImageView = new ImageView(textureImageViewSettings);
 	        
+	        
+	        // ここでやることでない可能性が高い、現在は不明
+	        // テクスチャが複数あるとバグる可能性大
+	        
 	     // https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
 	        // createTextureSampler
 	        var samplerCreate = VkSamplerCreateInfo.calloc(stack).sType$Default()
@@ -106,7 +109,7 @@ public class Texture implements AutoCloseable {
 	        	.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	        
 	        var descriptorBufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
-	        		.buffer(descriptionHelper.getUniformBuffer().getHandler())
+	        		.buffer(uniformObject.getBuffer().getHandler())
 	        		.range(UniformObject.BYTES);
 	        
 	        var descriptorSet = VkWriteDescriptorSet.calloc(DEFAULT_DESCRIPTOR_COUNT, stack).sType$Default();
@@ -127,8 +130,6 @@ public class Texture implements AutoCloseable {
 
 	        
 	        vkUpdateDescriptorSets(logicalDevice.getDevice(), descriptorSet, null);
-
-
 		}
 	}
 	

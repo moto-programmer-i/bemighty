@@ -144,7 +144,7 @@ public class Main {
 							
 							// 頂点の重複を削除できてない。なぜ？
 //							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
-							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper)) {
+							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
 								
 								
 								try (var command = new DrawModelCommand(testModel, BACKGROUND, swapChain, pipeline)) {
