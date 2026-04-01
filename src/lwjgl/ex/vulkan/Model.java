@@ -7,6 +7,7 @@ import java.nio.LongBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import org.lwjgl.assimp.AIColor4D;
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
 import org.lwjgl.assimp.AIString;
@@ -77,15 +78,16 @@ public class Model implements AutoCloseable {
         	// 画面の中心が（0, 0）、長さ1まで
         	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
 
+        	
+        	
+        	
         	vertices = new float[] {
-                	// 頂点　　　　色        テクスチャ座標
-        			0f, -0.5f, 0f, 0f,0f,0f, 0f,0f,
-        			0.5f, 0.5f, 0f, 0f,0f,0f, 0f,0f,
-        			-0.5f, 0.5f, 0f, 0f,0f,0f, 0f,0f};
-//        	verticesBytes += Float.BYTES * vertices.length;
+                	// 頂点				テクスチャ座標
+        			0f, -0.5f, 0f,		0f,0f,
+        			0.5f, 0.5f, 0f,		0f,0f,
+        			-0.5f, 0.5f, 0f,	0f,0f};
 //        	indices = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
         	indices = new int[] {0, 1, 2};
-//        	indicesBytes += Integer.BYTES * indices.length;
         	
 //        	// index
 //        	var numFaces = mesh.mNumFaces();

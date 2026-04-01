@@ -1,34 +1,39 @@
-static float2 positions[3] = float2[](
-    float2(0.0, -0.5),
-    float2(0.5, 0.5),
-    float2(-0.5, 0.5)
-);
-
-static float3 tempColor = float3(0.0, 1.0, 0.0);
-
 struct VSInput {
     float3 inPosition;
-    float3 inColor;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 inColor;
     float2 inTexCoord;
 };
 
 struct VertexOutput {
-    float3 color;
-    float4 sv_position : SV_Position;
+    float4 position : SV_Position;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 color;
+    float2 texCoord;
 };
 
+// すべての頂点に対して呼び出される
 [shader("vertex")]
 VertexOutput vertMain(VSInput input) {
     VertexOutput output;
-    // output.sv_position = float4(positions[vid], 0.0, 1.0);
-    output.sv_position = float4(input.inPosition, 1.0);
-    output.color = tempColor;
+    output.position = float4(input.inPosition, 1.0);
+    // output.color = input.inColor;
+    output.texCoord = input.inTexCoord;
     return output;
 }
+
+// 処理上必要らしいが、詳細が不明。slangのAPIの場所が不明
+Sampler2D texture;
+
+// デバッグ用 RGBA（現状Aが効いてないが、不明）
+static float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
 
 [shader("fragment")]
 float4 fragMain(VertexOutput inVert) : SV_Target
 {
-    float3 color = inVert.color;
-    return float4(color, 1.0);
+    // なにかの処理。謎。
+    // return texture.Sample(inVert.texCoord);
+    
+    // 色を直接出力したい場合
+    return tempColor;
 }

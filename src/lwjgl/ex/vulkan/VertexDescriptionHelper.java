@@ -46,7 +46,17 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	 */
 	public static final int FIRST_SET = 0;
 	
-	public static final int[] DEFAULT_FORMATS = {VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32_SFLOAT};
+	public static final int[] DEFAULT_FORMATS = {
+			// shader.slangのVSInputと対応。
+			// inPosition
+			VK_FORMAT_R32G32B32_SFLOAT,
+
+// チュートリアルでは色を送る形式にはなっているが、現状使用していない
+//			// inColor
+//			VK_FORMAT_R32G32B32_SFLOAT,
+			
+			// inTexCoord
+			VK_FORMAT_R32G32_SFLOAT};
 	
 	private LogicalDevice logicalDevice;
 	
