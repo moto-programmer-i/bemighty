@@ -2,8 +2,10 @@ package lwjgl.ex.vulkan;
 
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
@@ -36,11 +38,9 @@ public class Model implements AutoCloseable {
 	// 複数モデルの場合は保留
 	
 	private float[] vertices;
-	private long verticesBytes = 0;
 	private StagingBuffer vertexBuffer;
 	
 	private int[] indices;
-	private long indicesBytes = 0;
 	private StagingBuffer indexBuffer;
 	private UniformObject uniformObject;
 	private AutoCloseableList<Texture> textures;
@@ -55,31 +55,61 @@ public class Model implements AutoCloseable {
 		
 		int numMeshes = model.mNumMeshes();
         var mesheBuffers = model.mMeshes();
-        for (int i = 0; i < numMeshes; ++i) {
+        for (int m = 0; m < numMeshes; ++m) {
         	// createしなければいけないらしい
         	// Assimp自体はそうなっていないので、LWJGLの設計ミス？
-        	var mesh = AIMesh.create(mesheBuffers.get(i));
+        	var mesh = AIMesh.create(mesheBuffers.get(m));
         	meshes.add(mesh);
         	
         	// 頂点のサイズを追加
-        	var numVertices = mesh.mNumVertices();
-        	vertices = new float[(int) XYZ_COUNT * numVertices];
-        	verticesBytes += Float.BYTES * vertices.length;
+//        	var numVertices = mesh.mNumVertices();
+//        	vertices = new float[(int) XYZ_COUNT * numVertices];
+//        	verticesBytes += Float.BYTES * vertices.length;
+//        	
+//        	// mesh複数の場合は保留
+//        	var verticesBuffer = mesh.mVertices();
+//        	for(int v = 0, index = 0; v < numVertices; ++v) {
+//        		var vertex = verticesBuffer.get(v);
+//        		vertices[index++] = vertex.x();
+//        		vertices[index++] = vertex.y();
+//        		vertices[index++] = vertex.z();
+//        	}
+        	// 画面の中心が（0, 0）、長さ1まで
+        	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
+
+        	vertices = new float[] {
+                	// 頂点　　　　色        テクスチャ座標
+        			0f, -0.5f, 0f, 0f,0f,0f, 0f,0f,
+        			0.5f, 0.5f, 0f, 0f,0f,0f, 0f,0f,
+        			-0.5f, 0.5f, 0f, 0f,0f,0f, 0f,0f};
+//        	verticesBytes += Float.BYTES * vertices.length;
+//        	indices = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
+        	indices = new int[] {0, 1, 2};
+//        	indicesBytes += Integer.BYTES * indices.length;
         	
-        	// mesh複数の場合は保留
-        	var verticesBuffer = mesh.mVertices();
-        	for(int v = 0, index = 0; v < numVertices; ++v) {
-        		var vertex = verticesBuffer.get(v);
-        		vertices[index++] = vertex.x();
-        		vertices[index++] = vertex.y();
-        		vertices[index++] = vertex.z();
-        	}
-        	
-        	
-        	// indexのサイズを追加
-        	// 一旦べたがき
-        	indices = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
-        	indicesBytes += Integer.BYTES * indices.length;
+//        	// index
+//        	var numFaces = mesh.mNumFaces();
+////        	System.out.println("faces " + numFaces);
+//        	var faces = mesh.mFaces();
+//        	int indicesLength = 0;
+//        	// faceに分かれてしまっているので、面倒だがまず要素数を取得しなければならない
+//        	for(int f = 0; f < numFaces; ++f) {
+//        		var face = faces.get(f);
+//        		indicesLength += face.mNumIndices();
+//        	}
+//        	indices = new int[indicesLength];
+//        	indicesBytes += Integer.BYTES * indices.length;
+//        	
+//        	//index取得
+//        	int allIndicesIndex = 0;
+//        	for(int f = 0; f < numFaces; ++f) {
+//        		var face = faces.get(f);
+//        		var numIndices = face.mNumIndices();
+//        		var mIndices = face.mIndices();
+//        		for(int i = 0; i < numIndices; ++i) {
+//        			indices[allIndicesIndex++] = mIndices.get(i);
+//        		}
+//        	}
         }
         
         uniformObject = new UniformObject(logicalDevice);
@@ -102,10 +132,10 @@ public class Model implements AutoCloseable {
 	
 	private StagingBufferSettings createVertexBufferSettings() {
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			var vertexBuffer = buffer.getFloatBuffer(0, (int)verticesBytes);
+			var vertexBuffer = buffer.getFloatBuffer(0, vertices.length);
 			vertexBuffer.put(vertices);
 		});
-		settings.setSize(verticesBytes);
+		settings.setSize(Float.BYTES * vertices.length);
 //		settings.setUsage(USAGE_VERTEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
 		settings.setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -119,10 +149,10 @@ public class Model implements AutoCloseable {
 	
 	private StagingBufferSettings createIndexBufferSettings() {
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			var indexBuffer = buffer.getIntBuffer(0, (int)indicesBytes);
+			var indexBuffer = buffer.getIntBuffer(0, indices.length);
 			indexBuffer.put(indices);
 		});
-		settings.setSize(indicesBytes);
+		settings.setSize(Integer.BYTES * Float.BYTES * indices.length);
 //		settings.setUsage(USAGE_INDEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
 		settings.setUsage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);

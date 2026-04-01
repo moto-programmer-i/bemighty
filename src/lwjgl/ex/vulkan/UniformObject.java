@@ -24,17 +24,18 @@ public class UniformObject implements AutoCloseable {
 	// 3DCGの知識(MVP行列)
 	// https://chaosplant.tech/do/vulkan/5-14/
 	public static final int MATRIX4_NUMS = 4 * 4;
-	public static final int MATRIX4_BYTES = Float.BYTES * MATRIX4_NUMS;
-	public static final int MODEL_BYTES = MATRIX4_BYTES;
+//	public static final int MATRIX4_BYTES = Float.BYTES * MATRIX4_NUMS;
+//	public static final int MODEL_BYTES = MATRIX4_BYTES;
 	
 	public static final int VIEW_INDEX = MATRIX4_NUMS;
-	public static final int VIEW_BYTES = MATRIX4_BYTES;
+//	public static final int VIEW_BYTES = MATRIX4_BYTES;
 	
 	public static final int PROJECTION_INDEX = VIEW_INDEX + MATRIX4_NUMS;
-	public static final int PROJECTION_BYTES = MATRIX4_BYTES;
-	public static final int BYTES = MODEL_BYTES + VIEW_BYTES + PROJECTION_BYTES;
-	
-	private final float[] data = new float[BYTES];
+//	public static final int PROJECTION_BYTES = MATRIX4_BYTES;
+
+	public static final int LENGTH = PROJECTION_INDEX + MATRIX4_NUMS;
+	private final float[] data = new float[LENGTH];
+	public static final int BYTES = Float.BYTES * LENGTH;
 	
 //	private final AIMatrix4x4.Buffer model = AIMatrix4x4.calloc(1);
 //	private final AIMatrix4x4.Buffer view = AIMatrix4x4.calloc(1);
@@ -44,7 +45,7 @@ public class UniformObject implements AutoCloseable {
 	
 	public UniformObject(LogicalDevice logicalDevice) {
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			var uniformBuffer = buffer.getFloatBuffer(0, BYTES);
+			var uniformBuffer = buffer.getFloatBuffer(0, data.length);
 			uniformBuffer.put(data);
 		});
 		settings.setSize(BYTES);

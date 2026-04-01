@@ -1,0 +1,57 @@
+#extension GL_EXT_debug_printf : enable
+
+// 参考
+// https://docs.vulkan.org/tutorial/latest/_attachments/27_shader_depth.slang
+
+
+struct VSInput {
+    float3 inPosition;
+    float3 inColor;
+    float2 inTexCoord;
+};
+
+struct UniformBuffer {
+    float4x4 model;
+    float4x4 view;
+    float4x4 proj;
+};
+ConstantBuffer<UniformBuffer> ubo;
+
+struct VSOutput
+{
+    float4 pos : SV_Position;
+    float3 fragColor;
+    float2 fragTexCoord;
+};
+
+// デバッグ用
+static float3 tempColor = float3(0.0, 1.0, 0.0);
+
+
+// すべての頂点に対して呼び出される
+[shader("vertex")]
+VSOutput vertMain(VSInput input) {
+    VSOutput output;
+    // デバッグのためコメントアウト
+    // output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
+    // 変換なしなら何かがでるが、おかしい
+    output.pos = float4(input.inPosition, 1.0);
+    
+    output.fragColor = input.inColor;
+    
+    output.fragColor = tempColor;
+    
+    output.fragTexCoord = input.inTexCoord;
+    
+    
+    return output;
+}
+
+Sampler2D texture;
+
+
+
+[shader("fragment")]
+float4 fragMain(VSOutput vertIn) : SV_TARGET {
+   return texture.Sample(vertIn.fragTexCoord);
+}

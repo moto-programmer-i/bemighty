@@ -1,9 +1,7 @@
-#version 450
-
-
 // 参考
 // https://docs.vulkan.org/tutorial/latest/_attachments/27_shader_depth.vert
 
+これは関係あるのか？何を書いてもエラーにならない
 
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
@@ -19,7 +17,9 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+	// 一旦変換を諦め
+    // gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    gl_Position = vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
 }

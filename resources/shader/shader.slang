@@ -1,8 +1,10 @@
-#extension GL_EXT_debug_printf : enable
+static float2 positions[3] = float2[](
+    float2(0.0, -0.5),
+    float2(0.5, 0.5),
+    float2(-0.5, 0.5)
+);
 
-// 参考
-// https://docs.vulkan.org/tutorial/latest/_attachments/27_shader_depth.slang
-
+static float3 tempColor = float3(0.0, 1.0, 0.0);
 
 struct VSInput {
     float3 inPosition;
@@ -10,38 +12,23 @@ struct VSInput {
     float2 inTexCoord;
 };
 
-struct UniformBuffer {
-    float4x4 model;
-    float4x4 view;
-    float4x4 proj;
-};
-ConstantBuffer<UniformBuffer> ubo;
-
-struct VSOutput
-{
-    float4 pos : SV_Position;
-    float3 fragColor;
-    float2 fragTexCoord;
+struct VertexOutput {
+    float3 color;
+    float4 sv_position : SV_Position;
 };
 
 [shader("vertex")]
-VSOutput vertMain(VSInput input) {
-    VSOutput output;
-    // デバッグのためコメントアウト
-    // output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
-    // 変換なしなら何かがでるが、おかしい
-    output.pos = float4(input.inPosition, 1.0);
-    
-    output.fragColor = input.inColor;
-    output.fragTexCoord = input.inTexCoord;
-    
-    
+VertexOutput vertMain(VSInput input) {
+    VertexOutput output;
+    // output.sv_position = float4(positions[vid], 0.0, 1.0);
+    output.sv_position = float4(input.inPosition, 1.0);
+    output.color = tempColor;
     return output;
 }
 
-Sampler2D texture;
-
 [shader("fragment")]
-float4 fragMain(VSOutput vertIn) : SV_TARGET {
-   return texture.Sample(vertIn.fragTexCoord);
+float4 fragMain(VertexOutput inVert) : SV_Target
+{
+    float3 color = inVert.color;
+    return float4(color, 1.0);
 }
