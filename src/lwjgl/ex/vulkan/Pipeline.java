@@ -110,6 +110,7 @@ public class Pipeline implements AutoCloseable {
                     .sType$Default()
                     .renderPass(VK_NULL_HANDLE)
                     
+                    .stageCount(settings.getShader().getStageCount())
                     // shaderが複数になった場合の対処法不明
                     .pStages(settings.getShader().createStageBuffer(stack))
                     

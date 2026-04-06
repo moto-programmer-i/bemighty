@@ -84,8 +84,7 @@ public class DrawModelCommand implements Command, AutoCloseable {
 				commandBuffer.setScissorFrom(swapChain, stack);
 				commandBuffer.bind(model);
 				commandBuffer.bindDescriptorSets(pipeline);
-				commandBuffer.drawIndexed(model.getIndices().length, instanceCount, firstIndex, vertexOffset,
-						firstInstance);
+				commandBuffer.drawIndexed(model.getIndices().length, instanceCount, firstIndex, vertexOffset, firstInstance);
 
 			});
 		});

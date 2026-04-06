@@ -5,7 +5,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.lwjgl.assimp.AIColor4D;
 import org.lwjgl.assimp.AIMesh;
@@ -19,6 +21,7 @@ import static org.lwjgl.vulkan.VK14.*;
 
 import motopgi.utils.AutoCloseableList;
 import motopgi.utils.ExceptionUtils;
+import motopgi.utils.FloatVector2;
 import motopgi.utils.FloatVector3;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
@@ -79,13 +82,29 @@ public class Model implements AutoCloseable {
         	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
 
         	
+        	// テクスチャ読み込み
+//        	System.out.println("numTextureCoords " + numTextureCoords);
+        	List<FloatVector2> textures = new ArrayList<>();
+        	var forTextureCoords = mesh.mTextureCoords();
+        	var textureCoordAddress = forTextureCoords.get();
+        	for(int i = 0; textureCoordAddress != MemoryUtil.NULL; ++i, textureCoordAddress = forTextureCoords.get()) {
+        		var textureCoord = mesh.mTextureCoords(i);
+        		textures.add(new FloatVector2(textureCoord.x(), textureCoord.y()));
+        	}
+        	
+        	System.out.println("テクスチャ " +  textures.get(0));
+        	
+        	
+        	// テクスチャと頂点をマッピング
+        	// https://chaosplant.tech/do/vulkan/6-5/
+        	var texture = textures.get(0);
         	
         	
         	vertices = new float[] {
                 	// 頂点				テクスチャ座標
-        			0f, -0.5f, 0f,		0f,0f,
-        			0.5f, 0.5f, 0f,		0f,0f,
-        			-0.5f, 0.5f, 0f,	0f,0f};
+        			0f, -0.5f, 0f,		texture.getX(),texture.getY(),
+        			0.5f, 0.5f, 0f,		texture.getX(),texture.getY(),
+        			-0.5f, 0.5f, 0f,	texture.getX(),texture.getY()};
 //        	indices = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
         	indices = new int[] {0, 1, 2};
         	
@@ -118,13 +137,13 @@ public class Model implements AutoCloseable {
         // 初期化
         uniformObject.modelToUnit();
         swapChain.setView(uniformObject);
+
+     // Textureの取得
+        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);
         
         // 描画範囲初期化
         onSwapChainRecreate(swapChain);
      	swapChain.addRecreateListener(this::onSwapChainRecreate);
-        
-        // Textureの取得
-        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);
         
         
         // GPUへ送信

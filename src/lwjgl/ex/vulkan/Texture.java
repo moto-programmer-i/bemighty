@@ -123,7 +123,7 @@ public class Texture implements AutoCloseable {
 	        descriptorSet.get(INDEX_FRAGMENT)
 	        	.sType$Default()
 		    	.dstSet(descriptionHelper.getDescriptorSetHandler())
-	        	.dstBinding(INDEX_FRAGMENT)
+	        	 .dstBinding(INDEX_FRAGMENT)
 		    	.descriptorCount(1)
 		    	.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 		    	.pImageInfo(descriptorImageInfo);

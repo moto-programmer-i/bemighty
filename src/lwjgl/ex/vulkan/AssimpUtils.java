@@ -85,7 +85,6 @@ public final class AssimpUtils {
 		// フォーマットごとへの対応が必要
 		// VK_FORMAT_R8G8B8_SRGB
 		
-
 		var size = image.getWidth() * image.getHeight();
 		var destinationBytes = destination.getIntBuffer(size);
 		for (int y = 0; y < image.getHeight(); ++y) {

@@ -63,15 +63,21 @@ public class Shader implements AutoCloseable {
 		int stagesSize = settings.stagesSize();
 		var shaderStages = VkPipelineShaderStageCreateInfo.calloc(stagesSize, stack);
         for (int i = 0; i < stagesSize; ++i) {
-        	var stage = settings.getStage(i);
-            shaderStages.get(i)
-                    .sType$Default()
-                    .stage(stage.getStage())
+        	var stageSettings = settings.getStage(i);
+            shaderStages.get(i).sType$Default()
+                    .stage(stageSettings.getStage())
                     .module(handler)
                     // なぜかByteBufferに変換しなければいけない
-                    .pName(stack.UTF8(stage.getEntryPointName()));
+                    .pName(stack.UTF8(stageSettings.getEntryPointName()))
+                    ;
         }
+        
+        
         return shaderStages;
+	}
+	
+	public int getStageCount() {
+		return settings.stagesSize();
 	}
 	
 	

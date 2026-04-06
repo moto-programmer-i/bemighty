@@ -1,3 +1,5 @@
+// Model.javaのverticesと対応しなければならない。
+// 二重定義は避けたいが、現状どうしようもない
 struct VSInput {
     float3 inPosition;
     // チュートリアルでは含まれるが、今のところ使用していない
@@ -22,7 +24,7 @@ VertexOutput vertMain(VSInput input) {
     return output;
 }
 
-// 処理上必要らしいが、詳細が不明。slangのAPIの場所が不明
+// テクスチャが入っているらしい。どうやってバッファから受け取っているかは不明
 Sampler2D texture;
 
 // デバッグ用 RGBA（現状Aが効いてないが、不明）
@@ -31,9 +33,9 @@ static float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
 [shader("fragment")]
 float4 fragMain(VertexOutput inVert) : SV_Target
 {
-    // なにかの処理。謎。
-    // return texture.Sample(inVert.texCoord);
+    // テクスチャ座標から色を取得
+    return texture.Sample(inVert.texCoord);
     
     // 色を直接出力したい場合
-    return tempColor;
+    // return tempColor;
 }
