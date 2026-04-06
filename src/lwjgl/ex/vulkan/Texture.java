@@ -45,7 +45,6 @@ public class Texture implements AutoCloseable {
 	private LogicalDevice logicalDevice;
 	
 	private Handler imageHandler;
-	private long samplerHandler;
 	
 	
 	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, UniformObject uniformObject) {
@@ -90,25 +89,8 @@ public class Texture implements AutoCloseable {
 	        // テクスチャが複数あるとバグる可能性大
 	        
 	     // https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
-	        // createTextureSampler
-	        var samplerCreate = VkSamplerCreateInfo.calloc(stack).sType$Default()
-	        		.magFilter(VK_FILTER_LINEAR)
-	        		.minFilter(VK_FILTER_LINEAR)
-	        		.mipmapMode(VK_FILTER_LINEAR)
-	        		.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-	        		.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-	        		.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-	        		.mipLodBias(DEFAULT_BIAS)
-	        		.anisotropyEnable(true)
-	        		.maxAnisotropy(logicalDevice.getPhysicalDevice().getMaxSamplerAnisotropy())
-	        		.compareEnable(false)
-	        		.compareOp(VK_COMPARE_OP_ALWAYS);
-	        var forSampler = stack.mallocLong(1);
-	        Vulkan.throwExceptionIfFailed(vkCreateSampler(logicalDevice.getDevice(), samplerCreate, null,forSampler), "Samplerの作成に失敗しました");
-	        samplerHandler = forSampler.get(0);
-	        
 	        var descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack)
-	        	.sampler(samplerHandler)
+	        	.sampler(descriptionHelper.getSamplerHandler())
 	        	.imageView(textureImageView.getHandler())
 	        	.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	        
@@ -194,10 +176,6 @@ public class Texture implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		var device = logicalDevice.getDevice();
-		if (samplerHandler != NULL) {
-			vkDestroySampler(device, samplerHandler, null);
-			samplerHandler = NULL;
-		}
 		ExceptionUtils.close(textureImageView, imageHandler, commandBuffer, textureBuffer);
 	}
 

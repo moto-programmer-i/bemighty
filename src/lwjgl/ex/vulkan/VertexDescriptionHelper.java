@@ -2,6 +2,12 @@ package lwjgl.ex.vulkan;
 
 
 
+import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.VK10.VK_COMPARE_OP_ALWAYS;
+import static org.lwjgl.vulkan.VK10.VK_FILTER_LINEAR;
+import static org.lwjgl.vulkan.VK10.VK_SAMPLER_ADDRESS_MODE_REPEAT;
+import static org.lwjgl.vulkan.VK10.vkCreateSampler;
+import static org.lwjgl.vulkan.VK10.vkDestroySampler;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.nio.LongBuffer;
@@ -55,6 +61,8 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	private LongBuffer forDescriptorPool = MemoryUtil.memAllocLong(1);
 	private LongBuffer forLayouts = MemoryUtil.memAllocLong(1);
 
+	private long samplerHandler;
+
 	public VertexDescriptionHelper(LogicalDevice logicalDevice, ShaderSettings shaderSettings) {
 		this.logicalDevice = logicalDevice;
 		this.shaderSettings = shaderSettings;
@@ -68,7 +76,66 @@ public class VertexDescriptionHelper implements AutoCloseable {
 			offsets[i] = bytes;
 			bytes += formatToBytes(shaderSettings.getStage(i).getFormat());
 		}
-		initDescriptor(logicalDevice);
+		
+
+		try(var stack = MemoryStack.stackPush()) {
+			// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
+			var poolSize = VkDescriptorPoolSize.calloc(descriptorCount, stack);
+			
+			for(int i = 0; i < descriptorCount; ++i) {
+				poolSize.get(i)
+					.type(shaderStageToDescriptorType(shaderSettings.getStage(i)))
+					.descriptorCount(1);
+			}
+			
+			
+			var poolInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType$Default()
+					.flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+					.maxSets(descriptorCount)
+					.pPoolSizes(poolSize);
+			
+	//					descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
+			Vulkan.throwExceptionIfFailed(vkCreateDescriptorPool(logicalDevice.getDevice(), poolInfo, null, forDescriptorPool), "DescriptorPoolの作成に失敗しました");
+			
+			var bindings = VkDescriptorSetLayoutBinding.calloc(descriptorCount, stack);
+			
+			for(int i = 0; i < descriptorCount; ++i) {
+				var stage = shaderSettings.getStage(i);
+				bindings.get(i)
+				.binding(i)
+				.descriptorCount(1)
+				.descriptorType(shaderStageToDescriptorType(stage))
+				.stageFlags(stage.getStage());
+			}
+			
+			var layout = VkDescriptorSetLayoutCreateInfo.calloc(stack).sType$Default()
+					.pBindings(bindings);
+			Vulkan.throwExceptionIfFailed(vkCreateDescriptorSetLayout(logicalDevice.getDevice(), layout, null, forLayouts),
+	                "DescriptorSetLayoutの作成に失敗しました");
+			
+			var allocate = VkDescriptorSetAllocateInfo.calloc(stack).sType$Default()
+					.pSetLayouts(forLayouts)
+					.descriptorPool(forDescriptorPool.get(0));
+			Vulkan.throwExceptionIfFailed(vkAllocateDescriptorSets(logicalDevice.getDevice(), allocate, forDescriptorSet),
+	                "DescriptorSetsの割り当てに失敗しました");
+			
+			// createTextureSampler
+	        var samplerCreate = VkSamplerCreateInfo.calloc(stack).sType$Default()
+	        		.magFilter(VK_FILTER_LINEAR)
+	        		.minFilter(VK_FILTER_LINEAR)
+	        		.mipmapMode(VK_FILTER_LINEAR)
+	        		.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+	        		.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+	        		.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
+	        		.mipLodBias(DEFAULT_BIAS)
+	        		.anisotropyEnable(true)
+	        		.maxAnisotropy(logicalDevice.getPhysicalDevice().getMaxSamplerAnisotropy())
+	        		.compareEnable(false)
+	        		.compareOp(VK_COMPARE_OP_ALWAYS);
+	        var forSampler = stack.mallocLong(1);
+	        Vulkan.throwExceptionIfFailed(vkCreateSampler(logicalDevice.getDevice(), samplerCreate, null,forSampler), "Samplerの作成に失敗しました");
+	        samplerHandler = forSampler.get(0);
+		}
 	}
 	
 	/**
@@ -119,51 +186,6 @@ public class VertexDescriptionHelper implements AutoCloseable {
 		return vertexAttribute;
 	}
 	
-	private void initDescriptor(LogicalDevice logicalDevice) {
-	// どこまでstackを使えるのか不明
-		try(var stack = MemoryStack.stackPush()) {
-			// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
-			var poolSize = VkDescriptorPoolSize.calloc(descriptorCount, stack);
-			
-			for(int i = 0; i < descriptorCount; ++i) {
-				poolSize.get(i)
-					.type(shaderStageToDescriptorType(shaderSettings.getStage(i)))
-					.descriptorCount(1);
-			}
-			
-			
-			var poolInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType$Default()
-					.flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-					.maxSets(descriptorCount)
-					.pPoolSizes(poolSize);
-			
-	//					descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
-			Vulkan.throwExceptionIfFailed(vkCreateDescriptorPool(logicalDevice.getDevice(), poolInfo, null, forDescriptorPool), "DescriptorPoolの作成に失敗しました");
-			
-			var bindings = VkDescriptorSetLayoutBinding.calloc(descriptorCount, stack);
-			
-			for(int i = 0; i < descriptorCount; ++i) {
-				var stage = shaderSettings.getStage(i);
-				bindings.get(i)
-				.binding(i)
-				.descriptorCount(1)
-				.descriptorType(shaderStageToDescriptorType(stage))
-				.stageFlags(stage.getStage());
-			}
-			
-			var layout = VkDescriptorSetLayoutCreateInfo.calloc(stack).sType$Default()
-					.pBindings(bindings);
-			Vulkan.throwExceptionIfFailed(vkCreateDescriptorSetLayout(logicalDevice.getDevice(), layout, null, forLayouts),
-	                "DescriptorSetLayoutの作成に失敗しました");
-			
-			var allocate = VkDescriptorSetAllocateInfo.calloc(stack).sType$Default()
-					.pSetLayouts(forLayouts)
-					.descriptorPool(forDescriptorPool.get(0));
-			Vulkan.throwExceptionIfFailed(vkAllocateDescriptorSets(logicalDevice.getDevice(), allocate, forDescriptorSet),
-	                "DescriptorSetsの割り当てに失敗しました");
-		}
-	}
-	
 	
 	/**
 	 * vk::ShaderStageFlagBitsからvk::DescriptorTypeへ
@@ -180,9 +202,15 @@ public class VertexDescriptionHelper implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		vkDestroyDescriptorSetLayout(logicalDevice.getDevice(), forLayouts.get(0), null);
+		var device = logicalDevice.getDevice();
+		vkDestroyDescriptorSetLayout(device, forLayouts.get(0), null);
 		// Poolを削除すればDescriptorSetも消える
-		vkDestroyDescriptorPool(logicalDevice.getDevice(), forDescriptorPool.get(0), null);
+		vkDestroyDescriptorPool(device, forDescriptorPool.get(0), null);
+		
+		if (samplerHandler != NULL) {
+			vkDestroySampler(device, samplerHandler, null);
+			samplerHandler = NULL;
+		}
 	}
 	
 	
@@ -205,6 +233,12 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	public int getDescriptorCount() {
 		return descriptorCount;
 	}
+
+	public long getSamplerHandler() {
+		return samplerHandler;
+	}
+	
+	
 	
 	
 }
