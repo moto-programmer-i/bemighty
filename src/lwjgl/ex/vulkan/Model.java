@@ -49,11 +49,11 @@ public class Model implements AutoCloseable {
 	private UniformObject uniformObject;
 	private AutoCloseableList<Texture> textures;
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, SwapChain swapChain) {
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, SwapChain swapChain) {
 		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, swapChain, DEFAULT_IMPORT_FILE_FLAG);
 	}
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, SwapChain swapChain, int importFileFlag) {
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, SwapChain swapChain, int importFileFlag) {
 		this.model = Assimp.aiImportFile(modelPath.toString(), importFileFlag);
 		this.logicalDevice = logicalDevice;
 		

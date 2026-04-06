@@ -26,7 +26,7 @@ import java.awt.image.BufferedImage;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.ImageViewSettings.*;
-import static lwjgl.ex.vulkan.VertexDescriptionHelper.*;
+import static lwjgl.ex.vulkan.DescriptionHelper.*;
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
 
 public class Texture implements AutoCloseable {
@@ -47,7 +47,7 @@ public class Texture implements AutoCloseable {
 	private Handler imageHandler;
 	
 	
-	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, UniformObject uniformObject) {
+	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, UniformObject uniformObject) {
 		this.image = image;
 		this.logicalDevice = logicalDevice;
 		commandBuffer = new CommandBuffer(new CommandBufferSettings(commandPool));
@@ -107,7 +107,7 @@ public class Texture implements AutoCloseable {
 		        	.dstSet(descriptionHelper.getDescriptorSetHandler())
 		        	.dstBinding(i)
 		        	.descriptorCount(1)
-		        	.descriptorType(VertexDescriptionHelper.shaderStageToDescriptorType(stage));
+		        	.descriptorType(DescriptionHelper.shaderStageToDescriptorType(stage));
 
 	        	// 非常にきもいが、Vulkanの仕様上どうしようもない？
 	        	switch(stage.getStage()) {

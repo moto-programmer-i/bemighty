@@ -28,7 +28,7 @@ public final class AssimpUtils {
 	// https://the-asset-importer-lib-documentation.readthedocs.io/en/latest/usage/use_the_lib.html#textures
 	// This applies if aiTexture::mHeight == 0 is fulfilled. Then, the texture is stored in a compressed format such as DDS or PNG. The term “compressed” does not mean that the texture data must actually be compressed, however, the texture was found in the model file as if it was stored in a separate file on the hard disk. Appropriate decoders (such as libjpeg, libpng, D3DX, DevIL) are required to load these textures. aiTexture::mWidth specifies the size of the texture data in bytes, aiTexture::pcData is a pointer to the raw image data and aiTexture::achFormatHint is either zeroed or contains the most common file extension of the embedded texture’s format. This value is only set if Assimp is able to determine the file format.
 	
-	public static AutoCloseableList<Texture> readTextures(AIScene scene, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, VertexDescriptionHelper descriptionHelper, UniformObject uniformObject) {
+	public static AutoCloseableList<Texture> readTextures(AIScene scene, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, UniformObject uniformObject) {
 		var list = new AutoCloseableList<Texture>();
 		int numTextures = scene.mNumTextures();
         for(int i = 0; i < numTextures; ++i) {

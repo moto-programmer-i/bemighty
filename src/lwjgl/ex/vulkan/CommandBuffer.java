@@ -101,7 +101,7 @@ public class CommandBuffer implements AutoCloseable {
     }
     
     public void bindDescriptorSets(Pipeline pipeline) {
-    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), VertexDescriptionHelper.FIRST_SET, pipeline.getVertexDescriptionHelper().getForDescriptorSet(), null);
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getVertexDescriptionHelper().getForDescriptorSet(), null);
     }
     
 //    public void bindVertices(LongBuffer vertices) {

@@ -170,7 +170,7 @@ public class Pipeline implements AutoCloseable {
 		return layoutHandler;
 	}
 	
-	public VertexDescriptionHelper getVertexDescriptionHelper() {
+	public DescriptionHelper getVertexDescriptionHelper() {
 		return settings.getVertexDescriptionHelper();
 	}
 }

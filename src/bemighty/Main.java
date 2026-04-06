@@ -55,7 +55,7 @@ import lwjgl.ex.vulkan.Surface;
 import lwjgl.ex.vulkan.SurfaceSettings;
 import lwjgl.ex.vulkan.SwapChain;
 import lwjgl.ex.vulkan.SwapChainSettings;
-import lwjgl.ex.vulkan.VertexDescriptionHelper;
+import lwjgl.ex.vulkan.DescriptionHelper;
 import lwjgl.ex.vulkan.Vulkan;
 import lwjgl.ex.vulkan.VulkanSettings;
 import lwjgl.ex.vulkan.Window;
@@ -127,7 +127,7 @@ public class Main {
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings);
-							var vertexDescriptionHelper = new VertexDescriptionHelper(logicalDevice, shaderSettings);
+							var vertexDescriptionHelper = new DescriptionHelper(logicalDevice, shaderSettings);
 									) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
 						pipelineSettings.setVertexDescriptionHelper(vertexDescriptionHelper);

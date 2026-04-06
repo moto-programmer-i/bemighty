@@ -34,7 +34,7 @@ import static lwjgl.ex.vulkan.VulkanConstants.*;
 /**
  * VertexInputBindingDescription, VertexInputAttributeDescriptionの作成に使う
  */
-public class VertexDescriptionHelper implements AutoCloseable {
+public class DescriptionHelper implements AutoCloseable {
 	public static final int FLOAT_RGB = Float.BYTES * 3;
 	public static final int FLOAT_RG = Float.BYTES * 2;
 	
@@ -63,7 +63,7 @@ public class VertexDescriptionHelper implements AutoCloseable {
 
 	private long samplerHandler;
 
-	public VertexDescriptionHelper(LogicalDevice logicalDevice, ShaderSettings shaderSettings) {
+	public DescriptionHelper(LogicalDevice logicalDevice, ShaderSettings shaderSettings) {
 		this.logicalDevice = logicalDevice;
 		this.shaderSettings = shaderSettings;
 		
