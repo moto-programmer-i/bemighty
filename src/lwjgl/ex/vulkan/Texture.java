@@ -35,7 +35,10 @@ public class Texture implements AutoCloseable {
 	 */
 	public static final int PIXEL_BYTES = 4;
 	
-	public static final int DEFAULT_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
+	/**
+	 * これ以外のフォーマットにすると、AssimpUtils.writeImageToPointerの対応が難しい
+	 */
+	public static final int DEFAULT_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
 	
 	private StagingBuffer textureBuffer;
 	private CommandBuffer commandBuffer;
@@ -67,7 +70,7 @@ public class Texture implements AutoCloseable {
 		
 		textureBuffer = new StagingBuffer(bufferSettings);
 
-		// createImage(texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
+		// createImage(texWidth, texHeight, （フォーマットはJavaの都合上、チュートリアルと変更）, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
 		imageHandler = ImageView.createImage(new ImageSettings(logicalDevice, image.getWidth(), image.getHeight(), DEFAULT_FORMAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 		
 		
