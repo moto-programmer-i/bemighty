@@ -16,6 +16,10 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet;
 import motopgi.utils.ExceptionUtils;
 
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BIT;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.awt.image.BufferedImage;
@@ -112,24 +116,26 @@ public class Texture implements AutoCloseable {
 	        		.buffer(uniformObject.getBuffer().getHandler())
 	        		.range(UniformObject.BYTES);
 	        
-	        var descriptorSet = VkWriteDescriptorSet.calloc(DEFAULT_DESCRIPTOR_COUNT, stack).sType$Default();
-	        descriptorSet.get(INDEX_VERTEX)
-	        	.sType$Default()
-	        	.dstSet(descriptionHelper.getDescriptorSetHandler())
-	        	.dstBinding(INDEX_VERTEX)
-	        	.descriptorCount(1)
-	        	.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-	        	.pBufferInfo(descriptorBufferInfo);
-	        descriptorSet.get(INDEX_FRAGMENT)
-	        	.sType$Default()
-		    	.dstSet(descriptionHelper.getDescriptorSetHandler())
-	        	 .dstBinding(INDEX_FRAGMENT)
-		    	.descriptorCount(1)
-		    	.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-		    	.pImageInfo(descriptorImageInfo);
+	        var descriptorSetBuffer = VkWriteDescriptorSet.calloc(descriptionHelper.getDescriptorCount(), stack).sType$Default();
+	        var shaderSettings = descriptionHelper.getShaderSettings();
+	        for(int i = 0; i < descriptionHelper.getDescriptorCount(); ++i) {
+	        	var stage = shaderSettings.getStage(i);
+	        	var descriptorSet = descriptorSetBuffer.get(i);
+	        	descriptorSet.sType$Default()
+		        	.dstSet(descriptionHelper.getDescriptorSetHandler())
+		        	.dstBinding(i)
+		        	.descriptorCount(1)
+		        	.descriptorType(VertexDescriptionHelper.shaderStageToDescriptorType(stage));
 
+	        	// 非常にきもいが、Vulkanの仕様上どうしようもない？
+	        	switch(stage.getStage()) {
+	    		case VK_SHADER_STAGE_VERTEX_BIT -> descriptorSet.pBufferInfo(descriptorBufferInfo);
+	    		case VK_SHADER_STAGE_FRAGMENT_BIT -> descriptorSet.pImageInfo(descriptorImageInfo);
+	    		// 不明な場合の正しい挙動不明
+	    		}
+	        }
 	        
-	        vkUpdateDescriptorSets(logicalDevice.getDevice(), descriptorSet, null);
+	        vkUpdateDescriptorSets(logicalDevice.getDevice(), descriptorSetBuffer, null);
 		}
 	}
 	

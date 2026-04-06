@@ -4,6 +4,7 @@ package lwjgl.ex.vulkan;
 
 public class ShaderStageSettings {
 	private int stage;
+	private int format;
 	private String entryPointName;
 	/**
 	 * 
@@ -11,8 +12,9 @@ public class ShaderStageSettings {
 	 * @param stage org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BITなど(intなのはLWJGLの設計ミス)
 	 * @param entryPointName VkPipelineShaderStageCreateInfoのpName、shader.slangの対象関数名
 	 */
-	public ShaderStageSettings(int stage, String entryPointName) {
+	public ShaderStageSettings(int stage, int format, String entryPointName) {
 		this.stage = stage;
+		this.format = format;
 		this.entryPointName = entryPointName;
 	}
 	public int getStage() {
@@ -26,5 +28,11 @@ public class ShaderStageSettings {
 	}
 	public void setEntryPointName(String entryPointName) {
 		this.entryPointName = entryPointName;
+	}
+	public int getFormat() {
+		return format;
+	}
+	public void setFormat(int format) {
+		this.format = format;
 	}
 }

@@ -8,6 +8,7 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo;
@@ -33,50 +34,39 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	
 	
 	/**
-	 * DescriptorSetLayoutBindingのデフォルトの数（VertexとFragment）
-	 */
-	public static final int DEFAULT_DESCRIPTOR_COUNT = 2;
-	
-	public static final int INDEX_VERTEX = 0;
-	public static final int INDEX_FRAGMENT = 1;
-	
-	/**
 	 * https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/vkCmdBindDescriptorSets.html
 	 * のfirstSet。0以外を渡す場合があるのか不明。
 	 */
 	public static final int FIRST_SET = 0;
 	
-	public static final int[] DEFAULT_FORMATS = {
-			// shader.slangのVSInputと対応。
-			// inPosition
-			VK_FORMAT_R32G32B32_SFLOAT,
-
-// チュートリアルでは色を送る形式にはなっているが、現状使用していない
-//			// inColor
-//			VK_FORMAT_R32G32B32_SFLOAT,
-			
-			// inTexCoord
-			VK_FORMAT_R32G32_SFLOAT};
-	
 	private LogicalDevice logicalDevice;
+	private ShaderSettings shaderSettings;
 	
-	private int[] formats;
 	private int[] offsets;
 	private int bytes = 0;
+	
+	/**
+	 * Descriptorの種類
+	 */
+	private final int descriptorCount;
 	
 	
 	private LongBuffer forDescriptorSet = MemoryUtil.memAllocLong(1);
 	private LongBuffer forDescriptorPool = MemoryUtil.memAllocLong(1);
 	private LongBuffer forLayouts = MemoryUtil.memAllocLong(1);
 
-	public VertexDescriptionHelper(LogicalDevice logicalDevice, int... formats) {
+	public VertexDescriptionHelper(LogicalDevice logicalDevice, ShaderSettings shaderSettings) {
 		this.logicalDevice = logicalDevice;
-		this.formats = formats;
-		offsets = new int[formats.length];
-		for(int i = 0; i < formats.length; ++i) {
+		this.shaderSettings = shaderSettings;
+		
+		// 可読性を考慮して用意
+		descriptorCount = shaderSettings.stagesSize();
+		
+		offsets = new int[descriptorCount];
+		for(int i = 0; i < offsets.length; ++i) {
 			// offsetはそれまでのbytesの合計
 			offsets[i] = bytes;
-			bytes += formatToBytes(formats[i]);
+			bytes += formatToBytes(shaderSettings.getStage(i).getFormat());
 		}
 		initDescriptor(logicalDevice);
 	}
@@ -115,15 +105,15 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	 * @return
 	 */
 	public VkVertexInputAttributeDescription.Buffer createAttribute(MemoryStack stack) {
-		var vertexAttribute = VkVertexInputAttributeDescription.calloc(formats.length, stack);
+		var vertexAttribute = VkVertexInputAttributeDescription.calloc(descriptorCount, stack);
 		
 		// 参考
 		// https://github.com/LWJGL/lwjgl3/blob/4ef1eebe4af235b2934a165e82aeefcaf8d9b893/modules/samples/src/test/java/org/lwjgl/demo/vulkan/khronos/HelloTriangle_1_3.java#L754-L771
 		// https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
-		for(int i = 0; i < formats.length; ++i) {
+		for(int i = 0; i < descriptorCount; ++i) {
 			vertexAttribute.get(i)
 	            .location(i)
-	            .format(formats[i])
+	            .format(shaderSettings.getStage(i).getFormat())
 	            .offset(offsets[i]);	
 		}
 		return vertexAttribute;
@@ -133,38 +123,33 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	// どこまでstackを使えるのか不明
 		try(var stack = MemoryStack.stackPush()) {
 			// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
-			var poolSize = VkDescriptorPoolSize.calloc(DEFAULT_DESCRIPTOR_COUNT, stack);
-			poolSize.get(INDEX_VERTEX)
-				.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-				.descriptorCount(1);
-			poolSize.get(INDEX_FRAGMENT)
-				.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-				.descriptorCount(1);
+			var poolSize = VkDescriptorPoolSize.calloc(descriptorCount, stack);
+			
+			for(int i = 0; i < descriptorCount; ++i) {
+				poolSize.get(i)
+					.type(shaderStageToDescriptorType(shaderSettings.getStage(i)))
+					.descriptorCount(1);
+			}
+			
 			
 			var poolInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType$Default()
 					.flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-					.maxSets(DEFAULT_DESCRIPTOR_COUNT)
+					.maxSets(descriptorCount)
 					.pPoolSizes(poolSize);
 			
 	//					descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
 			Vulkan.throwExceptionIfFailed(vkCreateDescriptorPool(logicalDevice.getDevice(), poolInfo, null, forDescriptorPool), "DescriptorPoolの作成に失敗しました");
 			
-			var bindings = VkDescriptorSetLayoutBinding.calloc(DEFAULT_DESCRIPTOR_COUNT, stack);
-			// vertex側の設定
-			//  vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
-			bindings.get(INDEX_VERTEX)
-				.binding(INDEX_VERTEX)
-				.descriptorCount(1)
-				.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-				.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+			var bindings = VkDescriptorSetLayoutBinding.calloc(descriptorCount, stack);
 			
-			// fragment側の設定
-			// vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr)};
-			bindings.get(INDEX_FRAGMENT)
-				.binding(INDEX_FRAGMENT)
+			for(int i = 0; i < descriptorCount; ++i) {
+				var stage = shaderSettings.getStage(i);
+				bindings.get(i)
+				.binding(i)
 				.descriptorCount(1)
-				.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-				.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+				.descriptorType(shaderStageToDescriptorType(stage))
+				.stageFlags(stage.getStage());
+			}
 			
 			var layout = VkDescriptorSetLayoutCreateInfo.calloc(stack).sType$Default()
 					.pBindings(bindings);
@@ -177,6 +162,20 @@ public class VertexDescriptionHelper implements AutoCloseable {
 			Vulkan.throwExceptionIfFailed(vkAllocateDescriptorSets(logicalDevice.getDevice(), allocate, forDescriptorSet),
 	                "DescriptorSetsの割り当てに失敗しました");
 		}
+	}
+	
+	
+	/**
+	 * vk::ShaderStageFlagBitsからvk::DescriptorTypeへ
+	 * @param stageSettings vk::ShaderStageFlagBits
+	 * @return vk::DescriptorType
+	 */
+	public static int shaderStageToDescriptorType(ShaderStageSettings stageSettings) {
+		return switch(stageSettings.getStage()) {
+		case VK_SHADER_STAGE_VERTEX_BIT -> VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		case VK_SHADER_STAGE_FRAGMENT_BIT -> VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		default -> throw new IllegalArgumentException("不明なShaderStage");
+		};
 	}
 
 	@Override
@@ -198,5 +197,14 @@ public class VertexDescriptionHelper implements AutoCloseable {
 	public LongBuffer getForLayouts() {
 		return forLayouts;
 	}
+
+	public ShaderSettings getShaderSettings() {
+		return shaderSettings;
+	}
+
+	public int getDescriptorCount() {
+		return descriptorCount;
+	}
+	
 	
 }

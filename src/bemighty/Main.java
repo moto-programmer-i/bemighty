@@ -120,14 +120,14 @@ public class Main {
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
-					// shader.slangと対応させる必要がある
+					// shader.slangのVSInputと対応させる必要がある
 					// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
-					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
-					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
+					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, VK_FORMAT_R32G32B32_SFLOAT, "vertMain"));
+					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, VK_FORMAT_R32G32_SFLOAT, "fragMain"));
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings);
-							var vertexDescriptionHelper = new VertexDescriptionHelper(logicalDevice, VertexDescriptionHelper.DEFAULT_FORMATS)
+							var vertexDescriptionHelper = new VertexDescriptionHelper(logicalDevice, shaderSettings);
 									) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
 						pipelineSettings.setVertexDescriptionHelper(vertexDescriptionHelper);
