@@ -33,8 +33,6 @@ replay_pid*
 #Slangのコンパイル結果を無視
 *.spv
 
-#3Dモデルを無視
-*.gltf
 
 # ライセンスなどはいつでも含める
 !LICENSE.*
