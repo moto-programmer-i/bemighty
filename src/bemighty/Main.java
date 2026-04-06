@@ -70,7 +70,7 @@ public class Main {
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
 	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {		
 		// 頂点の重複を削除できてない。なぜ？
 		 int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
 		 

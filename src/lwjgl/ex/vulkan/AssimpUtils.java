@@ -82,20 +82,22 @@ public final class AssimpUtils {
 	}
 	
 	public static void writeImageToPointer(BufferedImage image, PointerBuffer destination) {
-		// フォーマットごとへの対応が必要
-		// VK_FORMAT_R8G8B8_SRGB
+		// 本来は、フォーマットごとへの対応が必要だが、諦める
+		// 現状、VK_FORMAT_B8G8R8A8_SRGB でしか動作しない
 		
 		var size = image.getWidth() * image.getHeight();
 		var destinationBytes = destination.getIntBuffer(size);
+		
 		for (int y = 0; y < image.getHeight(); ++y) {
 			for(int x = 0; x < image.getWidth(); ++x) {
+				// IntBufferがLITTLE_ENDIANなので、ABGRで色が入る
+//				int red = 0x00_00_00_ff;
+//				destinationBytes.put(red);
+				
 				// getRGBはTYPE_INT_ARGBフォーマット
 				// https://docs.oracle.com/javase/jp/24/docs/api/java.desktop/java/awt/image/BufferedImage.html#getRGB(int,int)
-				// STBI_rgb_alphaもARGBの順番っぽい
-				// https://github.com/quentinplessis/STBI/blob/cfeea57e2e9f3980376d735ae81e4b80450fcb82/stb_image.c#L2738
+				// リトルエンディアンなのでBGRAの順序で送られる
 				destinationBytes.put(image.getRGB(x, y));
-				
-				// これで正しいのか不明
 			}
 		}
 		
