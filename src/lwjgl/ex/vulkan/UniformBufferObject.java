@@ -15,7 +15,7 @@ import static lwjgl.ex.vulkan.StagingBufferSettings.*;
  * https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
  * のUniformBufferObject
  */
-public class UniformObject implements AutoCloseable {
+public class UniformBufferObject implements AutoCloseable {
 	// C++のように指定はできないので、ごまかす
 //	alignas(16) glm::mat4 model;
 //	alignas(16) glm::mat4 view;
@@ -37,13 +37,32 @@ public class UniformObject implements AutoCloseable {
 	private final float[] data = new float[LENGTH];
 	public static final int BYTES = Float.BYTES * LENGTH;
 	
+	// 行列は、行が先になる
+	public static final int MATRIX4_INDEX_00 = 0;
+	public static final int MATRIX4_INDEX_10 = 1;
+	public static final int MATRIX4_INDEX_20 = 2;
+	public static final int MATRIX4_INDEX_30 = 3;
+	public static final int MATRIX4_INDEX_01 = 4;
+	public static final int MATRIX4_INDEX_11 = 5;
+	public static final int MATRIX4_INDEX_21 = 6;
+	public static final int MATRIX4_INDEX_31 = 7;
+	public static final int MATRIX4_INDEX_02 = 8;
+	public static final int MATRIX4_INDEX_12 = 9;
+	public static final int MATRIX4_INDEX_22 = 10;
+	public static final int MATRIX4_INDEX_32 = 11;
+	public static final int MATRIX4_INDEX_03 = 12;
+	public static final int MATRIX4_INDEX_13 = 13;
+	public static final int MATRIX4_INDEX_23 = 14;
+	public static final int MATRIX4_INDEX_33 = 15;
+	
 //	private final AIMatrix4x4.Buffer model = AIMatrix4x4.calloc(1);
 //	private final AIMatrix4x4.Buffer view = AIMatrix4x4.calloc(1);
 //	private final AIMatrix4x4.Buffer projection = AIMatrix4x4.calloc(1);
 
 	private StagingBuffer buffer;
 	
-	public UniformObject(LogicalDevice logicalDevice) {
+	public UniformBufferObject(LogicalDevice logicalDevice) {
+		modelToUnit();
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
 			var uniformBuffer = buffer.getFloatBuffer(0, data.length);
 			uniformBuffer.put(data);
@@ -73,6 +92,77 @@ public class UniformObject implements AutoCloseable {
 			// 0 0 0 1
 			data[i] = i % 5 == 0 ? 1f : 0f;
 		}
+	}
+	
+	public void scale(float s) {
+		// 拡大用の行列に設定
+		// https://chaosplant.tech/do/vulkan/5-14/#kuo-da-suo-xiao
+		// s 0 0 0
+		// 0 s 0 0
+		// 0 0 s 0
+		// 0 0 0 1
+		data[MATRIX4_INDEX_00] *= s;
+		data[MATRIX4_INDEX_11] *= s;
+		data[MATRIX4_INDEX_22] *= s;
+	}
+	
+	/**
+	 * https://chaosplant.tech/do/vulkan/5-14/#hui-zhuan
+	 * @param axis 回転軸のベクトル
+	 * @param angle 回転（ラジアン）
+	 */
+	public void rotate(FloatVector3 axis, double angle) {
+		// 回転軸を単位ベクトルに
+		axis.normalize();
+		float x = axis.getX();
+		float y = axis.getY();
+		float z = axis.getZ();
+		
+		// 回転の行列に設定
+		// https://chaosplant.tech/do/vulkan/5-14/#hui-zhuan
+		double sin = Math.sin(angle);
+		double cos = Math.cos(angle);
+		// 1 - cosθ
+		double one_cos = 1 - cos; 
+		// x(1 - cosθ)
+		double xOne_cos = x * one_cos;
+		// y(1 - cosθ)
+		double yOne_cos = y * one_cos;
+		// xy(1 - cosθ)
+		double xyOne_cos = x * yOne_cos;
+		// zx(1 - cosθ)
+		double zxOne_cos = z * xOne_cos;
+		// zy(1 - cosθ)
+		double zyOne_cos = z * yOne_cos;
+		// xsinθ
+		double xsin = x * sin;
+		// ysinθ
+		double ysin = y * sin;
+		// zsinθ
+		double zsin = z * sin;
+		
+		// 回転にかかる部分だけは掛ける必要がある
+		data[MATRIX4_INDEX_00] *= (float)(x * xOne_cos + cos);
+		data[MATRIX4_INDEX_10] = (float)(y * xOne_cos + zsin);
+		data[MATRIX4_INDEX_20] = (float)(zxOne_cos - ysin);
+		data[MATRIX4_INDEX_01] = (float)(xyOne_cos - zsin);
+		data[MATRIX4_INDEX_11] *= (float)(y * yOne_cos + cos);
+		data[MATRIX4_INDEX_21] = (float)(zyOne_cos + xsin);
+		data[MATRIX4_INDEX_02] = (float)(zxOne_cos + ysin);
+		data[MATRIX4_INDEX_12] = (float)(zyOne_cos - xsin);
+		data[MATRIX4_INDEX_22] *= (float)(z * z * one_cos + cos);
+	}
+	
+	public void move(float x, float y, float z) {
+		// 平行移動の行列に設定
+		// https://chaosplant.tech/do/vulkan/5-14/#ping-xing-yi-dong
+		// 1 0 0 x
+		// 0 1 0 y
+		// 0 0 1 z
+		// 0 0 0 1
+		data[MATRIX4_INDEX_03] = x;
+		data[MATRIX4_INDEX_13] = y;
+		data[MATRIX4_INDEX_23] = z;
 	}
 	
 	/**

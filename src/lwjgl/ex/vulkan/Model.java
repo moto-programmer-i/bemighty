@@ -46,7 +46,7 @@ public class Model implements AutoCloseable {
 	
 	private int[] indices;
 	private StagingBuffer indexBuffer;
-	private UniformObject uniformObject;
+	private UniformBufferObject uniformObject;
 	private AutoCloseableList<Texture> textures;
 	
 	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, SwapChain swapChain) {
@@ -133,10 +133,16 @@ public class Model implements AutoCloseable {
 
         }
         
-        uniformObject = new UniformObject(logicalDevice);
+        uniformObject = new UniformBufferObject(logicalDevice);
         // 初期化
-        uniformObject.modelToUnit();
         swapChain.setView(uniformObject);
+        
+        // デバッグ用
+        uniformObject.scale(0.5f);
+        uniformObject.move(-0.2f, 0f, 0f);
+        var axis = new FloatVector3(1f, 0f, 1f);
+        var angle = Math.PI / 6;
+        uniformObject.rotate(axis, angle);
 
      // Textureの取得
         textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);

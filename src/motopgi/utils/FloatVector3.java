@@ -30,4 +30,14 @@ public class FloatVector3 {
 	public void setZ(float z) {
 		this.z = z;
 	}
+	
+	/**
+	 * 単位ベクトルにする
+	 */
+	public void normalize() {
+		var scale = 1 / Math.sqrt(x * x + y * y * z * z);
+		x *= scale;
+		y *= scale;
+		z *= scale;
+	}
 }

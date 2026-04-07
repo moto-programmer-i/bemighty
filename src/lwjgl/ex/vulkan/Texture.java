@@ -50,7 +50,7 @@ public class Texture implements AutoCloseable {
 	private Handler imageHandler;
 	
 	
-	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, UniformObject uniformObject) {
+	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, UniformBufferObject uniformObject) {
 		this.image = image;
 		this.logicalDevice = logicalDevice;
 		commandBuffer = new CommandBuffer(new CommandBufferSettings(commandPool));
@@ -99,7 +99,7 @@ public class Texture implements AutoCloseable {
 	        
 	        var descriptorBufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
 	        		.buffer(uniformObject.getBuffer().getHandler())
-	        		.range(UniformObject.BYTES);
+	        		.range(UniformBufferObject.BYTES);
 	        
 	        var descriptorSetBuffer = VkWriteDescriptorSet.calloc(descriptionHelper.getDescriptorCount(), stack).sType$Default();
 	        var shaderSettings = descriptionHelper.getShaderSettings();

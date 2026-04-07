@@ -244,11 +244,11 @@ public class SwapChain implements AutoCloseable {
 		return depthImageView;
 	}
 	
-	public void setView(UniformObject uniformObject) {
+	public void setView(UniformBufferObject uniformObject) {
 		uniformObject.setView(camera, cameraDirection, cameraUp);
 	}
 	
-	public void setProjection(UniformObject uniformObject) {
+	public void setProjection(UniformBufferObject uniformObject) {
 		// kx : ky = 横 : 縦 でないと歪む
 		// https://chaosplant.tech/do/vulkan/5-14/#pasuwotukeru-1
 		var ratio = (float)height / width;
