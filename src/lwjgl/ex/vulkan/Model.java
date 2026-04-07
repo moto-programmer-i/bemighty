@@ -66,71 +66,71 @@ public class Model implements AutoCloseable {
         	meshes.add(mesh);
         	
         	// 頂点のサイズを追加
-//        	var numVertices = mesh.mNumVertices();
-//        	vertices = new float[(int) XYZ_COUNT * numVertices];
-//        	verticesBytes += Float.BYTES * vertices.length;
-//        	
-//        	// mesh複数の場合は保留
-//        	var verticesBuffer = mesh.mVertices();
-//        	for(int v = 0, index = 0; v < numVertices; ++v) {
-//        		var vertex = verticesBuffer.get(v);
-//        		vertices[index++] = vertex.x();
-//        		vertices[index++] = vertex.y();
-//        		vertices[index++] = vertex.z();
-//        	}
-        	// 画面の中心が（0, 0）、長さ1まで
-        	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
-
+        	var numVertices = mesh.mNumVertices();
+        	vertices = new float[(int) XYZUV_COUNT * numVertices];
         	
-        	// テクスチャ読み込み
-//        	System.out.println("numTextureCoords " + numTextureCoords);
-        	List<FloatVector2> textures = new ArrayList<>();
-        	var forTextureCoords = mesh.mTextureCoords();
-        	var textureCoordAddress = forTextureCoords.get();
-        	for(int i = 0; textureCoordAddress != MemoryUtil.NULL; ++i, textureCoordAddress = forTextureCoords.get()) {
-        		var textureCoord = mesh.mTextureCoords(i);
-        		textures.add(new FloatVector2(textureCoord.x(), textureCoord.y()));
+        	// index 0 にテクスチャがすべて入っている？これでいいのか不明
+        	var textureCoords = mesh.mTextureCoords(0);
+        	
+        	// mesh複数の場合は保留
+        	var verticesBuffer = mesh.mVertices();
+        	for(int v = 0, index = 0; v < numVertices; ++v) {
+        		var vertex = verticesBuffer.get(v);
+        		vertices[index++] = vertex.x();
+        		vertices[index++] = vertex.y();
+        		vertices[index++] = vertex.z();
+        		
+        		// テクスチャ座標
+        		// 画面の中心が（0, 0）、長さ1まで
+            	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
+        		// https://qiita.com/dpals39/items/1681d9101e58b5aefa27
+        		var textureCoord = textureCoords.get(v);
+//        		vertices[index++] = textureCoord.x();
+//        		vertices[index++] = textureCoord.y();
+        		// 確認用で一旦(0,0)
+        		vertices[index++] = 0f;
+        		vertices[index++] = 0f;
         	}
         	
-        	System.out.println("テクスチャ " +  textures.get(0));
+        	
+        	// index
+        	// faceに分かれてしまっているので、面倒だがまず要素数を取得しなければならない
+        	// faceにわかれている理由は不明
+        	var numFaces = mesh.mNumFaces();
+        	var faces = mesh.mFaces();
+        	int indicesLength = 0;
+        	for(int f = 0; f < numFaces; ++f) {
+        		var face = faces.get(f);
+        		indicesLength += face.mNumIndices();
+        	}
+        	indices = new int[indicesLength];
+        	
+        	//index取得
+        	for(int f = 0, allIndicesIndex = 0; f < numFaces; ++f) {
+        		var face = faces.get(f);
+        		var numIndices = face.mNumIndices();
+        		var mIndices = face.mIndices();
+        		for(int i = 0; i < numIndices; ++i) {
+        			indices[allIndicesIndex++] = mIndices.get(i);
+        		}
+        	}
         	
         	
-        	// テクスチャと頂点をマッピング
-        	// https://chaosplant.tech/do/vulkan/6-5/
-        	var texture = textures.get(0);
         	
         	
-        	vertices = new float[] {
-                	// 頂点				テクスチャ座標
-        			0f, -0.5f, 0f,		texture.getX(),texture.getY(),
-        			0.5f, 0.5f, 0f,		texture.getX(),texture.getY(),
-        			-0.5f, 0.5f, 0f,	texture.getX(),texture.getY()};
-//        	indices = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
-        	indices = new int[] {0, 1, 2};
+        	// デバッグ用
+//        	// テクスチャと頂点をマッピング
+//        	// https://chaosplant.tech/do/vulkan/6-5/
+//        	var texture = new FloatVector2(0.5f, 0f);
+//        	vertices = new float[] {
+//                	// 頂点				テクスチャ座標
+//        			0f, -0.5f, 0f,		texture.getX(),texture.getY(),
+//        			0.5f, 0.5f, 0f,		texture.getX(),texture.getY(),
+//        			-0.5f, 0.5f, 0f,	texture.getX(),texture.getY()};
+////        	indices = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
+//        	indices = new int[] {0, 1, 2};
         	
-//        	// index
-//        	var numFaces = mesh.mNumFaces();
-////        	System.out.println("faces " + numFaces);
-//        	var faces = mesh.mFaces();
-//        	int indicesLength = 0;
-//        	// faceに分かれてしまっているので、面倒だがまず要素数を取得しなければならない
-//        	for(int f = 0; f < numFaces; ++f) {
-//        		var face = faces.get(f);
-//        		indicesLength += face.mNumIndices();
-//        	}
-//        	indices = new int[indicesLength];
-//        	indicesBytes += Integer.BYTES * indices.length;
-//        	
-//        	//index取得
-//        	int allIndicesIndex = 0;
-//        	for(int f = 0; f < numFaces; ++f) {
-//        		var face = faces.get(f);
-//        		var numIndices = face.mNumIndices();
-//        		var mIndices = face.mIndices();
-//        		for(int i = 0; i < numIndices; ++i) {
-//        			indices[allIndicesIndex++] = mIndices.get(i);
-//        		}
-//        	}
+
         }
         
         uniformObject = new UniformObject(logicalDevice);
