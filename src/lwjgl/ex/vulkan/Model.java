@@ -138,20 +138,20 @@ public class Model implements AutoCloseable {
         swapChain.setView(uniformObject);
         
         // デバッグ用
-//        uniformObject.scale(0.5f);
+//        uniformObject.scale(3f);
 //        uniformObject.move(-0.2f, 0f, 0f);
-//        var axis = new FloatVector3(1f, 0f, 0f);
+//        var axis = new FloatVector3(0f, 1f, 0f);
 //        var angle = Math.PI / 6;
 //        uniformObject.rotate(axis, angle);
 //        uniformObject.rotate(axis, angle);
 //        uniformObject.rotate(axis, angle);
-//        var camera = new FloatVector3(0, 1f, 0);
-//        var direction = new FloatVector3(0, 0, 1);
-        // y軸とdirectionが重なるときだけ計算が特殊になる
+        var camera = new FloatVector3(0, 1f, -1);
+        var direction = new FloatVector3(0, 0, 1);
+//         // y軸とdirectionが重なるときだけ計算が特殊になる
 //        var direction = new FloatVector3(0, 1, 0);
-//      uniformObject.setView(camera, direction);
-        System.out.println("setProjection");
-        uniformObject.perspective(2f, 2f, 0.1f, 100f);
+      uniformObject.setView(camera, direction);
+//        System.out.println("setProjection");
+        uniformObject.perspective(2f, 2f, 0f, 100f);
         
         
 
