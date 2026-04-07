@@ -114,9 +114,11 @@ public class UniformBufferObject implements AutoCloseable {
 	public void rotate(FloatVector3 axis, double angle) {
 		// 回転軸を単位ベクトルに
 		axis.normalize();
-		float x = axis.getX();
-		float y = axis.getY();
-		float z = axis.getZ();
+		
+		// 暗黙の変換が何度も起きないようにdoubleにしておく
+		double x = axis.getX();
+		double y = axis.getY();
+		double z = axis.getZ();
 		
 		// 回転の行列に設定
 		// https://chaosplant.tech/do/vulkan/5-14/#hui-zhuan
