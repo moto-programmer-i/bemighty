@@ -99,23 +99,23 @@ public class UniformBufferObject implements AutoCloseable {
 	
 	public void viewToUnit() {
 		// 単位ベクトルにする
-		for(int i = VIEW_INDEX; i < PROJECTION_INDEX; ++i) {
+		for(int i = 0; i < MATRIX4_NUMS; ++i) {
 			// 1 0 0 0
 			// 0 1 0 0
 			// 0 0 1 0
 			// 0 0 0 1
-			data[i] = i % 5 == 0 ? 1f : 0f;
+			data[i + VIEW_INDEX] = i % 5 == 0 ? 1f : 0f;
 		}
 	}
 	
 	public void projectionToUnit() {
 		// 単位ベクトルにする
-		for(int i = PROJECTION_INDEX; i < data.length; ++i) {
+		for(int i = 0; i < MATRIX4_NUMS; ++i) {
 			// 1 0 0 0
 			// 0 1 0 0
 			// 0 0 1 0
 			// 0 0 0 1
-			data[i] = i % 5 == 0 ? 1f : 0f;
+			data[i + PROJECTION_INDEX] = i % 5 == 0 ? 1f : 0f;
 		}
 	}
 	
@@ -239,11 +239,7 @@ public class UniformBufferObject implements AutoCloseable {
 		// dx = 0, dz = 0のときは、ux = 0になることに注意
 		double ux = dz != 0 ? uXz / dz : (dx != 0 ? uXz : 0);
 		double uy = Math.sqrt(uY2);
-		double uz = dx != 0 ? uXz / dx : uXz;
-		
-		System.out.println("up " + ux + " " + uy + " " + uz);
-		
-		
+		double uz = dx != 0 ? uXz / dx : uXz;		
 		
 		// https://chaosplant.tech/do/vulkan/5-14/#biyuxing-lie-nozhi
 		int i = VIEW_INDEX;
