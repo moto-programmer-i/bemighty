@@ -63,6 +63,8 @@ public class UniformBufferObject implements AutoCloseable {
 	
 	public UniformBufferObject(LogicalDevice logicalDevice) {
 		modelToUnit();
+		viewToUnit();
+		projectionToUnit();
 		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
 			var uniformBuffer = buffer.getFloatBuffer(0, data.length);
 			uniformBuffer.put(data);
@@ -93,6 +95,28 @@ public class UniformBufferObject implements AutoCloseable {
 			data[i] = i % 5 == 0 ? 1f : 0f;
 		}
 		scale = 1.0;
+	}
+	
+	public void viewToUnit() {
+		// 単位ベクトルにする
+		for(int i = VIEW_INDEX; i < PROJECTION_INDEX; ++i) {
+			// 1 0 0 0
+			// 0 1 0 0
+			// 0 0 1 0
+			// 0 0 0 1
+			data[i] = i % 5 == 0 ? 1f : 0f;
+		}
+	}
+	
+	public void projectionToUnit() {
+		// 単位ベクトルにする
+		for(int i = PROJECTION_INDEX; i < data.length; ++i) {
+			// 1 0 0 0
+			// 0 1 0 0
+			// 0 0 1 0
+			// 0 0 0 1
+			data[i] = i % 5 == 0 ? 1f : 0f;
+		}
 	}
 	
 	public void scale(float s) {
@@ -176,6 +200,80 @@ public class UniformBufferObject implements AutoCloseable {
 		data[MATRIX4_INDEX_23] = z;
 	}
 	
+	
+
+	@Override
+	public void close() throws Exception {
+		if (buffer != null) {
+			buffer.close();
+			buffer = null;
+		}
+	}
+
+	public StagingBuffer getBuffer() {
+		return buffer;
+	}
+	
+	public void setView(FloatVector3 camera, FloatVector3 direction) {
+		// カメラの上を↑以外にするのは保留
+		// 計算が合ってるか現状不明
+		
+		// 単位ベクトルにしておく
+		direction.normalize();
+		
+		// カメラの向きと上は直交である必要があるので、作る
+		// カメラの上は、画面の↑を0度とする
+		// (x, y, z)を(xとz, y)の2次元として考える
+		double dx = direction.getX();
+		double dy = direction.getY();
+		double dz = direction.getZ();
+		var dxz2 = dx * dx + dz * dz;
+		
+		// (xとz, y)の2次元の直交ベクトル（計算省略のためyは2乗のまま）
+		var uXz = -dy;
+		var uY2 = dxz2;
+		
+		// dx : dz = ux : uz より
+		// ux = (ux * uz) / dz
+		// uz = (ux * uz) / dx
+		// dx = 0, dz = 0のときは、ux = 0になることに注意
+		double ux = dz != 0 ? uXz / dz : (dx != 0 ? uXz : 0);
+		double uy = Math.sqrt(uY2);
+		double uz = dx != 0 ? uXz / dx : uXz;
+		
+		System.out.println("up " + ux + " " + uy + " " + uz);
+		
+		
+		
+		// https://chaosplant.tech/do/vulkan/5-14/#biyuxing-lie-nozhi
+		int i = VIEW_INDEX;
+		double view00 = uz * dy - uy * dz;
+		double view01 = ux * dz - uz * dx;
+		double view02 = uy * dx - ux * dy;
+//		System.out.println(view00);
+//		System.out.println(view01);
+//		System.out.println(view02);
+		data[i++] = (float)view00;
+		data[i++] = (float)-ux;
+		data[i++] = (float)direction.getX();
+		i++;
+		
+		data[i++] = (float)view01;
+		data[i++] = (float)-uy;
+		data[i++] = (float)dy;
+		i++;
+		
+		data[i++] = (float)view02;
+		data[i++] = (float)-uz;
+		data[i++] = (float)dz;
+		i++;
+		
+		data[i++] = (float)(view00 * -camera.getX() - view01 * camera.getY() - view02 * camera.getZ());
+		data[i++] = (float)(ux * camera.getX() + uy * camera.getY() + uz * camera.getZ());
+		data[i++] = (float)(dx * -camera.getX() - dy * camera.getY() - dz * camera.getZ());
+		data[i++] = 1;
+	}
+	
 	/**
 	 * プロジェクション行列を設定
 	 * kx:ky = ウィンドウ横 : 縦　でなければ歪む
@@ -213,51 +311,6 @@ public class UniformBufferObject implements AutoCloseable {
 		
 		i += 3;
 		data[i] = -(near * far / f_n);
-	}
-
-	@Override
-	public void close() throws Exception {
-		if (buffer != null) {
-			buffer.close();
-			buffer = null;
-		}
-	}
-
-
-	public StagingBuffer getBuffer() {
-		return buffer;
-	}
-	
-	public void setView(FloatVector3 camera, FloatVector3 direction, FloatVector3 up) {
-		// https://chaosplant.tech/do/vulkan/5-14/#biyuxing-lie-nozhi
-		// 計算が合ってるか現状不明
-		int i = VIEW_INDEX;
-		float view00 = up.getZ() * direction.getY() - up.getY() * direction.getZ();
-		float view01 = up.getX() * direction.getZ() - up.getZ() * direction.getX();
-		float view02 = up.getY() * direction.getX() - up.getX() * direction.getY();
-//		System.out.println(view00);
-//		System.out.println(view01);
-//		System.out.println(view02);
-		data[i++] = view00;
-		data[i++] = -up.getX();
-		data[i++] = direction.getX();
-		i++;
-		
-		data[i++] = view01;
-		data[i++] = -up.getY();
-		data[i++] = direction.getY();
-		i++;
-		
-		data[i++] = view02;
-		data[i++] = -up.getZ();
-		data[i++] = direction.getZ();
-		i++;
-		
-		data[i++] = view00 * -camera.getX() - view01 * camera.getY() - view02 * camera.getZ();
-		
-		data[i++] = up.getX() * camera.getX() + up.getY() * camera.getY() + up.getZ() * camera.getZ();
-		data[i++] = direction.getX() * -camera.getX() - direction.getY() * camera.getY() - direction.getZ() * camera.getZ();
-		data[i++] = 1;
 	}
 
 }

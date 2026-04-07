@@ -28,7 +28,8 @@ public class SwapChain implements AutoCloseable {
 	// カメラのクラスを用意するべきか？
 	private FloatVector3 camera = new FloatVector3(0f, 0.5f, -10f);
 	private FloatVector3 cameraDirection = new FloatVector3(0f, 0f, 1f);
-	private FloatVector3 cameraUp = new FloatVector3(0f, 0f, 1f);
+	// 保留
+//	private FloatVector3 cameraUp = new FloatVector3(0f, 0f, 1f);
 	
 	private final SwapChainSettings settings;
 	private long handler;
@@ -245,7 +246,7 @@ public class SwapChain implements AutoCloseable {
 	}
 	
 	public void setView(UniformBufferObject uniformObject) {
-		uniformObject.setView(camera, cameraDirection, cameraUp);
+		uniformObject.setView(camera, cameraDirection);
 	}
 	
 	public void setProjection(UniformBufferObject uniformObject) {
