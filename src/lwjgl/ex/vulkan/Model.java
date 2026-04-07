@@ -139,10 +139,12 @@ public class Model implements AutoCloseable {
         
         // デバッグ用
         uniformObject.scale(0.5f);
-        uniformObject.move(-0.2f, 0f, 0f);
-        var axis = new FloatVector3(1f, 0f, 1f);
+//        uniformObject.move(-0.2f, 0f, 0f);
+        var axis = new FloatVector3(0f, 0f, 1f);
         var angle = Math.PI / 6;
         uniformObject.rotate(axis, angle);
+//        uniformObject.rotate(axis, angle);
+//        uniformObject.rotate(axis, angle);
 
      // Textureの取得
         textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);

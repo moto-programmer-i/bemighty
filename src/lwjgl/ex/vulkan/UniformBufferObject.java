@@ -34,7 +34,6 @@ public class UniformBufferObject implements AutoCloseable {
 //	public static final int PROJECTION_BYTES = MATRIX4_BYTES;
 
 	public static final int LENGTH = PROJECTION_INDEX + MATRIX4_NUMS;
-	private final float[] data = new float[LENGTH];
 	public static final int BYTES = Float.BYTES * LENGTH;
 	
 	// 行列は、行が先になる
@@ -54,11 +53,12 @@ public class UniformBufferObject implements AutoCloseable {
 	public static final int MATRIX4_INDEX_13 = 13;
 	public static final int MATRIX4_INDEX_23 = 14;
 	public static final int MATRIX4_INDEX_33 = 15;
-	
-//	private final AIMatrix4x4.Buffer model = AIMatrix4x4.calloc(1);
-//	private final AIMatrix4x4.Buffer view = AIMatrix4x4.calloc(1);
-//	private final AIMatrix4x4.Buffer projection = AIMatrix4x4.calloc(1);
 
+	private final float[] data = new float[LENGTH];
+	
+	// scaleだけ別でもっておかないと無理だった
+	private double scale = 1.0;
+	
 	private StagingBuffer buffer;
 	
 	public UniformBufferObject(LogicalDevice logicalDevice) {
@@ -92,21 +92,30 @@ public class UniformBufferObject implements AutoCloseable {
 			// 0 0 0 1
 			data[i] = i % 5 == 0 ? 1f : 0f;
 		}
+		scale = 1.0;
 	}
 	
 	public void scale(float s) {
+		// 過去のscaleを捨てて拡大率を設定
+		// （例：scale(2); scale(3); は6倍ではなく、3倍にする）
+		var toNewScale = s / scale;
+		
 		// 拡大用の行列に設定
 		// https://chaosplant.tech/do/vulkan/5-14/#kuo-da-suo-xiao
 		// s 0 0 0
 		// 0 s 0 0
 		// 0 0 s 0
 		// 0 0 0 1
-		data[MATRIX4_INDEX_00] *= s;
-		data[MATRIX4_INDEX_11] *= s;
-		data[MATRIX4_INDEX_22] *= s;
+		data[MATRIX4_INDEX_00] *= toNewScale;
+		data[MATRIX4_INDEX_11] *= toNewScale;
+		data[MATRIX4_INDEX_22] *= toNewScale;
+		
+		// 新しい拡大率を設定
+		scale = s;
 	}
 	
 	/**
+	 * 回転を設定（過去の角度は捨てる）
 	 * https://chaosplant.tech/do/vulkan/5-14/#hui-zhuan
 	 * @param axis 回転軸のベクトル
 	 * @param angle 回転（ラジアン）
@@ -144,15 +153,15 @@ public class UniformBufferObject implements AutoCloseable {
 		double zsin = z * sin;
 		
 		// 回転にかかる部分だけは掛ける必要がある
-		data[MATRIX4_INDEX_00] *= (float)(x * xOne_cos + cos);
+		data[MATRIX4_INDEX_00] = (float) (scale * (x * xOne_cos + cos));
 		data[MATRIX4_INDEX_10] = (float)(y * xOne_cos + zsin);
 		data[MATRIX4_INDEX_20] = (float)(zxOne_cos - ysin);
 		data[MATRIX4_INDEX_01] = (float)(xyOne_cos - zsin);
-		data[MATRIX4_INDEX_11] *= (float)(y * yOne_cos + cos);
+		data[MATRIX4_INDEX_11] = (float)(scale * (y * yOne_cos + cos));
 		data[MATRIX4_INDEX_21] = (float)(zyOne_cos + xsin);
 		data[MATRIX4_INDEX_02] = (float)(zxOne_cos + ysin);
 		data[MATRIX4_INDEX_12] = (float)(zyOne_cos - xsin);
-		data[MATRIX4_INDEX_22] *= (float)(z * z * one_cos + cos);
+		data[MATRIX4_INDEX_22] = (float)(scale * (z * z * one_cos + cos));
 	}
 	
 	public void move(float x, float y, float z) {
