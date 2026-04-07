@@ -89,37 +89,13 @@ public final class AssimpUtils {
 		var destinationBytes = destination.getIntBuffer(size);
 		
 		for (int y = 0; y < image.getHeight(); ++y) {
-			for(int x = 0; x < image.getWidth(); ++x) {
-				// IntBufferがLITTLE_ENDIANなので、ABGRで色が入る
-//				int red = 0x00_00_00_ff;
-//				destinationBytes.put(red);
-				
+			for(int x = 0; x < image.getWidth(); ++x) {				
 				// getRGBはTYPE_INT_ARGBフォーマット
 				// https://docs.oracle.com/javase/jp/24/docs/api/java.desktop/java/awt/image/BufferedImage.html#getRGB(int,int)
 				// リトルエンディアンなのでBGRAの順序で送られる
 				destinationBytes.put(image.getRGB(x, y));
 			}
 		}
-		
-		
-//		var size = calcSize(image);
-//		var output = new ByteArrayOutputStream(size);
-//		for (int y = 0; y < image.getHeight(); ++y) {
-//			for(int x = 0; x < image.getWidth(); ++x) {
-//				var argb = image.getRGB(x, y);
-//				// a r g b の各バイトを書く
-//				for(int bytes = 0; bytes < ARGB_BYTES; ++bytes) {
-//					// write(int)は下位8バイトだけ書かれる
-//					output.write(argb);	
-//					argb >>= Byte.BYTES;
-//				
-//					// これで正しいのか不明、順番が逆の可能性も大
-//				}
-//			}
-//		}
-		
-		
-		
 	}
 
 }
