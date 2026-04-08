@@ -152,7 +152,7 @@ public class Model implements AutoCloseable {
             	}
             	
             	// indexもメッシュごとにオフセットが必要
-            	indexOffset = numVertices;
+            	indexOffset += numVertices;
             }
         }
         
