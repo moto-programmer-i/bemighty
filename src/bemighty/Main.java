@@ -68,7 +68,8 @@ public class Main {
 	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
-	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
+//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
+	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/polyMesh.gltf");
 
 	public static void main(String[] args) throws Exception {		
 		// 頂点の重複を削除できてない。なぜ？

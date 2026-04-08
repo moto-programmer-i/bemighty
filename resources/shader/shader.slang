@@ -28,6 +28,9 @@ VertexOutput vertMain(VSInput input) {
     // 変形なし
     // output.position = float4(input.inPosition, 1.0);
     
+    // 移動、拡大、回転のみ
+    // output.position = mul(ubo.model, float4(input.inPosition, 1.0));
+    
     // UniformBufferObjectを用いた座標の変換 
     output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
 
