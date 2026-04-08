@@ -85,11 +85,16 @@ public class Model implements AutoCloseable {
             	// https://docs.vulkan.org/tutorial/latest/_images/images/normalized_device_coordinates.svg
         		// https://qiita.com/dpals39/items/1681d9101e58b5aefa27
         		var textureCoord = textureCoords.get(v);
-//        		vertices[index++] = textureCoord.x();
-//        		vertices[index++] = textureCoord.y();
-        		// 確認用で一旦(0,0)
-        		vertices[index++] = 0f;
-        		vertices[index++] = 0f;
+        		vertices[index++] = textureCoord.x();
+        		
+        		// vulkanではy座標が逆なので調整
+        		// https://docs.vulkan.org/tutorial/latest/08_Loading_models.html
+        		vertices[index++] = 1.0f - textureCoord.y();
+        		
+        		
+////        		// 確認用
+//        		vertices[index++] = 0f;
+//        		vertices[index++] = 0f;
         	}
         	
         	
