@@ -1,5 +1,6 @@
 package lwjgl.ex.vulkan;
 
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8A8_SRGB;
 import static org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED;
 import static org.lwjgl.vulkan.VK14.*;
 
@@ -19,6 +20,11 @@ public class ImageViewSettings {
 	public static final int DEFAULT_BASE_MIP_LEVEL = 0;
 	public static final int DEFAULT_LEVEL_COUNT = 1;
 	public static final int DEFAULT_VIEW_TYPE = VK_IMAGE_VIEW_TYPE_2D;
+	
+	/**
+	 * これ以外の画像フォーマットにすると、AssimpUtils.writeImageToPointerの対応が難しい
+	 */
+	public static final int DEFAULT_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
 	
 	public static final VkImageSubresourceRange DEFAULT_IMAGE_SUBRESOURCE_RANGE = 
 			VkImageSubresourceRange.create()
@@ -41,7 +47,7 @@ public class ImageViewSettings {
 	/**
 	 * 本来はenumにするべきだが、LWJGLがこうなってしまっているのでしょうがない
 	 */
-	private int format;
+	private int format = DEFAULT_FORMAT;
 	private int layerCount = DEFAULT_LAYER_COUNT;
 	private int levelCount = DEFAULT_LEVEL_COUNT;
 	private int baseMipLevel = DEFAULT_BASE_MIP_LEVEL;
@@ -92,16 +98,17 @@ public class ImageViewSettings {
 		return levelCount;
 	}
 
-	public void setLevelCount(int levelCount) {
-		this.levelCount = levelCount;
-	}
-
-	public int getBaseMipLevel() {
-		return baseMipLevel;
-	}
-
+	// baseMipLevelと対応させなければいけないらしい
+	// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_image_creation
+//	public void setLevelCount(int levelCount) {
+//		this.levelCount = levelCount;
+//	}
 	public void setBaseMipLevel(int baseMipLevel) {
 		this.baseMipLevel = baseMipLevel;
+	}
+	
+	public int getBaseMipLevel() {
+		return baseMipLevel;
 	}
 
 	public int getViewType() {

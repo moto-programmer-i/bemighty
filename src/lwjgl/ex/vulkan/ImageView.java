@@ -1,5 +1,6 @@
 package lwjgl.ex.vulkan;
 
+import java.awt.image.BufferedImage;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
@@ -13,6 +14,7 @@ import motopgi.utils.ExceptionUtils;
 
 import static lwjgl.ex.vulkan.StagingBufferSettings.MEMORY_PROPERTY_FLAGS_DESTINATION;
 import static lwjgl.ex.vulkan.VulkanConstants.DEFAULT_LONG_OFFSETS;
+import static org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8A8_SRGB;
 import static org.lwjgl.vulkan.VK14.*;
 
 /**
@@ -26,6 +28,16 @@ public class ImageView implements AutoCloseable {
 	public static final int DEFAULT_IMAGE_DEPTH = 1;
 	public static final int DEFAULT_IMAGE_MIP_LEVEL = 1;
 	public static final int DEFAULT_IMAGE_ARRAY_LAYER = 1;
+
+	/**
+	 * 最大mipLevel（適当に3にした）
+	 */
+	public static final int MAX_MIP_LEVEL = 3;
+	
+	/**
+	 * この幅を超えたとき、mipLevelを使用（適当に1000にした）
+	 */
+	public static final int WIDTH_DELIMITER_FOR_MIP = 1000;
 	
 	private long handler;
 	private final ImageViewSettings settings;
@@ -109,7 +121,7 @@ public class ImageView implements AutoCloseable {
 				.imageType(VK_IMAGE_TYPE_2D)
 				.format(imageSettings.getFormat())
 				.extent(VkExtent3D.malloc(stack).width(imageSettings.getWidth()).height(imageSettings.getHeight()).depth(DEFAULT_IMAGE_DEPTH))
-				.mipLevels(DEFAULT_IMAGE_MIP_LEVEL)
+				.mipLevels(imageSettings.getMipLevels())
 				.arrayLayers(DEFAULT_IMAGE_ARRAY_LAYER)
 				.samples(VK_SAMPLE_COUNT_1_BIT)
 				.tiling(imageSettings.getTiling())
@@ -158,5 +170,19 @@ public class ImageView implements AutoCloseable {
 	}
 	public long getImageHandler() {
 		return settings.getImageHandler();
+	}
+	/**
+	 * ミップレベルの計算
+	 * （ミップマップは、事前に計算された縮小版の画像）
+	 * @param image
+	 * @return
+	 */
+	public static int calcMipLevel(BufferedImage image) {
+		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html
+		// mipLevelを適当に設定
+//		if(image.getWidth() >= WIDTH_DELIMITER_FOR_MIP) {
+			return MAX_MIP_LEVEL;
+//		}
+//		return ImageView.DEFAULT_IMAGE_MIP_LEVEL;
 	}
 }

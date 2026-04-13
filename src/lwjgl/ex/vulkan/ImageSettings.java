@@ -2,14 +2,17 @@ package lwjgl.ex.vulkan;
 
 import static org.lwjgl.vulkan.VK14.*;
 
+import java.awt.image.BufferedImage;
+
 public class ImageSettings {
+	
 	private LogicalDevice logicalDevice;
 	private int width;
 	private int  height;
 	/**
 	 * vk::Format
 	 */
-	private int format;
+	private int format = ImageViewSettings.DEFAULT_FORMAT;
 	/**
 	 * vk::ImageTiling
 	 */
@@ -22,6 +25,8 @@ public class ImageSettings {
 	 * vk::MemoryPropertyFlags
 	 */
 	private int properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	
+	private int mipLevels = ImageView.DEFAULT_IMAGE_MIP_LEVEL;
 	public ImageSettings(LogicalDevice logicalDevice, int width, int height, int format, int usage) {
 		this.logicalDevice = logicalDevice;
 		this.width = width;
@@ -29,6 +34,11 @@ public class ImageSettings {
 		this.format = format;
 		this.usage = usage;
 	}
+	
+	public ImageSettings(LogicalDevice logicalDevice, BufferedImage image, int usage) {
+		this(logicalDevice, image.getWidth(), image.getHeight(), ImageViewSettings.DEFAULT_FORMAT, usage);
+	}
+	
 	public int getWidth() {
 		return width;
 	}
@@ -57,5 +67,13 @@ public class ImageSettings {
 	}
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
+	}
+
+	public int getMipLevels() {
+		return mipLevels;
+	}
+
+	public void setMipLevels(int mipLevels) {
+		this.mipLevels = mipLevels;
 	}
 }

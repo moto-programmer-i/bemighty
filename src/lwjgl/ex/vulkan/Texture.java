@@ -35,11 +35,6 @@ public class Texture implements AutoCloseable {
 	 */
 	public static final int PIXEL_BYTES = 4;
 	
-	/**
-	 * これ以外のフォーマットにすると、AssimpUtils.writeImageToPointerの対応が難しい
-	 */
-	public static final int DEFAULT_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
-	
 	private StagingBuffer textureBuffer;
 	private CommandBuffer commandBuffer;
 	private ImageView textureImageView;
@@ -71,7 +66,9 @@ public class Texture implements AutoCloseable {
 		textureBuffer = new StagingBuffer(bufferSettings);
 
 		// createImage(texWidth, texHeight, （フォーマットはJavaの都合上、チュートリアルと変更）, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
-		imageHandler = ImageView.createImage(new ImageSettings(logicalDevice, image.getWidth(), image.getHeight(), DEFAULT_FORMAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+		var imageSettings = new ImageSettings(logicalDevice, image, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+//		imageSettings.setMipLevels(ImageView.calcMipLevel(image));
+		imageHandler = ImageView.createImage(imageSettings);
 		
 		
 		try(var stack = MemoryStack.stackPush()) {
@@ -83,7 +80,6 @@ public class Texture implements AutoCloseable {
 			
 			// createImageView
 			var textureImageViewSettings = new ImageViewSettings(logicalDevice);
-	        textureImageViewSettings.setFormat(DEFAULT_FORMAT);
 	        textureImageViewSettings.setImageHandler(imageHandler.getHandler());
 	        textureImageView = new ImageView(textureImageViewSettings);
 	        
