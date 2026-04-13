@@ -66,7 +66,10 @@ public class ImageView implements AutoCloseable {
                     .subresourceRange(it -> it
                             .aspectMask(settings.getAspectMask())
                             .baseMipLevel(settings.getBaseMipLevel())
-                            .levelCount(settings.getLevelCount())
+                            // levelCountという名前が不適切なので変更した 
+                            // https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+                            .levelCount(settings.getMipLevels())
+                            
                             .baseArrayLayer(settings.getBaseArrayLayer())
                             .layerCount(settings.getLayerCount()));
 

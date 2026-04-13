@@ -79,7 +79,7 @@ public class Texture implements AutoCloseable {
 			
 			
 			// createImageView
-			var textureImageViewSettings = new ImageViewSettings(logicalDevice);
+			var textureImageViewSettings = new ImageViewSettings(logicalDevice, imageSettings);
 	        textureImageViewSettings.setImageHandler(imageHandler.getHandler());
 	        textureImageView = new ImageView(textureImageViewSettings);
 	        

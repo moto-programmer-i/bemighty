@@ -18,7 +18,11 @@ public class ImageViewSettings {
 	public static final int DEFAULT_BASE_ARRAY_LAYER = 0;
 	public static final int DEFAULT_LAYER_COUNT = 1;
 	public static final int DEFAULT_BASE_MIP_LEVEL = 0;
-	public static final int DEFAULT_LEVEL_COUNT = 1;
+	/**
+	 * LEVEL_COUNTという名前が不適切なので変更した
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+	 */
+	public static final int DEFAULT_MIP_LEVELS = 1;
 	public static final int DEFAULT_VIEW_TYPE = VK_IMAGE_VIEW_TYPE_2D;
 	
 	/**
@@ -30,7 +34,7 @@ public class ImageViewSettings {
 			VkImageSubresourceRange.create()
 			.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
 			.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
-			.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
+			.levelCount(ImageViewSettings.DEFAULT_MIP_LEVELS)
 			.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
 			.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
 	
@@ -38,7 +42,7 @@ public class ImageViewSettings {
 			VkImageSubresourceRange.create()
 			.aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT)
 			.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
-			.levelCount(ImageViewSettings.DEFAULT_LAYER_COUNT)
+			.levelCount(ImageViewSettings.DEFAULT_MIP_LEVELS)
 			.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
 			.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
 
@@ -49,7 +53,7 @@ public class ImageViewSettings {
 	 */
 	private int format = DEFAULT_FORMAT;
 	private int layerCount = DEFAULT_LAYER_COUNT;
-	private int levelCount = DEFAULT_LEVEL_COUNT;
+	private int mipLevels = DEFAULT_MIP_LEVELS;
 	private int baseMipLevel = DEFAULT_BASE_MIP_LEVEL;
 	private int viewType = DEFAULT_VIEW_TYPE;
 
@@ -60,6 +64,11 @@ public class ImageViewSettings {
 
 	public ImageViewSettings(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
+	}
+	
+	public ImageViewSettings(LogicalDevice logicalDevice, ImageSettings imageSettings) {
+		this.logicalDevice = logicalDevice;
+		mipLevels = imageSettings.getMipLevels();
 	}
 
 	public int getAspectMask() {
@@ -94,15 +103,33 @@ public class ImageViewSettings {
 		this.layerCount = layerCount;
 	}
 
-	public int getLevelCount() {
-		return levelCount;
+	/**
+	 * mipLevels（旧levelCount）を取得
+	 * 
+	 * levelCountという名前が不適切なので変更した
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+	 * @return
+	 */
+	public int getMipLevels() {
+		return mipLevels;
 	}
 
-	// baseMipLevelと対応させなければいけないらしい
-	// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_image_creation
-//	public void setLevelCount(int levelCount) {
-//		this.levelCount = levelCount;
-//	}
+	/**
+	 * mipLevels（旧levelCount）を設定
+	 * 
+	 * levelCountという名前が不適切なので変更した
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+	 * @param mipLevels 旧levelCount
+	 */
+	public void setMipLevels(int mipLevels) {
+		this.mipLevels = mipLevels;
+	}
+
+	/**
+	 *  the first mipmap level、基本的にいじることはないはず
+	 *  http://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+	 * @param baseMipLevel
+	 */
 	public void setBaseMipLevel(int baseMipLevel) {
 		this.baseMipLevel = baseMipLevel;
 	}
@@ -137,7 +164,7 @@ public class ImageViewSettings {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(aspectMask, baseArrayLayer, baseMipLevel, format, imageHandler, layerCount, levelCount,
+		return Objects.hash(aspectMask, baseArrayLayer, baseMipLevel, format, imageHandler, layerCount, mipLevels,
 				logicalDevice, viewType);
 	}
 
@@ -152,7 +179,7 @@ public class ImageViewSettings {
 		ImageViewSettings other = (ImageViewSettings) obj;
 		return aspectMask == other.aspectMask && baseArrayLayer == other.baseArrayLayer
 				&& baseMipLevel == other.baseMipLevel && format == other.format && imageHandler == other.imageHandler
-				&& layerCount == other.layerCount && levelCount == other.levelCount
+				&& layerCount == other.layerCount && mipLevels == other.mipLevels
 				&& Objects.equals(logicalDevice, other.logicalDevice) && viewType == other.viewType;
 	}
 
@@ -163,7 +190,7 @@ public class ImageViewSettings {
 		clone.baseArrayLayer = baseArrayLayer;
 		clone.format = format;
 		clone.layerCount = layerCount;
-		clone.levelCount = levelCount;
+		clone.mipLevels = mipLevels;
 		clone.baseMipLevel = baseMipLevel;
 		clone.viewType = viewType;
 		clone.imageHandler = imageHandler;
