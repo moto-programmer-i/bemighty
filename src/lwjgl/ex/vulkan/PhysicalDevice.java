@@ -321,6 +321,18 @@ public class PhysicalDevice {
 				DEPTH_FORMAT);
 	}
 	
+	/**
+	 * https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/vkGetPhysicalDeviceFormatProperties2.html
+	 * @param format
+	 * @param stack
+	 * @return
+	 */
+	public VkFormatProperties2 getFormatProperties(int format, MemoryStack stack) {
+		var properties = VkFormatProperties2.calloc(stack).sType$Default();
+		vkGetPhysicalDeviceFormatProperties2(device, format, properties);
+		return properties;
+	}
+	
 	
 	public int findSupportedFormat(int tiling, int features, int...candidates ) {
 		try (var stack = MemoryStack.stackPush()) {

@@ -6,7 +6,10 @@ import java.util.Arrays;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkExtent3D;
+import org.lwjgl.vulkan.VkImageBlit;
 import org.lwjgl.vulkan.VkImageCreateInfo;
+import org.lwjgl.vulkan.VkImageMemoryBarrier2;
+import org.lwjgl.vulkan.VkImageSubresourceRange;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 
@@ -14,7 +17,6 @@ import motopgi.utils.ExceptionUtils;
 
 import static lwjgl.ex.vulkan.StagingBufferSettings.MEMORY_PROPERTY_FLAGS_DESTINATION;
 import static lwjgl.ex.vulkan.VulkanConstants.DEFAULT_LONG_OFFSETS;
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_B8G8R8A8_SRGB;
 import static org.lwjgl.vulkan.VK14.*;
 
 /**
@@ -38,6 +40,11 @@ public class ImageView implements AutoCloseable {
 	 * この幅を超えたとき、mipLevelを使用（適当に1000にした）
 	 */
 	public static final int WIDTH_DELIMITER_FOR_MIP = 1000;
+	
+	// VkImageBlit.offsets[2]は名前が不適切、実際にはboundsなので用意
+	// https://docs.vulkan.org/refpages/latest/refpages/source/VkImageBlit.html
+	public static final int BOUNDS_INDEX_LEFT_TOP = 0;
+	public static final int BOUNDS_INDEX_WIDTH_HEIGHT = 1;
 	
 	private long handler;
 	private final ImageViewSettings settings;
@@ -187,5 +194,99 @@ public class ImageView implements AutoCloseable {
 			return MAX_MIP_LEVEL;
 //		}
 //		return ImageView.DEFAULT_IMAGE_MIP_LEVEL;
+	}
+	
+	public static void generateMipmaps(Handler imageHandler, BufferedImage image, int imageFormat, int mipLevels, LogicalDevice logicalDevice, CommandBuffer commandBuffer, Queue queue)
+	{
+		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_generating_mipmaps
+		try(var stack = MemoryStack.stackPush()) {
+			// Check if image format supports linear blit-ing
+			var formatProperties = logicalDevice.getPhysicalDevice().getFormatProperties(imageFormat, stack).formatProperties();
+			
+			
+			if ((formatProperties.optimalTilingFeatures() & VK_FORMAT_FEATURE_2_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
+			{
+				throw new IllegalArgumentException("テクスチャの画像フォーマットがlinear blittingをサポートしていません\n フォーマット：" + imageFormat);
+			}
+
+			commandBuffer.begin();
+			
+			var barrier = new ImageMemoryBarrier(stack)
+					.accessMask(VK_ACCESS_TRANSFER_READ_BIT)
+					.stageMask(VK_PIPELINE_STAGE_2_TRANSFER_BIT)
+					.layout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+					.image(imageHandler.getHandler())
+					;
+
+			var barrierBegin = barrier.getBegin()
+				.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT)
+				.srcStageMask(VK_PIPELINE_STAGE_2_TRANSFER_BIT)
+				.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			
+			var barrierEnd = barrier.getEnd()
+					.dstAccessMask(VK_ACCESS_SHADER_READ_BIT)
+					.dstStageMask(VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT)
+					.newLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			
+
+			int sourceMipWidth  = image.getWidth();
+			int sourceMipHeight = image.getHeight();
+			int destinationMipWidth, destinationMipHeight;
+			
+			// https://docs.vulkan.org/refpages/latest/refpages/source/VkImageBlit.html
+			var imageBlit = VkImageBlit.malloc(1, stack);
+			// 変数名はoffsets[2]となっているが、実際はbounds
+			// 左上は当然0
+			// サイズはzが1らしい
+			// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_generating_mipmaps
+			imageBlit.srcOffsets().get(BOUNDS_INDEX_LEFT_TOP).x(0).y(0).z(0);
+			imageBlit.srcOffsets().get(BOUNDS_INDEX_WIDTH_HEIGHT).z(1);
+			imageBlit.dstOffsets().get(BOUNDS_INDEX_LEFT_TOP).x(0).y(0).z(0);
+			imageBlit.dstOffsets().get(BOUNDS_INDEX_WIDTH_HEIGHT).z(1);
+			
+			imageBlit.srcSubresource()
+				.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
+				.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+				.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
+			imageBlit.dstSubresource()
+				.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
+				.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+				.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
+
+			// baseMipLevel 0 から、次のbaseMipLevelへコピーしていく
+			for(int sourceMipLevel = 0, destinationMipLevel = 1; destinationMipLevel < mipLevels; ++sourceMipLevel, ++destinationMipLevel) {
+				barrier.baseMipLevel(sourceMipLevel);
+				commandBuffer.transitionImageLayout(barrierBegin);
+
+				// mipWidthはチュートリアルに合わせて半分にしていく
+				imageBlit.srcOffsets().get(BOUNDS_INDEX_WIDTH_HEIGHT).x(sourceMipWidth).y(sourceMipHeight);
+				destinationMipWidth = sourceMipWidth > 1 ? sourceMipWidth / 2 : 1;
+				destinationMipHeight = sourceMipHeight > 1 ? sourceMipHeight / 2 : 1;
+				imageBlit.dstOffsets().get(BOUNDS_INDEX_WIDTH_HEIGHT).x(destinationMipWidth).y(destinationMipHeight);
+				
+				// mipLevel更新
+				imageBlit.srcSubresource().mipLevel(sourceMipLevel);
+				imageBlit.dstSubresource().mipLevel(destinationMipLevel);
+
+				commandBuffer.blitImage(imageHandler, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageHandler, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageBlit, VK_FILTER_LINEAR);
+
+				commandBuffer.transitionImageLayout(barrierEnd);
+				
+
+				// destinationは次のループでsourceになる
+				sourceMipWidth = destinationMipWidth;
+				sourceMipHeight = destinationMipHeight;
+			}
+
+			
+			// 最後のmipLevelを送信
+			// 事前のnewLayoutとoldLayoutが異なるが、エラーにならない。不明。
+			barrierEnd.subresourceRange().baseMipLevel(mipLevels - 1);
+			barrierEnd.oldLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			barrierEnd.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
+			commandBuffer.transitionImageLayout(barrierEnd);
+
+			commandBuffer.submit(stack, queue);
+		}
 	}
 }

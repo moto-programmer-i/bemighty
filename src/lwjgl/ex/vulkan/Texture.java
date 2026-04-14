@@ -66,17 +66,18 @@ public class Texture implements AutoCloseable {
 		textureBuffer = new StagingBuffer(bufferSettings);
 
 		// createImage(texWidth, texHeight, （フォーマットはJavaの都合上、チュートリアルと変更）, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, vk::MemoryPropertyFlagBits::eDeviceLocal, textureImage, textureImageMemory);
-		var imageSettings = new ImageSettings(logicalDevice, image, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-//		imageSettings.setMipLevels(ImageView.calcMipLevel(image));
+		// vkCmdBlitImageこれは転送操作とみなされるため、テクスチャイメージを転送元と転送先の両方として使用することをVulkanに通知する必要がある
+		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_generating_mipmaps
+		var imageSettings = new ImageSettings(logicalDevice, image, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		imageSettings.setMipLevels(ImageView.calcMipLevel(image));
 		imageHandler = ImageView.createImage(imageSettings);
 		
 		
 		try(var stack = MemoryStack.stackPush()) {
 			// まとめてsubmitできないのか？
-			transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, queue, stack);
+			transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, queue, imageSettings.getMipLevels(), stack);
 			copyBufferToImage(stack, queue);
-			transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, queue, stack);
-			
+			ImageView.generateMipmaps(imageHandler, image, ImageViewSettings.DEFAULT_FORMAT, imageSettings.getMipLevels(), logicalDevice, commandBuffer, queue);
 			
 			// createImageView
 			var textureImageViewSettings = new ImageViewSettings(logicalDevice, imageSettings);
@@ -121,7 +122,7 @@ public class Texture implements AutoCloseable {
 	}
 	
 	
-	private void transitionImageLayout(int oldLayout, int newLayout, Queue queue, MemoryStack stack) {
+	private void transitionImageLayout(int oldLayout, int newLayout, Queue queue, int mipLevels, MemoryStack stack) {
 		commandBuffer.begin();
 		// 参考
 		// https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
@@ -129,7 +130,9 @@ public class Texture implements AutoCloseable {
 			.oldLayout(oldLayout)
 			.newLayout(newLayout)
 			.image(imageHandler.getHandler())
-			.subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
+			.subresourceRange(
+					ImageViewSettings.createDefaultImageSubresourceRange(stack, mipLevels)
+					);
 		
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
 			barrier.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);

@@ -204,4 +204,15 @@ public class ImageViewSettings {
         .dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
         .subresourceRange(ImageViewSettings.DEFAULT_IMAGE_SUBRESOURCE_RANGE);
 	}
+	
+	public static VkImageSubresourceRange createDefaultImageSubresourceRange(MemoryStack stack, int mipLevels) {
+		return VkImageSubresourceRange.create()
+				.aspectMask(ImageViewSettings.DEFAULT_ASPECT_MASK)
+				.baseMipLevel(ImageViewSettings.DEFAULT_BASE_MIP_LEVEL)
+				// levelCountという名前が不適切なので変更した
+				// https://docs.vulkan.org/refpages/latest/refpages/source/VkImageSubresourceRange.html
+				.levelCount(mipLevels)
+				.baseArrayLayer(ImageViewSettings.DEFAULT_BASE_ARRAY_LAYER)
+				.layerCount(ImageViewSettings.DEFAULT_LAYER_COUNT);
+	}
 }

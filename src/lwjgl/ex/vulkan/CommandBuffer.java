@@ -21,6 +21,7 @@ import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
 import org.lwjgl.vulkan.VkCommandBufferSubmitInfo;
 import org.lwjgl.vulkan.VkDependencyInfo;
+import org.lwjgl.vulkan.VkImageBlit;
 import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderingInfo;
@@ -258,5 +259,18 @@ public class CommandBuffer implements AutoCloseable {
 
 	public VkCommandBuffer getBuffer() {
 		return buffer;
+	}
+	
+	/**
+	 * https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBlitImage.html
+	 * @param sourceImage
+	 * @param sourceImageLayout
+	 * @param destinationImage
+	 * @param destinationImageLayout
+	 * @param regions
+	 * @param filter
+	 */
+	public void blitImage(Handler sourceImage, int sourceImageLayout, Handler destinationImage, int destinationImageLayout, VkImageBlit.Buffer regions, int filter) {
+		vkCmdBlitImage(buffer, sourceImage.getHandler(), sourceImageLayout, destinationImage.getHandler(), destinationImageLayout, regions, filter);
 	}
 }
