@@ -190,10 +190,10 @@ public class ImageView implements AutoCloseable {
 	public static int calcMipLevel(BufferedImage image) {
 		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html
 		// mipLevelを適当に設定
-//		if(image.getWidth() >= WIDTH_DELIMITER_FOR_MIP) {
+		if(image.getWidth() >= WIDTH_DELIMITER_FOR_MIP) {
 			return MAX_MIP_LEVEL;
-//		}
-//		return ImageView.DEFAULT_IMAGE_MIP_LEVEL;
+		}
+		return ImageView.DEFAULT_IMAGE_MIP_LEVEL;
 	}
 	
 	public static void generateMipmaps(Handler imageHandler, BufferedImage image, int imageFormat, int mipLevels, LogicalDevice logicalDevice, CommandBuffer commandBuffer, Queue queue)

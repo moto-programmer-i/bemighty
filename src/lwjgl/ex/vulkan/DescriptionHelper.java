@@ -121,13 +121,19 @@ public class DescriptionHelper implements AutoCloseable {
 			
 			// createTextureSampler
 	        var samplerCreate = VkSamplerCreateInfo.calloc(stack).sType$Default()
+	        		// mipmapModeを選択
+	        		// 設定可能にするべきか不明
+	        		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_sampler
 	        		.magFilter(VK_FILTER_LINEAR)
 	        		.minFilter(VK_FILTER_LINEAR)
 	        		.mipmapMode(VK_FILTER_LINEAR)
+	        		.mipLodBias(DEFAULT_BIAS)
+	        		.minLod(DEFAULT_MIN_LEVEL_OF_DETAIL)
+			        .maxLod(VK_LOD_CLAMP_NONE)
+	        		
 	        		.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT)
 	        		.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT)
 	        		.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT)
-	        		.mipLodBias(DEFAULT_BIAS)
 	        		.anisotropyEnable(true)
 	        		.maxAnisotropy(logicalDevice.getPhysicalDevice().getMaxSamplerAnisotropy())
 	        		.compareEnable(false)

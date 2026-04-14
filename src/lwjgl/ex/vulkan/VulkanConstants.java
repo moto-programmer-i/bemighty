@@ -57,6 +57,11 @@ public final class VulkanConstants {
 	 * https://qiita.com/dgtanaka/items/2ec0fd88236daa5c3cc7
 	 */
 	public static final float DEFAULT_BIAS = 0.0f;
+	
+	/**
+	 * https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_sampler
+	 */
+	public static final float DEFAULT_MIN_LEVEL_OF_DETAIL = 0.0f;
 
 	/**
 	 * 1ピクセルのバイト数
