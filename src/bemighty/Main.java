@@ -71,7 +71,10 @@ public class Main {
 //	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
 	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/polyMesh.gltf");
 
-	public static void main(String[] args) throws Exception {		
+	public static void main(String[] args) throws Exception {
+		// 処理前の時刻を取得
+        long startMilliseconds = System.currentTimeMillis();
+		
 		// 頂点の重複を削除できてない。なぜ？
 		 int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
 		 
@@ -159,6 +162,9 @@ public class Main {
 										render.render(command);
 									}
 									
+									// 処理後の時刻を取得
+							        long endMilliseconds = System.currentTimeMillis();
+							        System.out.println("処理時間 " + (endMilliseconds - startMilliseconds) / 1000.0);									
 									// ウィンドウが閉じられるまで待つ
 									window.waitUntilClose();	
 								}
