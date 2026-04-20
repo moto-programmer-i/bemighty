@@ -43,6 +43,7 @@ public class SwapChain implements AutoCloseable {
 	private final List<Consumer<SwapChain>> recreateListeners = new ArrayList<>();
 	
 	private ImageView depthImageView;
+	private ImageView msaaColorImageView;
 
 	public SwapChain(SwapChainSettings settings) {
 		this.settings = settings;
@@ -125,6 +126,12 @@ public class SwapChain implements AutoCloseable {
 					"Swapchainイメージの取得に失敗しました");
 
 			imageViews = ImageView.createArray(imageCount, swapchainImagesBuffer, settings.getImageViewSettings());
+			
+			// createColorResources()
+			// https://docs.vulkan.org/tutorial/latest/10_Multisampling.html#_setting_up_a_render_target
+			var msaaColorFormat = settings.getSurface().getFormat();
+			var msaaColorSettings = new ImageSettings(settings.getLogicalDevice(), width, height, msaaColorFormat, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+			msaaColorImageView = ImageView.from(msaaColorSettings, msaaColorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 			
 			// createDepthResources()
 			var depthFormat = settings.getLogicalDevice().getPhysicalDevice().findDepthFormat();
@@ -215,7 +222,7 @@ public class SwapChain implements AutoCloseable {
 			return;
 		}
 		try {
-			ExceptionUtils.close(imageViews, depthImageView);
+			ExceptionUtils.close(imageViews, msaaColorImageView, depthImageView);
 		} finally {
 			vkDestroySwapchainKHR(settings.getLogicalDevice().getDevice(), handler, null);
 			handler = VK_NULL_HANDLE;
@@ -240,6 +247,11 @@ public class SwapChain implements AutoCloseable {
 	public boolean addRecreateListener(Consumer<SwapChain> listener) {
 		return recreateListeners.add(listener);
 	}
+	
+
+	public ImageView getMsaaColorImageView() {
+		return msaaColorImageView;
+	}
 
 	public ImageView getDepthImageView() {
 		return depthImageView;
@@ -257,5 +269,10 @@ public class SwapChain implements AutoCloseable {
 		var ky = kx * ratio;
 		uniformObject.perspective(kx, ky, settings.getCameraNear(), settings.getCameraFar());
 	}
+	
+	public boolean isAntiAlias() {
+		return settings.getLogicalDevice().getSettings().isAntiAlias();
+	}
+	
 	
 }

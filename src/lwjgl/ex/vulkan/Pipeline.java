@@ -63,7 +63,7 @@ public class Pipeline implements AutoCloseable {
                     .lineWidth(settings.getLineWidth());
 
             var multisample = VkPipelineMultisampleStateCreateInfo.calloc(stack).sType$Default()
-                    .rasterizationSamples(settings.getRasterizationSamples())
+                    .rasterizationSamples(settings.getLogicalDevice().getMsaaSamples())
                     .sampleShadingEnable(false);
             
             var depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack).sType$Default()

@@ -26,8 +26,6 @@ public class PipelineSettings {
 	private float depthBiasSlopeFactor = 1.0f; 
 	private float depthlineWidth = DEFAULT_LINE_WIDTH;
 	
-	// vk::PipelineMultisampleStateCreateInfo multisampling{.rasterizationSamples = vk::SampleCountFlagBits::e1, .sampleShadingEnable = vk::False};
-	private int rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	private boolean sampleShadingEnable = false;
 	
 	// vk::PipelineColorBlendAttachmentState colorBlendAttachment{.blendEnable    = vk::False,
@@ -129,12 +127,7 @@ public class PipelineSettings {
 	public void setDepthlineWidth(float depthlineWidth) {
 		this.depthlineWidth = depthlineWidth;
 	}
-	public int getRasterizationSamples() {
-		return rasterizationSamples;
-	}
-	public void setRasterizationSamples(int rasterizationSamples) {
-		this.rasterizationSamples = rasterizationSamples;
-	}
+	
 	public boolean isSampleShadingEnable() {
 		return sampleShadingEnable;
 	}

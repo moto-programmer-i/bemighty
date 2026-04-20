@@ -44,6 +44,8 @@ public class PhysicalDevice {
 	private float maxSamplerAnisotropy;
 	
 	private int[] memoryProperties;
+	
+	private int msaaSamples;
 
 	/**
 	 * getFirstPhysicalDeviceから初期化
@@ -89,6 +91,11 @@ public class PhysicalDevice {
 //	        var nameBytes = new byte[properties.deviceName().capacity()];
 //	        properties.deviceName().get(nameBytes);
 //	        System.out.println(new String(nameBytes));
+	        
+		    // https://docs.vulkan.org/tutorial/latest/10_Multisampling.html
+		    // getMaxUsableSampleCount
+	        // 最上位のビットだけあれば良いらしい
+	        msaaSamples = Integer.highestOneBit(properties.limits().framebufferColorSampleCounts() & properties.limits().framebufferDepthSampleCounts());
 	        
 	        // PhysicalDeviceMemoryPropertiesを事前に確保
 	        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties = VkPhysicalDeviceMemoryProperties.calloc(stack);
@@ -354,5 +361,14 @@ public class PhysicalDevice {
 		}
 
 		throw new IllegalArgumentException("フォーマットの取得に失敗しました " + Arrays.toString(candidates));
+	}
+
+	/**
+	 * アンチエイリアスに利用可能なサンプル数を取得する
+	 * http://docs.vulkan.org/tutorial/latest/10_Multisampling.html#_introduction
+	 * @return vk::SampleCountFlagBits
+	 */
+	public int getMsaaSamples() {
+		return msaaSamples;
 	}
 }

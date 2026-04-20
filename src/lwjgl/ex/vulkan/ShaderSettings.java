@@ -36,4 +36,5 @@ public class ShaderSettings {
 	public ShaderStageSettings getStage(int index) {
 		return stages.get(index);
 	}
+	
 }

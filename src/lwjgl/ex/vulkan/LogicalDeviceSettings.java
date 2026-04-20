@@ -19,6 +19,9 @@ vkResetFences(): pFences[0] (VkFence 0xb000000000b) is in use.
 	private boolean synchronization2 = true;
 	private boolean shaderDrawParameters = true;
 	
+
+	private boolean antiAlias = true;
+	
 	public LogicalDeviceSettings(PhysicalDevice physicalDevice) {
 		this.physicalDevice = physicalDevice;
 	}
@@ -60,5 +63,11 @@ vkResetFences(): pFences[0] (VkFence 0xb000000000b) is in use.
 	}
 	public void setShaderDrawParameters(boolean shaderDrawParameters) {
 		this.shaderDrawParameters = shaderDrawParameters;
+	}
+	public boolean isAntiAlias() {
+		return antiAlias;
+	}
+	public void setAntiAlias(boolean antiAlias) {
+		this.antiAlias = antiAlias;
 	}
 }

@@ -14,6 +14,8 @@ import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 import org.lwjgl.vulkan.VkRenderingInfo;
 
+import motopgi.utils.ExceptionUtils;
+
 /**
  * 画面を塗りつぶすコマンド
  */
@@ -55,7 +57,11 @@ public class ClearColorCommand implements Command, AutoCloseable{
             // 何も待たない
             .srcStageMask(COLOR_OUTPUT_STAGE)
             // 同期のスコープの終了時まで
-            .dstStageMask(VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);	
+            .dstStageMask(VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);
+	
+	// Transition the multisampled color image to COLOR_ATTACHMENT_OPTIMAL
+	// https://docs.vulkan.org/tutorial/latest/_attachments/30_multisampling.cpp
+	private VkImageMemoryBarrier2.Buffer multisampleBarrier;	
 	
 	private Color color;
 	private final VkClearColorValue clearColorValue;
@@ -73,6 +79,45 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	            .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
 	            .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
 	            .clearValue(clearValue);
+		
+		if(swapChain.isAntiAlias()) {
+			// https://docs.vulkan.org/tutorial/latest/10_Multisampling.html#_adding_new_attachments
+	        // マルチサンプル画像を直接表示できないため、通常の画像に解決する必要があるらしい
+			// PRESENT_SRC_KHR -> COLOR_ATTACHMENT_OPTIMAL
+			endBarrier.dstStageMask(COLOR_LAYOUT);
+			
+			// もう1つmultisample用のバリアが必要になるらしい
+			// Vulkan側がやってくれないのか？
+			multisampleBarrier = ImageViewSettings.createDefaultBarrier()
+					.image(swapChain.getMsaaColorImageView().getHandler())
+		            .oldLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+		            .newLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		            
+		            // アクセスは書き込み
+		            .srcAccessMask(WRITE_ACCESS_MASK)
+		            .dstAccessMask(WRITE_ACCESS_MASK)
+		            
+		            // 事前の色の出力まで
+		            .srcStageMask(COLOR_OUTPUT_STAGE)
+		            .dstStageMask(COLOR_OUTPUT_STAGE);
+			
+			
+			// マルチサンプル環境だとcolorAttachmentの変更が必要らしい。Vulkanがやってくれないのか？
+			// Color attachment (multisampled) with resolve attachment
+			// https://docs.vulkan.org/tutorial/latest/_attachments/30_multisampling.cpp
+			colorAttachment
+				.imageView(swapChain.getMsaaColorImageView().getHandler())
+				.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+				.resolveMode(VK_RESOLVE_MODE_AVERAGE_BIT)
+				// swapChainImageViewは毎回違うので、ここでは不可
+				// .resolveImageView   = swapChainImageViews[imageIndex],
+				.resolveImageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+				;
+		}
+		
+		
+		
+		
 		renderArea = new Rect2D();
 		renderingInfo = VkRenderingInfo.create().sType$Default()
 				// 未設定Rect2Dを代入する意味なし
@@ -111,10 +156,19 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	 */
 	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable render) {
 		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
-		colorAttachment.imageView(nextSwapChainImageView.getHandler());		
+		// マルチサンプリング下ではresolveImageViewにswapChain、そうでない場合はimageViewにswapChain
+		if(swapChain.isAntiAlias()) {
+			colorAttachment.resolveImageView(nextSwapChainImageView.getHandler());
+		}
+		else {
+			colorAttachment.imageView(nextSwapChainImageView.getHandler());	
+		}
 		
 		// transinsionでrenderを挟まなければならない
         commandBuffer.transitionImageLayout(startBarrier, nextSwapChainImageView);
+        if(multisampleBarrier != null) {
+        	commandBuffer.transitionImageLayout(multisampleBarrier, nextSwapChainImageView);
+        }
         render.run();
         commandBuffer.transitionImageLayout(endBarrier, nextSwapChainImageView);
 	}
@@ -124,7 +178,8 @@ public class ClearColorCommand implements Command, AutoCloseable{
 		if (color == null) {
 			return;
 		}
-		try(startBarrier;endBarrier;clearColorValue;clearValue;colorAttachment;renderArea;renderingInfo){}
+		ExceptionUtils.close(renderingInfo,renderArea,multisampleBarrier,colorAttachment,clearValue,clearColorValue,endBarrier,startBarrier);
+		
 		color = null;
 	}
 

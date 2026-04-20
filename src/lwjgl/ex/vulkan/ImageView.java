@@ -133,7 +133,10 @@ public class ImageView implements AutoCloseable {
 				.extent(VkExtent3D.malloc(stack).width(imageSettings.getWidth()).height(imageSettings.getHeight()).depth(DEFAULT_IMAGE_DEPTH))
 				.mipLevels(imageSettings.getMipLevels())
 				.arrayLayers(DEFAULT_IMAGE_ARRAY_LAYER)
-				.samples(VK_SAMPLE_COUNT_1_BIT)
+				
+				// アンチエイリアスに使うサンプル数
+				.samples(imageSettings.getSamples())
+				
 				.tiling(imageSettings.getTiling())
 				.usage(imageSettings.getUsage())
 				.sharingMode(VK_SHARING_MODE_EXCLUSIVE);

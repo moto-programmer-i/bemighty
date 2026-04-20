@@ -11,6 +11,7 @@ import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 import org.lwjgl.vulkan.VkPhysicalDeviceVulkan11Features;
 import org.lwjgl.vulkan.VkPhysicalDeviceVulkan13Features;
 
+import static org.lwjgl.vulkan.VK10.VK_SAMPLE_COUNT_1_BIT;
 import static org.lwjgl.vulkan.VK10.vkDestroyDevice;
 import static org.lwjgl.vulkan.VK13.*;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -27,6 +28,11 @@ import static lwjgl.ex.vulkan.Vulkan.*;
 public class LogicalDevice implements AutoCloseable {
 	private LogicalDeviceSettings settings;
 	private VkDevice device;
+	
+	/**
+	 * MSAAに使うサンプル数
+	 */
+	private int msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
     public LogicalDevice(LogicalDeviceSettings settings) {
     	this.settings = settings;
@@ -84,6 +90,10 @@ public class LogicalDevice implements AutoCloseable {
         	throwExceptionIfFailed(vkCreateDevice(settings.getPhysicalDevice().getDevice(), deviceCreateInfo, null, deviceBuffer),"論理デバイスの初期化に失敗しました");
             device = new VkDevice(deviceBuffer.get(0), settings.getPhysicalDevice().getDevice(), deviceCreateInfo);
         }
+        
+        if (settings.isAntiAlias()) {
+			msaaSamples = settings.getPhysicalDevice().getMsaaSamples();
+		}
     }
 
 	public VkDevice getDevice() {
@@ -113,6 +123,14 @@ public class LogicalDevice implements AutoCloseable {
 	
 	public PhysicalDevice getPhysicalDevice() {
 		return settings.getPhysicalDevice();
+	}
+
+	public LogicalDeviceSettings getSettings() {
+		return settings;
+	}
+
+	public int getMsaaSamples() {
+		return msaaSamples;
 	}
     
 }

@@ -27,12 +27,19 @@ public class ImageSettings {
 	private int properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 	
 	private int mipLevels = ImageView.DEFAULT_IMAGE_MIP_LEVEL;
+	
+	private int samples;
+	
+	
 	public ImageSettings(LogicalDevice logicalDevice, int width, int height, int format, int usage) {
 		this.logicalDevice = logicalDevice;
 		this.width = width;
 		this.height = height;
 		this.format = format;
 		this.usage = usage;
+		
+		// デフォルトはマルチサンプルとする
+		samples = logicalDevice.getMsaaSamples();
 	}
 	
 	public ImageSettings(LogicalDevice logicalDevice, BufferedImage image, int usage) {
@@ -76,4 +83,13 @@ public class ImageSettings {
 	public void setMipLevels(int mipLevels) {
 		this.mipLevels = mipLevels;
 	}
+
+	public int getSamples() {
+		return samples;
+	}
+
+	public void setSamples(int samples) {
+		this.samples = samples;
+	}
+	
 }

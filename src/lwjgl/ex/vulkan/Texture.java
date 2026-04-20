@@ -6,27 +6,20 @@ import org.lwjgl.vulkan.VkBufferImageCopy;
 import org.lwjgl.vulkan.VkDescriptorBufferInfo;
 import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkExtent3D;
-import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkImageMemoryBarrier2;
 import org.lwjgl.vulkan.VkImageSubresourceLayers;
-import org.lwjgl.vulkan.VkMemoryRequirements;
-import org.lwjgl.vulkan.VkSamplerCreateInfo;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import motopgi.utils.ExceptionUtils;
 
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-import static org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BIT;
+import static org.lwjgl.vulkan.VK10.VK_SAMPLE_COUNT_1_BIT;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.awt.image.BufferedImage;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.ImageViewSettings.*;
-import static lwjgl.ex.vulkan.DescriptionHelper.*;
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
 
 public class Texture implements AutoCloseable {
@@ -70,6 +63,10 @@ public class Texture implements AutoCloseable {
 		// https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html#_generating_mipmaps
 		var imageSettings = new ImageSettings(logicalDevice, image, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		imageSettings.setMipLevels(ImageView.calcMipLevel(image));
+		
+		// マルチサンプル環境でも、テクスチャのサンプル数は1
+		imageSettings.setSamples(VK_SAMPLE_COUNT_1_BIT);
+		
 		imageHandler = ImageView.createImage(imageSettings);
 		
 		
