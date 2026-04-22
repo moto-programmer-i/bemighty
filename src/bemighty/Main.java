@@ -124,22 +124,23 @@ public class Main {
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
-					// shader.slangのVSInputと対応させる必要がある
+					// shader.slangと対応させる必要がある
 					// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
 					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, VK_FORMAT_R32G32B32_SFLOAT, "vertMain"));
 					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, VK_FORMAT_R32G32_SFLOAT, "fragMain"));
+					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, VK_FORMAT_R32G32B32_SFLOAT, "compMain"));
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings);
 							var vertexDescriptionHelper = new DescriptionHelper(logicalDevice, shaderSettings);
 									) {
 						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
-						pipelineSettings.setVertexDescriptionHelper(vertexDescriptionHelper);
+						pipelineSettings.setDescriptionHelper(vertexDescriptionHelper);
 						
 						var queueSettings = new QueueSettings(logicalDevice);
 						Queue queue = new Queue(queueSettings);
 						
-						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue);
+						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue, shader);
 						
 						try(var pipeline = new Pipeline(pipelineSettings);
 								var render = new Render(renderSettings)
@@ -147,10 +148,11 @@ public class Main {
 							
 							// 頂点の重複を削除できてない。なぜ？
 //							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
-							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
+//							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
+							try(var particleTest = new ParticleTest(logicalDevice)) {
 								
 								
-								try (var command = new DrawModelCommand(testModel, BACKGROUND, swapChain, pipeline)) {
+								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, pipeline, particleTest)) {
 									final int testCount = 1;
 									for(int i = 0; i < testCount; ++i) {
 										if (window.shouldClose()) {

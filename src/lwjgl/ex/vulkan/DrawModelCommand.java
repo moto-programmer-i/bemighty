@@ -43,12 +43,14 @@ public class DrawModelCommand implements Command, AutoCloseable {
 
 
 	private Model model;
+	private SwapChain swapChain;
 	private final ClearColorCommand clearColor;
 	private Pipeline pipeline;
 	private final VkRenderingAttachmentInfo depthAttachment;
 
 	public DrawModelCommand(Model model, Color background, SwapChain swapChain, Pipeline pipeline) {
 		this.model = model;
+		this.swapChain = swapChain;
 		this.clearColor = new ClearColorCommand(background, swapChain);
 		this.pipeline = pipeline;
 		
@@ -71,19 +73,17 @@ public class DrawModelCommand implements Command, AutoCloseable {
 	}
 	
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain,
-			ImageView nextSwapChainImageView) {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {
 		
 		// transitionまでは、ClearColorと共通
-		clearColor.run(stack, commandBuffer, swapChain, nextSwapChainImageView, () -> {
+		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {
 			
 			commandBuffer.transitionImageLayout(depthBarrier);	
 			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
-				commandBuffer.bind(pipeline);
+				commandBuffer.bindGraphics(pipeline);
 				commandBuffer.setViewportFrom(swapChain, stack);
 				commandBuffer.setScissorFrom(swapChain, stack);
 				commandBuffer.bind(model);
-				commandBuffer.bindDescriptorSets(pipeline);
 				commandBuffer.drawIndexed(model.getIndices().length, instanceCount, firstIndex, vertexOffset, firstInstance);
 
 			});

@@ -15,18 +15,20 @@ public class RenderSettings {
 	private LogicalDevice logicalDevice;
 	private SwapChain swapChain;
 	private Queue queue;
+	private Shader shader;
 	private final CommandPoolSettings commandPoolSettings;
 	private final CommandBufferSettings commandBufferSettings = new CommandBufferSettings();
 	private final QueueSettings queueSettings;
 	
 	
 
-	public RenderSettings(LogicalDevice logicalDevice, SwapChain swapChain, Queue queue) {
+	public RenderSettings(LogicalDevice logicalDevice, SwapChain swapChain, Queue queue, Shader shader) {
 		queueSettings = new QueueSettings(logicalDevice);
 		commandPoolSettings = new CommandPoolSettings(logicalDevice);
 		setLogicalDevice(logicalDevice);
 		this.swapChain = swapChain;
 		this.queue = queue;
+		this.shader = shader;
 	}
 
 	public LogicalDevice getLogicalDevice() {
@@ -75,4 +77,9 @@ public class RenderSettings {
 	public void setMaxInFlight(int maxInFlight) {
 		this.maxInFlight = maxInFlight;
 	}
+
+	public Shader getShader() {
+		return shader;
+	}
+	
 }

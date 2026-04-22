@@ -10,6 +10,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
+
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_COMPUTE_BIT;
 import static org.lwjgl.vulkan.VK14.*;
 
 // 参考
@@ -18,6 +20,7 @@ import static org.lwjgl.vulkan.VK14.*;
 public class Shader implements AutoCloseable {
 	private ShaderSettings settings;
 	private long handler;
+	private final boolean hasCompute;
 
 	public Shader(ShaderSettings settings) throws IOException {
 		this.settings = settings;
@@ -39,6 +42,9 @@ public class Shader implements AutoCloseable {
                     "Shaderの作成に失敗しました");
             handler = forHandler.get(0);
 		}
+		
+		// computeだけ別処理を作らなければいけないのでbooleanを用意
+		hasCompute = settings.hasStage(VK_SHADER_STAGE_COMPUTE_BIT);
 	}
 
 	@Override
@@ -76,9 +82,31 @@ public class Shader implements AutoCloseable {
         return shaderStages;
 	}
 	
+	/**
+	 * （ComputeShader用にPipelineが別で必要なので作成）
+	 * @param stack
+	 * @throws NoSuchElementException ComputeShader用の設定がない場合
+	 * @return
+	 */
+	public VkPipelineShaderStageCreateInfo.Buffer createComputeStageBuffer(MemoryStack stack) {
+		// compute用なので1つでよい
+		var shaderStage = VkPipelineShaderStageCreateInfo.calloc(1, stack).sType$Default();
+        var setting = settings.getCompute().get();
+        shaderStage
+        	.stage(setting.getStage())
+            .module(handler)
+            // なぜかByteBufferに変換しなければいけない
+            .pName(stack.UTF8(setting.getEntryPointName()));
+        
+        return shaderStage;
+	}
+	
 	public int getStageCount() {
 		return settings.stagesSize();
 	}
 	
+	public boolean hasCompute() {
+		return hasCompute;
+	}
 	
 }

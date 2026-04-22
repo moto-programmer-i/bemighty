@@ -3,6 +3,9 @@ package lwjgl.ex.vulkan;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static org.lwjgl.vulkan.VK14.*;
 
 public class ShaderSettings {
 	private LogicalDevice logicalDevice;
@@ -35,6 +38,19 @@ public class ShaderSettings {
 	
 	public ShaderStageSettings getStage(int index) {
 		return stages.get(index);
+	}
+	
+	public boolean hasStage(int stage) {
+		return stages.stream().anyMatch(e -> e.getStage() == stage);
+	}
+	
+	public Optional<ShaderStageSettings> getCompute() {
+		for(var stage: stages) {
+			if (stage.getStage() == VK_SHADER_STAGE_COMPUTE_BIT) {
+				return Optional.of(stage);
+			}
+		}
+		return Optional.empty();
 	}
 	
 }

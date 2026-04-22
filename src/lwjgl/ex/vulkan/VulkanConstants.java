@@ -17,7 +17,7 @@ public final class VulkanConstants {
 	public static final VkOffset3D DEFAULT_OFFSET_3D = VkOffset3D.create();
 	public static final LongBuffer DEFAULT_ARRAY_OF_BUFFER_OFFSETS = MemoryUtil.memAllocLong(1).put(0, DEFAULT_LONG_OFFSETS);
 	
-
+	public static final int DEFAULT_INSTANCE_COUNT = 1;
 	public static final int DEFAULT_FIRST_INDEX = 0;
 	public static final int DEFAULT_FIRST_INSTANCE = 0;
 	

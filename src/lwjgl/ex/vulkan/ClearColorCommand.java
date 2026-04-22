@@ -64,6 +64,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	private VkImageMemoryBarrier2.Buffer multisampleBarrier;	
 	
 	private Color color;
+	private SwapChain swapChain;
 	private final VkClearColorValue clearColorValue;
 	private final VkClearValue clearValue;
 	private final VkRenderingAttachmentInfo.Buffer colorAttachment;
@@ -72,6 +73,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 
 	public ClearColorCommand(Color color, SwapChain swapChain) {
 		this.color = color;
+		this.swapChain = swapChain;
 		clearColorValue = ColorUtils.createClearColorValue(color);
 		clearValue = ColorUtils.createClearValue(clearColorValue);
 		colorAttachment = VkRenderingAttachmentInfo.calloc(1).sType$Default()
@@ -140,8 +142,8 @@ public class ClearColorCommand implements Command, AutoCloseable{
 
 
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView) {
-		run(stack, commandBuffer, swapChain, nextSwapChainImageView, () -> {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {
+		run(stack, commandBuffer, nextSwapChainImageView, () -> {
 			commandBuffer.render(renderingInfo);	
 		});
 	}
@@ -154,7 +156,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 	 * @param nextSwapChainImageView
 	 * @param render transitionの間の処理
 	 */
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, SwapChain swapChain, ImageView nextSwapChainImageView, Runnable render) {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, Runnable render) {
 		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
 		// マルチサンプリング下ではresolveImageViewにswapChain、そうでない場合はimageViewにswapChain
 		if(swapChain.isAntiAlias()) {

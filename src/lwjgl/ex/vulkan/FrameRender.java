@@ -8,6 +8,8 @@ import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VkPresentInfoKHR;
 import org.lwjgl.vulkan.VkSubmitInfo2;
 
+import motopgi.utils.ExceptionUtils;
+
 
 /**
  * 1フレームを描画するのに必要なクラス群
@@ -18,6 +20,7 @@ public class FrameRender implements AutoCloseable {
 	private final Semaphore forSwapChain;
 	private final Semaphore complete;
 	private final CommandBuffer commandBuffer;
+	private CommandBuffer computeCommandBuffer;
 
 	public FrameRender(RenderSettings settings) {
 		this.settings = settings;
@@ -26,6 +29,11 @@ public class FrameRender implements AutoCloseable {
 		forSwapChain = new Semaphore(settings.getLogicalDevice());
 		complete = new Semaphore(settings.getLogicalDevice());		
 		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
+		
+		// ComputeShaderは設定がある時のみ作る
+		if(settings.getShader().hasCompute()) {
+			computeCommandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
+		}
 	}
 	
 	public void submit(MemoryStack stack, Command command) {
@@ -50,8 +58,8 @@ public class FrameRender implements AutoCloseable {
 		
 		commandBuffer.reset();
 		
-		// SwapChainとSwapChainImageView両方渡すのはちょっと変だが、現状しょうがない
-    	commandBuffer.record(command, stack, settings.getSwapChain(), nextSwapChainImageView);
+		
+    	commandBuffer.record(command, stack, nextSwapChainImageView, computeCommandBuffer);
         var commandBufferInfoBuffers = commandBuffer.createSubmitInfoBuffer(stack);
         var swapChainInfo = forSwapChain.createSubmitInfoBuffer(stack);
         var completeInfo = complete.createSubmitInfoBuffer(stack);
@@ -84,11 +92,7 @@ public class FrameRender implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-//		// Java側も逆順に解放するので、これだと解放順が逆になってしまう
-//		try(gpuCompleted;cpuSync;commandBuffer;commandPool) {};
-		
-		// 生成した順に書けば、Java側が逆順に解放してくれる
-		try(cpuSync;forSwapChain;complete;commandBuffer) {}
+		ExceptionUtils.close(computeCommandBuffer, commandBuffer, complete, forSwapChain, cpuSync);
 	}
 
 	public static FrameRender[] createArray(int length, RenderSettings settings) {

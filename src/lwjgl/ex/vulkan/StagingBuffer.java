@@ -1,10 +1,8 @@
 package lwjgl.ex.vulkan;
 
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.assimp.AIScene;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;

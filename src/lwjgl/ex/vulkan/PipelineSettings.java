@@ -40,7 +40,7 @@ public class PipelineSettings {
 	
 	private SurfaceSettings surfaceSettings;
 	
-	private DescriptionHelper vertexDescriptionHelper;
+	private DescriptionHelper descriptionHelper;
 	
 	
 	public PipelineSettings(LogicalDevice logicalDevice, Shader shader, SurfaceSettings surfaceSettings) {
@@ -158,10 +158,10 @@ public class PipelineSettings {
 	public void setColorBlendingLogicOp(int colorBlendingLogicOp) {
 		this.colorBlendingLogicOp = colorBlendingLogicOp;
 	}
-	public DescriptionHelper getVertexDescriptionHelper() {
-		return vertexDescriptionHelper;
+	public DescriptionHelper getDescriptionHelper() {
+		return descriptionHelper;
 	}
-	public void setVertexDescriptionHelper(DescriptionHelper vertexDescriptionHelper) {
-		this.vertexDescriptionHelper = vertexDescriptionHelper;
+	public void setDescriptionHelper(DescriptionHelper vertexDescriptionHelper) {
+		this.descriptionHelper = vertexDescriptionHelper;
 	}
 }

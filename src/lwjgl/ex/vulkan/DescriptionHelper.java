@@ -3,11 +3,6 @@ package lwjgl.ex.vulkan;
 
 
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.VK10.VK_COMPARE_OP_ALWAYS;
-import static org.lwjgl.vulkan.VK10.VK_FILTER_LINEAR;
-import static org.lwjgl.vulkan.VK10.VK_SAMPLER_ADDRESS_MODE_REPEAT;
-import static org.lwjgl.vulkan.VK10.vkCreateSampler;
-import static org.lwjgl.vulkan.VK10.vkDestroySampler;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.nio.LongBuffer;
@@ -200,8 +195,10 @@ public class DescriptionHelper implements AutoCloseable {
 	 */
 	public static int shaderStageToDescriptorType(ShaderStageSettings stageSettings) {
 		return switch(stageSettings.getStage()) {
+		// この対応にならない可能性あり？そうならば設計変更
 		case VK_SHADER_STAGE_VERTEX_BIT -> VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		case VK_SHADER_STAGE_FRAGMENT_BIT -> VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		case VK_SHADER_STAGE_COMPUTE_BIT -> VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		default -> throw new IllegalArgumentException("不明なShaderStage");
 		};
 	}

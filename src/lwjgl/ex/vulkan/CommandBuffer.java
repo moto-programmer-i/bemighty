@@ -59,10 +59,11 @@ public class CommandBuffer implements AutoCloseable {
 	
 	/**
 	 * 描画の情報をcommandとして記録
+	 * (beginとendも実行される)
 	 * @param stack
 	 * @param command 描画内容
 	 */
-    public void record(Command command, MemoryStack stack, SwapChain swapChain, ImageView nextSwapChainImageView) {    	
+    public void record(Command command, MemoryStack stack, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {    	
         // todo secondaryの場合の実装
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
@@ -70,7 +71,31 @@ public class CommandBuffer implements AutoCloseable {
         
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     	try {
-    		command.run(stack, this, swapChain, nextSwapChainImageView);
+    		command.run(stack, this, nextSwapChainImageView, computeCommandBuffer);
+        }
+        finally {        	
+        	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
+        }
+    }
+    
+    /**
+     * reset();
+     * begin();
+     * runnable.run();
+     * end();
+     * @param runnable
+     * @throws Exception
+     */
+    public void record(Runnable runnable) {    	
+        // todo secondaryの場合の実装
+        // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
+//            if (!primary) {
+        
+    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
+    			"CommandBufferのリセットに失敗しました");
+        Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
+    	try {
+    		runnable.run();
         }
         finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
@@ -97,17 +122,27 @@ public class CommandBuffer implements AutoCloseable {
 		vkCmdEndRendering(buffer);
     }
     
-    public void bind(Pipeline pipeline) {
+    
+    /**
+     * Compute用の
+     * vkCmdBindPipeline
+     * vkCmdBindDescriptorSetsを実行
+     * @param pipeline
+     */
+    public void bindCompute(Pipeline pipeline) {
+    	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getComputeHandler());
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getDescriptionHelper().getForDescriptorSet(), null);
+    }
+    
+
+    public void bindGraphics(Pipeline pipeline) {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getDescriptionHelper().getForDescriptorSet(), null);
     }
     
-    public void bindDescriptorSets(Pipeline pipeline) {
-    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getVertexDescriptionHelper().getForDescriptorSet(), null);
+    public void bindVertices(LongBuffer vertices) {
+    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, vertices, DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
     }
-    
-//    public void bindVertices(LongBuffer vertices) {
-//    	vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, vertices, DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
-//    }
 //    public void bindIndex(PointerBuffer index) {
 //    	vkCmdBindIndexBuffer(buffer, index.address(), DEFAULT_LONG_OFFSETS, VK_INDEX_TYPE_UINT32);
 //    }
@@ -140,6 +175,10 @@ public class CommandBuffer implements AutoCloseable {
     	setScissor(RectUtils.createRectBuffer(swapchain.getWidth(), swapchain.getHeight(), stack));
     }
     
+    public void draw(int vertexCount) {
+    	vkCmdDraw(buffer, vertexCount, DEFAULT_INSTANCE_COUNT, DEFAULT_FIRST_INDEX, DEFAULT_FIRST_INSTANCE);
+    }
+    
     /**
      * https://javadoc.lwjgl.org/org/lwjgl/vulkan/VK10.html#vkCmdDraw(org.lwjgl.vulkan.VkCommandBuffer,int,int,int,int)
      * @param vertexCount
@@ -163,16 +202,6 @@ public class CommandBuffer implements AutoCloseable {
     	vkCmdDrawIndexed(buffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
     
-//    public void drawModel(Model model, MemoryStack stack) {
-//    	 for (var mesh : model.getMeshes()) {
-//    		 // 毎回bindしなければいけないのか？
-//             vkCmdBindVertexBuffers(buffer, DEFAULT_FIRST_BINDING, mesh.getVertices().getHandlerBuffer(), DEFAULT_ARRAY_OF_BUFFER_OFFSETS);
-//             
-//             // 複数bindされた場合どうするのか不明
-//             vkCmdBindIndexBuffer(buffer, mesh.getIndices().getHandler(), DEFAULT_INT_OFFSETS, VK_INDEX_TYPE_UINT32);
-//             vkCmdDrawIndexed(buffer, mesh.getNumIndices(), DEFAULT_COUNT, DEFAULT_FIRST_INDEX, DEFAULT_INT_OFFSETS, DEFAULT_FIRST_INSTANCE);
-//         }
-//    }
     
     
     public VkCommandBufferSubmitInfo.Buffer createSubmitInfoBuffer(MemoryStack stack) {
@@ -272,5 +301,9 @@ public class CommandBuffer implements AutoCloseable {
 	 */
 	public void blitImage(Handler sourceImage, int sourceImageLayout, Handler destinationImage, int destinationImageLayout, VkImageBlit.Buffer regions, int filter) {
 		vkCmdBlitImage(buffer, sourceImage.getHandler(), sourceImageLayout, destinationImage.getHandler(), destinationImageLayout, regions, filter);
+	}
+	
+	public void dispatch(int groupCountX, int groupCountY, int groupCountZ) {
+		vkCmdDispatch(buffer, groupCountX, groupCountY, groupCountZ);
 	}
 }

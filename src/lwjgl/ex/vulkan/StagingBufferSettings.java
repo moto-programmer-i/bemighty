@@ -23,6 +23,13 @@ public class StagingBufferSettings implements Cloneable {
 	public static final int USAGE_INDEX_DESTINATION = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	
 	/**
+	 * Compute Shaderに使われるストレージ用のバッファ
+	 * vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst
+	 * https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html#_shader_storage_buffer_objects_ssbo
+	 */
+	public static final int USAGE_SHADER_STORAGE = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | USAGE_VERTEX_DESTINATION;
+	
+	/**
 	 * vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
 	 */
 	public static final int MEMORY_PROPERTY_FLAGS_SOURCE = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;

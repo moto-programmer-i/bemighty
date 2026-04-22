@@ -10,6 +10,7 @@ import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.VkComputePipelineCreateInfo;
 import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
 import org.lwjgl.vulkan.VkPipelineColorBlendStateCreateInfo;
@@ -34,13 +35,15 @@ public class Pipeline implements AutoCloseable {
 	private PipelineCache cache;
 	private long handler;
     private long layoutHandler;
+    
+    private long computeHandler = MemoryUtil.NULL;
 
 	public Pipeline(PipelineSettings settings) {
 		this.settings = settings;
 		try (var stack = MemoryStack.stackPush()) {
 			var vertexInput = VkPipelineVertexInputStateCreateInfo.calloc(stack).sType$Default()
-					.pVertexBindingDescriptions(settings.getVertexDescriptionHelper().createBinding(stack))
-					.pVertexAttributeDescriptions(settings.getVertexDescriptionHelper().createAttribute(stack))
+					.pVertexBindingDescriptions(settings.getDescriptionHelper().createBinding(stack))
+					.pVertexAttributeDescriptions(settings.getDescriptionHelper().createAttribute(stack))
 					;
 
             var inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack).sType$Default()
@@ -99,20 +102,21 @@ public class Pipeline implements AutoCloseable {
                     ;
 
             var layout = VkPipelineLayoutCreateInfo.calloc(stack).sType$Default()
-            		.pSetLayouts(settings.getVertexDescriptionHelper().getForLayouts());
+            		.pSetLayouts(settings.getDescriptionHelper().getForLayouts());
 
             LongBuffer forLayout = stack.mallocLong(1);
             Vulkan.throwExceptionIfFailed(vkCreatePipelineLayout(settings.getLogicalDevice().getDevice(), layout, null, forLayout),
                     "PipelineLayoutの作成に失敗しました");
             layoutHandler = forLayout.get(0);
 
+            var shader = settings.getShader();
             var createInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack)
                     .sType$Default()
                     .renderPass(VK_NULL_HANDLE)
                     
-                    .stageCount(settings.getShader().getStageCount())
+                    .stageCount(shader.getStageCount())
                     // shaderが複数になった場合の対処法不明
-                    .pStages(settings.getShader().createStageBuffer(stack))
+                    .pStages(shader.createStageBuffer(stack))
                     
                     
                     .pVertexInputState(vertexInput)
@@ -133,6 +137,20 @@ public class Pipeline implements AutoCloseable {
             Vulkan.throwExceptionIfFailed(vkCreateGraphicsPipelines(settings.getLogicalDevice().getDevice(), cache.getHandler(), createInfo, null, forHandler),
                     "GraphicsPipelineの作成に失敗しました");
             handler = forHandler.get(0);
+            
+            
+            // Compute用のPipelineは別で必要
+            if(shader.hasCompute()) {
+            	
+        		var computeInfo = VkComputePipelineCreateInfo.calloc(1, stack).sType$Default()
+        				.stage(shader.createComputeStageBuffer(stack).get())
+        				.layout(layoutHandler);
+        		
+        		LongBuffer forComputeHandler = stack.mallocLong(1);
+                Vulkan.throwExceptionIfFailed(vkCreateComputePipelines(settings.getLogicalDevice().getDevice(), cache.getHandler(), computeInfo, null, forComputeHandler),
+                        "Compute Shader用のGraphicsPipelineの作成に失敗しました");
+                computeHandler = forHandler.get(0);
+            }
         }
 	}
 
@@ -170,7 +188,12 @@ public class Pipeline implements AutoCloseable {
 		return layoutHandler;
 	}
 	
-	public DescriptionHelper getVertexDescriptionHelper() {
-		return settings.getVertexDescriptionHelper();
+	public DescriptionHelper getDescriptionHelper() {
+		return settings.getDescriptionHelper();
 	}
+
+	public long getComputeHandler() {
+		return computeHandler;
+	}
+	
 }

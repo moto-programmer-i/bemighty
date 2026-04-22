@@ -1,12 +1,9 @@
-#extension GL_EXT_debug_printf : enable
-
-// 参考
-// https://docs.vulkan.org/tutorial/latest/_attachments/27_shader_depth.slang
-
-
+// Model.javaのverticesと対応しなければならない。
+// 二重定義は避けたいが、現状どうしようもない
 struct VSInput {
     float3 inPosition;
-    float3 inColor;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 inColor;
     float2 inTexCoord;
 };
 
@@ -17,41 +14,44 @@ struct UniformBuffer {
 };
 ConstantBuffer<UniformBuffer> ubo;
 
-struct VSOutput
-{
-    float4 pos : SV_Position;
-    float3 fragColor;
-    float2 fragTexCoord;
+struct VertexOutput {
+    float4 position : SV_Position;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 color;
+    float2 texCoord;
 };
-
-// デバッグ用
-static float3 tempColor = float3(0.0, 1.0, 0.0);
-
 
 // すべての頂点に対して呼び出される
 [shader("vertex")]
-VSOutput vertMain(VSInput input) {
-    VSOutput output;
-    // デバッグのためコメントアウト
-    // output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
-    // 変換なしなら何かがでるが、おかしい
-    output.pos = float4(input.inPosition, 1.0);
+VertexOutput vertMain(VSInput input) {
+    VertexOutput output;
+    // 変形なし
+    // output.position = float4(input.inPosition, 1.0);
     
-    output.fragColor = input.inColor;
+    // 移動、拡大、回転のみ
+    // output.position = mul(ubo.model, float4(input.inPosition, 1.0));
     
-    output.fragColor = tempColor;
+    // UniformBufferObjectを用いた座標の変換 
+    output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
+
     
-    output.fragTexCoord = input.inTexCoord;
-    
-    
+    // output.color = input.inColor;
+    output.texCoord = input.inTexCoord;
     return output;
 }
 
+// テクスチャが入っているらしい。どうやってバッファから受け取っているかは不明
 Sampler2D texture;
 
-
+// デバッグ用 RGBA（現状Aが効いてないが、不明）
+static float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
 
 [shader("fragment")]
-float4 fragMain(VSOutput vertIn) : SV_TARGET {
-   return texture.Sample(vertIn.fragTexCoord);
+float4 fragMain(VertexOutput inVert) : SV_Target
+{
+    // テクスチャ座標から色を取得
+    return texture.Sample(inVert.texCoord);
+    
+    // 色を直接出力したい場合
+    // return tempColor;
 }
