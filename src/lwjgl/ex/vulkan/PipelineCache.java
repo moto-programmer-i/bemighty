@@ -10,11 +10,19 @@ import static org.lwjgl.vulkan.VK14.*;
 // 参考
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-06/src/main/java/org/vulkanb/eng/graph/vk/PipelineCache.java
 
+/**
+ * Vulkanのクソ設計により必要。
+ * https://docs.vulkan.org/guide/latest/pipeline_cache.html
+ */
 public class PipelineCache implements AutoCloseable {
 	private LogicalDevice logicalDevice;
 	private long handler;
-    private PipelineCache cache;
 
+	/**
+	 * インスタンス生成
+	 * （LogicalDeviceで自動生成されるため、基本的に作る必要はない）
+	 * @param logicalDevice
+	 */
 	public PipelineCache(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
 		try (var stack = MemoryStack.stackPush()) {

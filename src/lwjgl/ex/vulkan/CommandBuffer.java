@@ -63,7 +63,7 @@ public class CommandBuffer implements AutoCloseable {
 	 * @param stack
 	 * @param command 描画内容
 	 */
-    public void record(Command command, MemoryStack stack, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {    	
+    public void record(Command command, MemoryStack stack, ImageView nextSwapChainImageView) {    	
         // todo secondaryの場合の実装
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
@@ -71,7 +71,7 @@ public class CommandBuffer implements AutoCloseable {
         
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     	try {
-    		command.run(stack, this, nextSwapChainImageView, computeCommandBuffer);
+    		command.run(stack, this, nextSwapChainImageView);
         }
         finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
@@ -91,8 +91,12 @@ public class CommandBuffer implements AutoCloseable {
         // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
 //            if (!primary) {
         
-    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
-    			"CommandBufferのリセットに失敗しました");
+    	
+    	// FrameRenderに移行した
+//    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
+//    			"CommandBufferのリセットに失敗しました");
+    	
+    	
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
     	try {
     		runnable.run();
@@ -130,14 +134,14 @@ public class CommandBuffer implements AutoCloseable {
      * @param pipeline
      */
     public void bindCompute(Pipeline pipeline) {
-    	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getComputeHandler());
-    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getDescriptionHelper().getForDescriptorSet(), null);
+    	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getHandler());
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
     }
     
 
     public void bindGraphics(Pipeline pipeline) {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
-    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DescriptionHelper.FIRST_SET, pipeline.getDescriptionHelper().getForDescriptorSet(), null);
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
     }
     
     public void bindVertices(LongBuffer vertices) {

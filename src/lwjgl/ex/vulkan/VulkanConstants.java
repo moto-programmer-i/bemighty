@@ -67,6 +67,12 @@ public final class VulkanConstants {
 	 * 1ピクセルのバイト数
 	 */
 	public static final int ARGB_BYTES = 4;
+	
+	/**
+	 * https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/vkCmdBindDescriptorSets.html
+	 * のfirstSet。0以外を渡す場合があるのか不明。
+	 */
+	public static final int DEFAULT_FIRST_SET = 0;
 
 	private VulkanConstants() {
 	}

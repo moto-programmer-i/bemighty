@@ -38,7 +38,7 @@ public class Texture implements AutoCloseable {
 	private Handler imageHandler;
 	
 	
-	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, UniformBufferObject uniformObject) {
+	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, UniformBufferObject uniformObject) {
 		this.image = image;
 		this.logicalDevice = logicalDevice;
 		commandBuffer = new CommandBuffer(new CommandBufferSettings(commandPool));
@@ -49,9 +49,10 @@ public class Texture implements AutoCloseable {
 		});
 		bufferSettings.setSize(AssimpUtils.calcSize(image));
 		
-		// 2の方はlongになっているが、不明
+		
+		// 保留
 		// VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT
-		bufferSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+//		bufferSettings.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		
 		// これは遅いらしいが、動作確認のため一旦こうする
 		bufferSettings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
@@ -84,37 +85,39 @@ public class Texture implements AutoCloseable {
 	        
 	        // ここでやることでない可能性が高い、現在は不明
 	        // テクスチャが複数あるとバグる可能性大
+	     // ここでやらなくてよくなったはず
 	        
-	     // https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
-	        var descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack)
-	        	.sampler(descriptionHelper.getSamplerHandler())
-	        	.imageView(textureImageView.getHandler())
-	        	.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+//	     // https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
+//	        var descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack)
+//	        	.sampler(pipelineHelper.getSettings().getSampler().getHandler())
+//	        	.imageView(textureImageView.getHandler())
+//	        	.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+//	        
+//	        var descriptorBufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
+//	        		.buffer(uniformObject.getBuffer().getHandler())
+//	        		.range(UniformBufferObject.BYTES);
 	        
-	        var descriptorBufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
-	        		.buffer(uniformObject.getBuffer().getHandler())
-	        		.range(UniformBufferObject.BYTES);
 	        
-	        var descriptorSetBuffer = VkWriteDescriptorSet.calloc(descriptionHelper.getDescriptorCount(), stack).sType$Default();
-	        var shaderSettings = descriptionHelper.getShaderSettings();
-	        for(int i = 0; i < descriptionHelper.getDescriptorCount(); ++i) {
-	        	var stage = shaderSettings.getStage(i);
-	        	var descriptorSet = descriptorSetBuffer.get(i);
-	        	descriptorSet.sType$Default()
-		        	.dstSet(descriptionHelper.getDescriptorSetHandler())
-		        	.dstBinding(i)
-		        	.descriptorCount(1)
-		        	.descriptorType(DescriptionHelper.shaderStageToDescriptorType(stage));
-
-	        	// 非常にきもいが、Vulkanの仕様上どうしようもない？
-	        	switch(stage.getStage()) {
-	    		case VK_SHADER_STAGE_VERTEX_BIT -> descriptorSet.pBufferInfo(descriptorBufferInfo);
-	    		case VK_SHADER_STAGE_FRAGMENT_BIT -> descriptorSet.pImageInfo(descriptorImageInfo);
-	    		// 不明な場合の正しい挙動不明
-	    		}
-	        }
-	        
-	        vkUpdateDescriptorSets(logicalDevice.getDevice(), descriptorSetBuffer, null);
+//	        var descriptorSetBuffer = VkWriteDescriptorSet.calloc(pipelineHelper.getDescriptorCount(), stack).sType$Default();
+//	        var shaderSettings = descriptionHelper.getShaderSettings();
+//	        for(int i = 0; i < descriptionHelper.getDescriptorCount(); ++i) {
+//	        	var stage = shaderSettings.getStage(i);
+//	        	var descriptorSet = descriptorSetBuffer.get(i);
+//	        	descriptorSet.sType$Default()
+//		        	.dstSet(descriptionHelper.getDescriptorSetHandler())
+//		        	.dstBinding(i)
+//		        	.descriptorCount(1)
+//		        	.descriptorType(DescriptionHelper.shaderStageToDescriptorType(stage));
+//
+//	        	// 非常にきもいが、Vulkanの仕様上どうしようもない？
+//	        	switch(stage.getStage()) {
+//	    		case VK_SHADER_STAGE_VERTEX_BIT -> descriptorSet.pBufferInfo(descriptorBufferInfo);
+//	    		case VK_SHADER_STAGE_FRAGMENT_BIT -> descriptorSet.pImageInfo(descriptorImageInfo);
+//	    		// 不明な場合の正しい挙動不明
+//	    		}
+//	        }
+//	        
+//	        vkUpdateDescriptorSets(logicalDevice.getDevice(), descriptorSetBuffer, null);
 		}
 	}
 	

@@ -73,7 +73,7 @@ public class DrawModelCommand implements Command, AutoCloseable {
 	}
 	
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
 		
 		// transitionまでは、ClearColorと共通
 		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {

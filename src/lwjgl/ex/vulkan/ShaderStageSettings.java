@@ -1,5 +1,12 @@
 package lwjgl.ex.vulkan;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.ByteBuffer;
+
 // https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineShaderStageCreateInfo.html
 
 public class ShaderStageSettings {
@@ -22,6 +29,16 @@ public class ShaderStageSettings {
 	}
 	public void setStage(int stage) {
 		this.stage = stage;
+	}
+	
+	/**
+	 * LWJGLのクソ設計によりpName(entryPointName)ができず、
+	 * ByteBufferにして渡さないといけないため
+	 * @param stack
+	 * @return
+	 */
+	public ByteBuffer getEntryPointNameAsByteBuffer(MemoryStack stack) {
+		return stack.UTF8(entryPointName);
 	}
 	public String getEntryPointName() {
 		return entryPointName;

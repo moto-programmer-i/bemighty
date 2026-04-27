@@ -33,6 +33,9 @@ public class LogicalDevice implements AutoCloseable {
 	 * MSAAに使うサンプル数
 	 */
 	private int msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	
+	// Vulkanのクソ設計によりここにあった方が楽
+	private PipelineCache pipelineCache;
 
     public LogicalDevice(LogicalDeviceSettings settings) {
     	this.settings = settings;
@@ -89,6 +92,11 @@ public class LogicalDevice implements AutoCloseable {
         	PointerBuffer deviceBuffer = stack.mallocPointer(1);
         	throwExceptionIfFailed(vkCreateDevice(settings.getPhysicalDevice().getDevice(), deviceCreateInfo, null, deviceBuffer),"論理デバイスの初期化に失敗しました");
             device = new VkDevice(deviceBuffer.get(0), settings.getPhysicalDevice().getDevice(), deviceCreateInfo);
+            
+            
+            // Vulkanのクソ設計のため、内部にPipelineCacheを持っていた方が楽なので作る
+            // （PipelineCacheのstaticに置くとcloseで難しくなる）
+            pipelineCache = new PipelineCache(this);
         }
         
         if (settings.isAntiAlias()) {
@@ -110,11 +118,17 @@ public class LogicalDevice implements AutoCloseable {
 		if (device == null) {
 			return;
         }
-		// 論理デバイスは明示的にDestroyする必要がある
-		// The Vulkan spec states: All child objects that were created with instance or with a VkPhysicalDevice retrieved from it, and that can be destroyed or freed, must have been destroyed or freed prior to destroying instance (https://vulkan.lunarg.com/doc/view/1.4.321.1/linux/antora/spec/latest/chapters/initialization.html#VUID-vkDestroyInstance-instance-00629)
-        vkDestroyDevice(device, null);
-        device = null;
-        settings = null;
+		
+		try {
+			pipelineCache.close();
+		}
+		finally {
+			// 論理デバイスは明示的にDestroyする必要がある
+			// The Vulkan spec states: All child objects that were created with instance or with a VkPhysicalDevice retrieved from it, and that can be destroyed or freed, must have been destroyed or freed prior to destroying instance (https://vulkan.lunarg.com/doc/view/1.4.321.1/linux/antora/spec/latest/chapters/initialization.html#VUID-vkDestroyInstance-instance-00629)
+	        vkDestroyDevice(device, null);
+	        device = null;
+	        settings = null;
+		}
 	}
 	
 	public OptionalInt getGraphicsQueueIndex() {
@@ -132,5 +146,8 @@ public class LogicalDevice implements AutoCloseable {
 	public int getMsaaSamples() {
 		return msaaSamples;
 	}
-    
+
+	public PipelineCache getPipelineCache() {
+		return pipelineCache;
+	}
 }

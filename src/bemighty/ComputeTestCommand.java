@@ -17,8 +17,6 @@ import lwjgl.ex.vulkan.ClearColorCommand;
 import lwjgl.ex.vulkan.Command;
 import lwjgl.ex.vulkan.CommandBuffer;
 import lwjgl.ex.vulkan.ImageView;
-import lwjgl.ex.vulkan.ImageViewSettings;
-import lwjgl.ex.vulkan.Model;
 import lwjgl.ex.vulkan.Pipeline;
 import lwjgl.ex.vulkan.SwapChain;
 import motopgi.utils.ExceptionUtils;
@@ -47,27 +45,27 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 	}
 	
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
 		// Computeを先に実行
 		// （同期などは保留）
-		computeCommandBuffer.record(() -> {
-			computeCommandBuffer.bindCompute(pipeline);
-			// 意味不明
-			computeCommandBuffer.dispatch(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z);
-		});
 		
-		// transitionまでは、ClearColorと共通
-		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {
-			
-			
-			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
-				commandBuffer.bindGraphics(pipeline);
-				commandBuffer.setViewportFrom(swapChain, stack);
-				commandBuffer.setScissorFrom(swapChain, stack);
-				commandBuffer.bindVertices(particleTest.getForParticle());
-				commandBuffer.draw(ParticleTest.PARTICLE_COUNT);
-			});
-		});
+		commandBuffer.bindCompute(pipeline);
+		// 意味不明
+		commandBuffer.dispatch(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z);
+		
+		
+//		// transitionまでは、ClearColorと共通
+//		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {
+//			
+//			
+//			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
+//				commandBuffer.bindGraphics(pipeline, pipelineHelper);
+//				commandBuffer.setViewportFrom(swapChain, stack);
+//				commandBuffer.setScissorFrom(swapChain, stack);
+//				commandBuffer.bindVertices(particleTest.getForParticle());
+//				commandBuffer.draw(ParticleTest.PARTICLE_COUNT);
+//			});
+//		});
 	}
 
 	@Override

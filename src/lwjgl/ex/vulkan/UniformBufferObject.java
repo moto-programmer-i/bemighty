@@ -70,7 +70,11 @@ public class UniformBufferObject implements AutoCloseable {
 			uniformBuffer.put(data);
 		});
 		settings.setSize(BYTES);
-		settings.setUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+		
+		// usageを直接いじるのをやめる、何が適切かは不明
+		// settings.setUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+		settings.setType(BufferType.VERTEX);
+		
 		settings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 		settings.setUnMap(false);
 		buffer = new StagingBuffer(settings);

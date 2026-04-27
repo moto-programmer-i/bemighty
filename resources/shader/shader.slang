@@ -51,12 +51,9 @@ struct Particle {
     // float4 color;
 };
 
-
-struct ParticleArray {
-    Particle particles;
-};
-ConstantBuffer<Particle> particlesIn;
-RWStructuredBuffer<ParticleArray> particlesOut;
+// ConstantBuffer<Particle> particlesIn;
+// RWStructuredBuffer<ParticleArray> particlesOut;
+RWStructuredBuffer<Particle> particles;
 
 
 
@@ -67,6 +64,11 @@ void compMain(uint3 threadId : SV_DispatchThreadID)
 {
     uint index = threadId.x;
     
+    // 適当。確認ができない
+    float velocity = particles[0].velocity;
+    
+    
+    /*
     // 一旦index 0
     particlesOut[0].particles.position = particlesIn.position;
     particlesOut[0].particles.velocity = particlesIn.velocity;

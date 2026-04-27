@@ -20,7 +20,6 @@ public class FrameRender implements AutoCloseable {
 	private final Semaphore forSwapChain;
 	private final Semaphore complete;
 	private final CommandBuffer commandBuffer;
-	private CommandBuffer computeCommandBuffer;
 
 	public FrameRender(RenderSettings settings) {
 		this.settings = settings;
@@ -29,11 +28,6 @@ public class FrameRender implements AutoCloseable {
 		forSwapChain = new Semaphore(settings.getLogicalDevice());
 		complete = new Semaphore(settings.getLogicalDevice());		
 		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
-		
-		// ComputeShaderは設定がある時のみ作る
-		if(settings.getShader().hasCompute()) {
-			computeCommandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
-		}
 	}
 	
 	public void submit(MemoryStack stack, Command command) {
@@ -59,7 +53,7 @@ public class FrameRender implements AutoCloseable {
 		commandBuffer.reset();
 		
 		
-    	commandBuffer.record(command, stack, nextSwapChainImageView, computeCommandBuffer);
+    	commandBuffer.record(command, stack, nextSwapChainImageView);
         var commandBufferInfoBuffers = commandBuffer.createSubmitInfoBuffer(stack);
         var swapChainInfo = forSwapChain.createSubmitInfoBuffer(stack);
         var completeInfo = complete.createSubmitInfoBuffer(stack);
@@ -92,7 +86,7 @@ public class FrameRender implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		ExceptionUtils.close(computeCommandBuffer, commandBuffer, complete, forSwapChain, cpuSync);
+		ExceptionUtils.close(commandBuffer, complete, forSwapChain, cpuSync);
 	}
 
 	public static FrameRender[] createArray(int length, RenderSettings settings) {

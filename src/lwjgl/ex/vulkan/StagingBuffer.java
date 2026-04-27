@@ -4,10 +4,14 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
+import org.lwjgl.vulkan.VkDescriptorBufferInfo;
+import org.lwjgl.vulkan.VkDescriptorImageInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
+import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_FRAGMENT_BIT;
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.nio.FloatBuffer;
@@ -20,7 +24,7 @@ import static lwjgl.ex.vulkan.VulkanConstants.*;
 // 参考
 // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-06/src/main/java/org/vulkanb/eng/graph/vk/VkBuffer.java
 
-public class StagingBuffer implements AutoCloseable {
+public class StagingBuffer implements AutoCloseable, Descriptor {
 	private long handler;
 	private LongBuffer forHandler = MemoryUtil.memAllocLong(1);
 	private long allocationSize;
@@ -53,10 +57,8 @@ public class StagingBuffer implements AutoCloseable {
 			var device = settings.getLogicalDevice().getDevice();
 			var bufferCreateInfo = VkBufferCreateInfo.calloc(stack).sType$Default()
 					.size(settings.getSize())
-					.usage(settings.getUsage())
+					.usage(settings.getType().getUsage())
 					.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
-
-			bufferCreateInfo.usage(settings.getUsage());
 			Vulkan.throwExceptionIfFailed(vkCreateBuffer(device, bufferCreateInfo, null, forHandler),
 					"Bufferの作成に失敗しました");
 			handler = forHandler.get(0);
@@ -135,5 +137,27 @@ public class StagingBuffer implements AutoCloseable {
 
 	public LongBuffer getForHandler() {
 		return forHandler;
+	}
+
+	@Override
+	public int getDescriptorType() {
+		return settings.getType().getDescriptorType();
+	}
+	
+	@Override
+	public int getShaderStage() {
+		return settings.getShaderStage();
+	}
+	
+	@Override
+	public void write(VkWriteDescriptorSet set, int dstBinding, LongBuffer forDescriptorSet, MemoryStack stack) {
+		// 初期値設定
+		Descriptor.super.write(set, dstBinding, forDescriptorSet, stack);
+		
+		// Vulkanのクソ設計により、Bufferの場合はpBufferInfoに代入
+		var descriptorBufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
+        		.buffer(handler)
+        		.range(settings.getSize());
+		set.pBufferInfo(descriptorBufferInfo);
 	}
 }

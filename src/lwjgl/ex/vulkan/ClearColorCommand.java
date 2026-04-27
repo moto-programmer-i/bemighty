@@ -142,7 +142,7 @@ public class ClearColorCommand implements Command, AutoCloseable{
 
 
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, CommandBuffer computeCommandBuffer) {
+	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
 		run(stack, commandBuffer, nextSwapChainImageView, () -> {
 			commandBuffer.render(renderingInfo);	
 		});

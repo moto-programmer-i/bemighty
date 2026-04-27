@@ -49,11 +49,11 @@ public class Model implements AutoCloseable {
 	private UniformBufferObject uniformObject;
 	private AutoCloseableList<Texture> textures;
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, SwapChain swapChain) throws Exception {
-		this(modelPath, logicalDevice, commandPool, queue, descriptionHelper, swapChain, DEFAULT_IMPORT_FILE_FLAG);
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, SwapChain swapChain) throws Exception {
+		this(modelPath, logicalDevice, commandPool, queue, pipeline, swapChain, DEFAULT_IMPORT_FILE_FLAG);
 	}
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, DescriptionHelper descriptionHelper, SwapChain swapChain, int importFileFlag) throws Exception {
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, SwapChain swapChain, int importFileFlag) throws Exception {
 		this.model = Assimp.aiImportFile(modelPath.toString(), importFileFlag);
 		this.logicalDevice = logicalDevice;
 		
@@ -195,7 +195,7 @@ public class Model implements AutoCloseable {
         
 
      // Textureの取得
-        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, descriptionHelper, uniformObject);
+        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, pipeline, uniformObject);
         
         // 描画範囲初期化
         onSwapChainRecreate(swapChain);
@@ -215,7 +215,7 @@ public class Model implements AutoCloseable {
 		settings.setSize(Float.BYTES * vertices.length);
 //		settings.setUsage(USAGE_VERTEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
-		settings.setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		settings.setType(BufferType.VERTEX);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
 		
@@ -230,9 +230,7 @@ public class Model implements AutoCloseable {
 			indexBuffer.put(indices);
 		});
 		settings.setSize(Integer.BYTES * Float.BYTES * indices.length);
-//		settings.setUsage(USAGE_INDEX_DESTINATION);
-//		settings.setUsage(USAGE_SOURCE);
-		settings.setUsage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		settings.setType(BufferType.INDEX);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
 		// これは遅いらしいが、動作確認のため一旦こうする

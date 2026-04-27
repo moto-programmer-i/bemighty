@@ -42,6 +42,7 @@ import lwjgl.ex.vulkan.Model;
 import lwjgl.ex.vulkan.PhysicalDevice;
 import lwjgl.ex.vulkan.Pipeline;
 import lwjgl.ex.vulkan.PipelineSettings;
+import lwjgl.ex.vulkan.PipelineSettings;
 import lwjgl.ex.vulkan.Queue;
 import lwjgl.ex.vulkan.QueueSettings;
 import lwjgl.ex.vulkan.RectUtils;
@@ -55,7 +56,6 @@ import lwjgl.ex.vulkan.Surface;
 import lwjgl.ex.vulkan.SurfaceSettings;
 import lwjgl.ex.vulkan.SwapChain;
 import lwjgl.ex.vulkan.SwapChainSettings;
-import lwjgl.ex.vulkan.DescriptionHelper;
 import lwjgl.ex.vulkan.Vulkan;
 import lwjgl.ex.vulkan.VulkanSettings;
 import lwjgl.ex.vulkan.Window;
@@ -118,38 +118,37 @@ public class Main {
 				
 				// 並列にインスタンスを作成するべきだが、今はこのまま
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
-						var surface = new Surface(surfaceSettings)
+						var surface = new Surface(surfaceSettings);
+						var particleTest = new ParticleTest(logicalDevice)
 						) {
 					
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
 					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
-					// shader.slangと対応させる必要がある
-					// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
-					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, VK_FORMAT_R32G32B32_SFLOAT, "vertMain"));
-					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, VK_FORMAT_R32G32_SFLOAT, "fragMain"));
-					shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, VK_FORMAT_R32G32B32_SFLOAT, "compMain"));
 					
 					try(var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings);
-							var vertexDescriptionHelper = new DescriptionHelper(logicalDevice, shaderSettings);
 									) {
-						var pipelineSettings = new PipelineSettings(logicalDevice, shader, surfaceSettings);
-						pipelineSettings.setDescriptionHelper(vertexDescriptionHelper);
+						
+						// shader.slangと対応させる必要がある
+						var computeSettings = new PipelineSettings(shader, particleTest.getBuffer()); 
+						// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+//						shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, VK_FORMAT_R32G32B32_SFLOAT, "vertMain"));
+//						shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, VK_FORMAT_R32G32_SFLOAT, "fragMain"));
+						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, VK_FORMAT_R32G32B32_SFLOAT, "compMain"));
 						
 						var queueSettings = new QueueSettings(logicalDevice);
 						Queue queue = new Queue(queueSettings);
 						
 						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue, shader);
 						
-						try(var pipeline = new Pipeline(pipelineSettings);
+						try(var pipeline = Pipeline.createCompute(computeSettings);
 								var render = new Render(renderSettings)
 								) {
 							
 							// 頂点の重複を削除できてない。なぜ？
 //							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
 //							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
-							try(var particleTest = new ParticleTest(logicalDevice)) {
 								
 								
 								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, pipeline, particleTest)) {
@@ -171,7 +170,7 @@ public class Main {
 									window.waitUntilClose();	
 								}
 								
-							}
+//							}
 						}
 					}
 				}

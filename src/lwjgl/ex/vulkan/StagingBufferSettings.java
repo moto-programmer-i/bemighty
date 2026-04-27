@@ -12,22 +12,8 @@ import static org.lwjgl.vulkan.VK14.*;
 
 
 public class StagingBufferSettings implements Cloneable {
-	public static final int USAGE_SOURCE = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	
 	
-	/**
-	 * vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
-	 */
-	public static final int USAGE_VERTEX_DESTINATION = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	
-	public static final int USAGE_INDEX_DESTINATION = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	
-	/**
-	 * Compute Shaderに使われるストレージ用のバッファ
-	 * vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst
-	 * https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html#_shader_storage_buffer_objects_ssbo
-	 */
-	public static final int USAGE_SHADER_STORAGE = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | USAGE_VERTEX_DESTINATION;
 	
 	/**
 	 * vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
@@ -45,7 +31,7 @@ public class StagingBufferSettings implements Cloneable {
 	
 	private LogicalDevice logicalDevice;
 	private long size;
-	private int usage;
+	private BufferType type;
 	
 	/**
 	 * 本来はvk::MemoryPropertyFlags
@@ -58,6 +44,11 @@ public class StagingBufferSettings implements Cloneable {
 
 	private boolean map = true;
 	private boolean unMap = true;
+	private int shaderStage = VK_SHADER_STAGE_VERTEX_BIT;
+	
+	public StagingBufferSettings(LogicalDevice logicalDevice) {
+		this(logicalDevice, null);
+	}
 	
 	/**
 	 * 
@@ -73,6 +64,8 @@ public class StagingBufferSettings implements Cloneable {
 		this.logicalDevice = logicalDevice;
 		this.copy = copy;
 	}
+
+	
 	public LogicalDevice getLogicalDevice() {
 		return logicalDevice;
 	}
@@ -85,17 +78,8 @@ public class StagingBufferSettings implements Cloneable {
 	public void setSize(long size) {
 		this.size = size;
 	}
-	public int getUsage() {
-		return usage;
-	}
-	/**
-	 * VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-	 * VK_BUFFER_USAGE_INDEX_BUFFER_BITなど
-	 * @param usage
-	 */
-	public void setUsage(int usage) {
-		this.usage = usage;
-	}
+	
+	
 	
 //	public int getSourceMemoryPropertyFlags() {
 //		return sourceMemoryPropertyFlags;
@@ -111,6 +95,9 @@ public class StagingBufferSettings implements Cloneable {
 	}
 	public Consumer<PointerBuffer> getCopy() {
 		return copy;
+	}
+	public void setCopy(Consumer<PointerBuffer> copy) {
+		this.copy = copy;
 	}
 	
 	
@@ -134,4 +121,21 @@ public class StagingBufferSettings implements Cloneable {
 	public void setUnMap(boolean unMap) {
 		this.unMap = unMap;
 	}
+
+	public int getShaderStage() {
+		return shaderStage;
+	}
+
+	public void setShaderStage(int shaderStage) {
+		this.shaderStage = shaderStage;
+	}
+
+	public BufferType getType() {
+		return type;
+	}
+
+	public void setType(BufferType type) {
+		this.type = type;
+	}
+	
 }

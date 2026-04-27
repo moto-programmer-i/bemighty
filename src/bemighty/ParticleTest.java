@@ -2,6 +2,7 @@ package bemighty;
 
 import java.nio.LongBuffer;
 
+import lwjgl.ex.vulkan.BufferType;
 import lwjgl.ex.vulkan.LogicalDevice;
 import lwjgl.ex.vulkan.StagingBuffer;
 import lwjgl.ex.vulkan.StagingBufferSettings;
@@ -33,8 +34,13 @@ public class ParticleTest implements AutoCloseable {
 			particleBuffer.put(velocity);
 		});
 		bufferSettings.setSize(BUFFER_SIZE);
-		bufferSettings.setUsage(StagingBufferSettings.USAGE_SHADER_STORAGE);
-		bufferSettings.setDestinationMemoryPropertyFlags(StagingBufferSettings.MEMORY_PROPERTY_FLAGS_DESTINATION);
+		bufferSettings.setType(BufferType.STORAGE);
+		
+		// チュートリアル版
+		// bufferSettings.setDestinationMemoryPropertyFlags(StagingBufferSettings.MEMORY_PROPERTY_FLAGS_DESTINATION);
+		
+		// 遅いらしいが、一旦確認用
+		bufferSettings.setDestinationMemoryPropertyFlags(StagingBufferSettings.MEMORY_PROPERTY_FLAGS_VISIBLE);
 		
 		
 		buffer = new StagingBuffer(bufferSettings);
@@ -47,5 +53,9 @@ public class ParticleTest implements AutoCloseable {
 	
 	public LongBuffer getForParticle() {
 		return buffer.getForHandler();
+	}
+
+	public StagingBuffer getBuffer() {
+		return buffer;
 	}
 }
