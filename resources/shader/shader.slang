@@ -1,60 +1,28 @@
-// https://docs.vulkan.org/tutorial/latest/_attachments/31_shader_compute.slang
-// にて今までのものとは完全に別物にされた
-
-struct VSInput {
-    float2 inPosition;
-    // float4 inColor;
+// -------------Java側と対応しなければならない↓------------
+struct Particle {
+	float2 position;
+	float velocity;
 };
+RWStructuredBuffer<Particle> particles;
+// -------------Java側と対応しなければならない↑------------
 
-static float pointSize = 50;
 
-struct VSOutput
-{
-    float4 pos : SV_Position;
-    // float pointSize : SV_PointSize;
-    // float3 fragColor : COLOR0;
-};
 
-struct PSInput
-{
-    float4 pos : SV_POSITION;
-    // float3 fragColor : COLOR0;
-    // float2 pointCoord : SV_PointCoord;
-};
+
+
 
 [shader("vertex")]
-VSOutput vertMain(VSInput input) {
-    VSOutput output;
-    // output.pointSize = 14.0;
-    output.pos = float4(input.inPosition, 1.0, 1.0);
-    // output.fragColor = input.inColor.rgb;
-    //output.pointCoord = (input.inPosition * float2(1.0, -1.0) + float2(1.0)) / 2.0;
-    return output;
+void vertMain() {
 }
 
 // デバッグ用 RGBA（現状Aが効いてないが、不明）
 static float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
 
 [shader("fragment")]
-float4 fragMain(PSInput input) : SV_TARGET {
-    // float2 coord = input.pointCoord - float2(0.5);
-    // return float4(input.fragColor, 0.5 - length(coord));
-    
+float4 fragMain() : SV_TARGET {
     // 色を直接出力したい場合
     return tempColor;
 }
-
-struct Particle {
-	float2 position;
-	float velocity;
-	// float2 velocity;
-    // float4 color;
-};
-
-// ConstantBuffer<Particle> particlesIn;
-// RWStructuredBuffer<ParticleArray> particlesOut;
-RWStructuredBuffer<Particle> particles;
-
 
 
 [shader("compute")]

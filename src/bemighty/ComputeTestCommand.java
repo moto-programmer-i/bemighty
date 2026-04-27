@@ -32,15 +32,15 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 	public static final int NUM_THREADS_X = 1;
 	public static final int NUM_THREADS_Y = 1;
 	public static final int NUM_THREADS_Z = 1;
-	private final ClearColorCommand clearColor;
+//	private final ClearColorCommand clearColor;
 	private SwapChain swapChain;
-	private Pipeline pipeline;
+	private Pipeline compute;
 	private ParticleTest particleTest;
 
-	public ComputeTestCommand(Color background, SwapChain swapChain, Pipeline pipeline, ParticleTest particleTest) {
-		this.clearColor = new ClearColorCommand(background, swapChain);
+	public ComputeTestCommand(Color background, SwapChain swapChain, Pipeline compute, ParticleTest particleTest) {
+//		this.clearColor = new ClearColorCommand(background, swapChain);
 		this.swapChain = swapChain;
-		this.pipeline = pipeline;
+		this.compute = compute;
 		this.particleTest = particleTest;
 	}
 	
@@ -49,7 +49,7 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 		// Computeを先に実行
 		// （同期などは保留）
 		
-		commandBuffer.bindCompute(pipeline);
+		commandBuffer.bindCompute(compute);
 		// 意味不明
 		commandBuffer.dispatch(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z);
 		
@@ -70,7 +70,7 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		ExceptionUtils.close(clearColor);
+//		ExceptionUtils.close(clearColor);
 	}
 
 }
