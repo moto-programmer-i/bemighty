@@ -36,6 +36,7 @@ import lwjgl.ex.vulkan.CommandPoolSettings;
 import lwjgl.ex.vulkan.DrawModelCommand;
 import lwjgl.ex.vulkan.Fence;
 import lwjgl.ex.vulkan.FrameRender;
+import lwjgl.ex.vulkan.GraphicPipelineSettings;
 import lwjgl.ex.vulkan.LogicalDevice;
 import lwjgl.ex.vulkan.LogicalDeviceSettings;
 import lwjgl.ex.vulkan.Model;
@@ -131,18 +132,23 @@ public class Main {
 									) {
 						
 						// shader.slangと対応させる必要がある
+						// ComputePipelineと GraphicPipelineの関係が謎
 						var computeSettings = new PipelineSettings(shader, particleTest.getBuffer()); 
 						// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
-//						shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, VK_FORMAT_R32G32B32_SFLOAT, "vertMain"));
-//						shaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, VK_FORMAT_R32G32_SFLOAT, "fragMain"));
-						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, VK_FORMAT_R32G32B32_SFLOAT, "compMain"));
+						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, "compMain"));
+						var graphicShaderSettings = new PipelineSettings(shader, particleTest.getBuffer());
+						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
+//						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
+						var graphicSettings = new GraphicPipelineSettings(surfaceSettings);
+						
 						
 						var queueSettings = new QueueSettings(logicalDevice);
 						Queue queue = new Queue(queueSettings);
 						
 						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue, shader);
 						
-						try(var pipeline = Pipeline.createCompute(computeSettings);
+						try(var graphic = Pipeline.createGraphics(graphicShaderSettings, graphicSettings, particleTest.getBinding());
+								var compute = Pipeline.createCompute(computeSettings);
 								var render = new Render(renderSettings)
 								) {
 							
@@ -151,7 +157,7 @@ public class Main {
 //							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
 								
 								
-								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, pipeline, particleTest)) {
+								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, graphic, compute, particleTest)) {
 									final int testCount = 1;
 									for(int i = 0; i < testCount; ++i) {
 										if (window.shouldClose()) {

@@ -27,7 +27,6 @@ import static lwjgl.ex.vulkan.VulkanConstants.*;
 public class StagingBuffer implements AutoCloseable, Descriptor {
 	private long handler;
 	private LongBuffer forHandler = MemoryUtil.memAllocLong(1);
-	private long allocationSize;
 	private long memory;
 //    private long mappedMemory = NULL;
 //    private PointerBuffer forMappedMemory;

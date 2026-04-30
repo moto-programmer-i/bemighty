@@ -32,13 +32,4 @@ public class FloatVector2 {
 	public String toString() {
 		return "FloatVector2 [x=" + x + ", y=" + y + "]";
 	}
-	
-	/**
-	 * FloatBuffer.put(this)
-	 * @param buffer
-	 */
-	public void sendTo(FloatBuffer buffer) {
-		buffer.put(x);
-		buffer.put(y);
-	}
 }

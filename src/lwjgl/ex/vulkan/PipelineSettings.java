@@ -3,9 +3,17 @@ package lwjgl.ex.vulkan;
 import java.util.ArrayList;
 import java.util.List;
 
+
+import static org.lwjgl.vulkan.VK14.*;
+
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkComputePipelineCreateInfo;
+import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
+import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
+import org.lwjgl.vulkan.VkVertexInputBindingDescription;
+
+import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class PipelineSettings {
 	private StagingBuffer[] buffers;
@@ -49,6 +57,23 @@ public class PipelineSettings {
 				.module(shader.getHandler())
 				.pName(shaderStageSettings.getEntryPointNameAsByteBuffer(stack));
 		compute.stage(shaderStages);
+	}
+	
+	public void write(VkGraphicsPipelineCreateInfo.Buffer graphics, MemoryStack stack) {
+		// shaderStageSettingsListからVkPipelineShaderStageCreateInfo.Bufferに変換
+		var shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaderStageSettingsList.size(), stack).sType$Default();
+		for(int i = 0; i < shaderStageSettingsList.size(); ++i) {
+			var settings = shaderStageSettingsList.get(i);
+			shaderStages.get(i).sType$Default()
+				.stage(settings.getStage())
+				.module(shader.getHandler())
+				.pName(settings.getEntryPointNameAsByteBuffer(stack));
+		}
+		
+		
+		graphics
+			.stageCount(shaderStageSettingsList.size())
+			.pStages(shaderStages);
 	}
 
 	public Shader getShader() {

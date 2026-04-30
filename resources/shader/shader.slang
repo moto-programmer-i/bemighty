@@ -12,7 +12,8 @@ RWStructuredBuffer<Particle> particles;
 
 
 [shader("vertex")]
-void vertMain() {
+Particle vertMain(Particle particle) {
+	return particle;
 }
 
 // デバッグ用 RGBA（現状Aが効いてないが、不明）

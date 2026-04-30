@@ -72,9 +72,19 @@ public class StagingBufferSettings implements Cloneable {
 	public void setLogicalDevice(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
 	}
+	
+	/**
+	 * 
+	 * @return （バイト）
+	 */
 	public long getSize() {
 		return size;
 	}
+	
+	/**
+	 * 
+	 * @param size （バイト）
+	 */
 	public void setSize(long size) {
 		this.size = size;
 	}

@@ -30,6 +30,8 @@ import org.lwjgl.vulkan.VkViewport;
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class CommandBuffer implements AutoCloseable {
+	public static final int DEFAULT_LAYER_COUNT = 1;
+	
 	private final VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.create().sType$Default();
 	private final VkDependencyInfo dependencyInfo = VkDependencyInfo.create().sType$Default();
 	private final CommandBufferSettings settings;
@@ -141,7 +143,8 @@ public class CommandBuffer implements AutoCloseable {
 
     public void bindGraphics(Pipeline pipeline) {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
-    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
+    	// Computeが追加されてからやらなくなった。意味不明
+//    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
     }
     
     public void bindVertices(LongBuffer vertices) {

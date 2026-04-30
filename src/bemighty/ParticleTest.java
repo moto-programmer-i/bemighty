@@ -6,34 +6,30 @@ import lwjgl.ex.vulkan.BufferType;
 import lwjgl.ex.vulkan.LogicalDevice;
 import lwjgl.ex.vulkan.StagingBuffer;
 import lwjgl.ex.vulkan.StagingBufferSettings;
+import lwjgl.ex.vulkan.VertexBindingBuilder;
 import motopgi.utils.FloatVector2;
 
 // https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
 // を試す用。内部は大幅に修正
 public class ParticleTest implements AutoCloseable {
 	public static final int PARTICLE_COUNT = 1;
-	// Particle(position + velocity)
-	private FloatVector2 position = new FloatVector2();
-	private float velocity = 1.0f;
 	
-	/**
-	 *  Particleのサイズ
-	 */
-	private static final int BUFFER_SIZE = FloatVector2.SIZE + Float.BYTES;
+	private Particle particle = new Particle();
 	
 	private LogicalDevice logicalDevice;
 	
 	private final StagingBuffer buffer;
+	
+	private VertexBindingBuilder binding;
 
 	public ParticleTest(LogicalDevice logicalDevice) throws Exception {
 		this.logicalDevice = logicalDevice;
-		var bufferSettings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			// Particleの内容を送信
-			var particleBuffer = buffer.getFloatBuffer(0, BUFFER_SIZE);
-			position.sendTo(particleBuffer);
-			particleBuffer.put(velocity);
-		});
-		bufferSettings.setSize(BUFFER_SIZE);
+		binding = particle.createBinding();
+		var bufferSettings = new StagingBufferSettings(logicalDevice, binding.createCopy());
+		
+		// 本来は、Partcleのサイズ * 数を設定する
+		// ここでは（数が1なのでサイズだけでよい）
+		bufferSettings.setSize(binding.getAllBytes());
 		bufferSettings.setType(BufferType.STORAGE);
 		
 		// チュートリアル版
@@ -57,5 +53,13 @@ public class ParticleTest implements AutoCloseable {
 
 	public StagingBuffer getBuffer() {
 		return buffer;
+	}
+
+	public VertexBindingBuilder getBinding() {
+		return binding;
+	}
+
+	public LogicalDevice getLogicalDevice() {
+		return logicalDevice;
 	}
 }

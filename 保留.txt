@@ -1,4 +1,4 @@
-CommandBuffer.bindDescriptorSetsの設計変更
+ComputePipelineが追加された結果、GraphicPipelineのDescriptor周りがなぜか移行された
 
 
 
