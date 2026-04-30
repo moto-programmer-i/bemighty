@@ -138,8 +138,11 @@ public class Main {
 						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, "compMain"));
 						var graphicShaderSettings = new PipelineSettings(shader, particleTest.getBuffer());
 						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
-//						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
+						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
 						var graphicSettings = new GraphicPipelineSettings(surfaceSettings);
+						
+						// 点を描画するときはトポロジを点にしなくてはいけない
+						graphicSettings.setTopology(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 						
 						
 						var queueSettings = new QueueSettings(logicalDevice);

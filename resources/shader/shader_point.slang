@@ -20,8 +20,9 @@ struct VSOutput
 VSOutput vertMain(Particle particle) {
 	VSOutput output;
     output.pos = float4(particle.position, 0.0, 1.0);    
-    output.pointSize = 100.0;
-    
+    output.pointSize = 20.0;
+    output.pos.x = 0;
+    output.pos.y = 0;
     output.fragColor = float3(1.0, 0.0, 0.0);
     return output;
 }

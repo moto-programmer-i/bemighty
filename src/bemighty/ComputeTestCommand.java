@@ -87,6 +87,7 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 				
 				commandBuffer.bindGraphics(graphic);
 				commandBuffer.bindVertices(particleTest.getForParticle());			
+				
 				commandBuffer.draw(ParticleTest.PARTICLE_COUNT);
 			});
 		});
