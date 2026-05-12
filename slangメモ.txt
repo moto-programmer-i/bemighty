@@ -13,7 +13,12 @@ threadIdの値はグループ関係なく一意になる模様。
 https://shader-slang.org/slang-playground/
 
 outputがすべてがでるわけではなく、採用されるスレッドがランダムなので
-printがあまり役に立たない
+printを使う場合はスレッドを限定する
+		 if (dispatchThreadID.x == 10 && dispatchThreadID.y == 10) {
+            print("%f a", distanceFromArc);
+            // 注目しているスレッドの座標を返す
+            return  vec4(0, 1, 0, 1);
+        }
 
 
 [playground::CALL(1, 1, 1)]
@@ -27,6 +32,10 @@ printがあまり役に立たない
 
 [playground::CALL::ONCE]
 スレッドが単一になるわけではないので、1つの結果を見たいだけならあったほうが良い
+
+void drawPixel(uint2 location, IFunc<float4, int2> renderFunction)
+Calls the renderFunction to get a color for a given pixel and stores it in the output texture.
+renderFunctionは戻り値が色、引数がscreenSizeっぽい
 ----------------------------------------------------------------------------------------
 // 基本的なコード
 import playground;
@@ -45,7 +54,74 @@ void imageMain(uint2 dispatchThreadID: SV_DispatchThreadID)
 
 
 ----------------------------------------------------------------------------------------
+// print
+
+import playground;
+import printing;
+
+[shader("compute")]
+[numthreads(1, 1, 1)]
+[playground::CALL(1, 1, 1)]
+[playground::CALL::ONCE]
+void printMain()
+{
+    print("%d, %3.2d, 0x%x, %8.3f, %s, %e\n", 2, 3456, 2134, 40.1234, "hello world", 12.547);
+}
 ----------------------------------------------------------------------------------------
+// 円を描く
+// A simple shader ported from https://www.shadertoy.com/view/XdlSDs.
+// Author: dynamite
+// License: CC BY-NC-SA 3.0 https://creativecommons.org/licenses/by-nc-sa/3.0/deed.en
+
+import playground;
+import rendering;
+import printing;
+
+typealias vec2 = float2;
+typealias vec3 = float3;
+typealias vec4 = float4;
+
+
+static var color = vec4(1.0f, 0.0f, 0.0f, 0.0f);
+static var backGroundColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+static var radius = 50.0f;
+// 半径の2乗
+static var radius2 = pow(radius, 2);
+
+static var lineWidth = 25.0f;
+
+[shader("compute")]
+// [numthreads(16, 16, 1)]
+[playground::CALL::SIZE_OF("outputTexture")]
+// 出力は１回でよい
+[playground::CALL::ONCE]
+void imageMain(uint2 dispatchThreadID: SV_DispatchThreadID)
+{
+    drawPixel(dispatchThreadID, (int2 screenSize) => {
+        // オフセット後の座標（0,0を画面の中心にする）
+        int2 p =  dispatchThreadID - (screenSize / 2);
+
+        // 弧からの距離
+        var distanceFromArc =  sqrt(abs(radius2 - pow(p.x, 2) - pow(p.y, 2)));
+
+        /*
+        if (dispatchThreadID.x == 164 && dispatchThreadID.y == 33) {
+            print("%f", distanceFromArc);
+            return  vec4(0, 1, 0, 1);
+        }
+        */
+
+        // 線の幅以下であれば描画
+        var onCircle = distanceFromArc <= lineWidth;
+        if (onCircle) {
+            return color;
+        }
+
+        // 他の場所であれば背景を描画
+        return  backGroundColor;
+	});
+}
+
 ----------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------
