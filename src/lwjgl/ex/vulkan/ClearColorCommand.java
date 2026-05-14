@@ -142,37 +142,40 @@ public class ClearColorCommand implements Command, AutoCloseable{
 
 
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
-		run(stack, commandBuffer, nextSwapChainImageView, () -> {
-			commandBuffer.render(renderingInfo);	
+	public void run(RecordInfo info) {
+		run(info, () -> {
+			info.getGraphic().render(renderingInfo);	
 		});
 	}
 	
 	/**
-	 * 
-	 * @param stack
-	 * @param commandBuffer
-	 * @param swapChain
-	 * @param nextSwapChainImageView
+	 * begin();
+	 * transitionImageLayout();
+	 * render.run();
+	 * transitionImageLayout();
+	 * end();
+	 * @param info
 	 * @param render transitionの間の処理
 	 */
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView, Runnable render) {
-		// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
-		// マルチサンプリング下ではresolveImageViewにswapChain、そうでない場合はimageViewにswapChain
-		if(swapChain.isAntiAlias()) {
-			colorAttachment.resolveImageView(nextSwapChainImageView.getHandler());
-		}
-		else {
-			colorAttachment.imageView(nextSwapChainImageView.getHandler());	
-		}
-		
-		// transinsionでrenderを挟まなければならない
-        commandBuffer.transitionImageLayout(startBarrier, nextSwapChainImageView);
-        if(multisampleBarrier != null) {
-        	commandBuffer.transitionImageLayout(multisampleBarrier, nextSwapChainImageView);
-        }
-        render.run();
-        commandBuffer.transitionImageLayout(endBarrier, nextSwapChainImageView);
+	public void run(RecordInfo info, Runnable render) {
+		info.getGraphic().record(() -> {
+			// SwapChain関係は呼び出しのたびに異なる可能性があるので毎回設定する
+			// マルチサンプリング下ではresolveImageViewにswapChain、そうでない場合はimageViewにswapChain
+			if(swapChain.isAntiAlias()) {
+				colorAttachment.resolveImageView(info.getNextSwapChainImageView().getHandler());
+			}
+			else {
+				colorAttachment.imageView(info.getNextSwapChainImageView().getHandler());	
+			}
+			
+			// transinsionでrenderを挟まなければならない
+			info.getGraphic().transitionImageLayout(startBarrier, info.getNextSwapChainImageView());
+	        if(multisampleBarrier != null) {
+	        	info.getGraphic().transitionImageLayout(multisampleBarrier, info.getNextSwapChainImageView());
+	        }
+	        render.run();
+	        info.getGraphic().transitionImageLayout(endBarrier, info.getNextSwapChainImageView());
+		});
 	}
 
 	@Override

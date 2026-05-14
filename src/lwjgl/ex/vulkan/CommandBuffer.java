@@ -57,28 +57,6 @@ public class CommandBuffer implements AutoCloseable {
             beginInfo.flags(settings.getUsageBit());
         }
 	}
-	
-	
-	/**
-	 * 描画の情報をcommandとして記録
-	 * (beginとendも実行される)
-	 * @param stack
-	 * @param command 描画内容
-	 */
-    public void record(Command command, MemoryStack stack, ImageView nextSwapChainImageView) {    	
-        // todo secondaryの場合の実装
-        // https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-05/src/main/java/org/vulkanb/eng/graph/vk/CmdBuffer.java
-//            if (!primary) {
-        
-        
-        Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
-    	try {
-    		command.run(stack, this, nextSwapChainImageView);
-        }
-        finally {        	
-        	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
-        }
-    }
     
     /**
      * reset();
@@ -94,9 +72,8 @@ public class CommandBuffer implements AutoCloseable {
 //            if (!primary) {
         
     	
-    	// FrameRenderに移行した
-//    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
-//    			"CommandBufferのリセットに失敗しました");
+    	Vulkan.throwExceptionIfFailed(vkResetCommandBuffer(buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT),
+    			"CommandBufferのリセットに失敗しました");
     	
     	
         Vulkan.throwExceptionIfFailed(vkBeginCommandBuffer(buffer, beginInfo), "CommandBufferの開始に失敗しました");
@@ -113,12 +90,17 @@ public class CommandBuffer implements AutoCloseable {
     }
     
     /**
-     * Renderingを開始して終了する。
-     * 注意：vkBeginCommandBufferとvkEndCommandBufferで挟まなければ実行不可
-     *       VkPhysicalDeviceVulkan13Features.queryVulkan13Featuresに対応しているGPUでなければ実行不可
+     * 
+     * 注意：事前にrecord(Runnable runnable)を呼ぶこと
+     * VkPhysicalDeviceVulkan13Features.queryVulkan13Featuresに対応しているGPUでなければ実行不可
      * @param renderingInfo
      */
     public void render(VkRenderingInfo renderingInfo) {
+    	// 事前にrecord(Runnable runnable)を呼ぶこと
+    	// booleanでチェックした方がいい？
+    	
+    	// 一般プログラミングではrender(VkRenderingInfo renderingInfo, Runnable rendering)を
+    	// 使って書くべきだが、速度上こう書いておく
     	vkCmdBeginRendering(buffer, renderingInfo);
 		vkCmdEndRendering(buffer);
     }

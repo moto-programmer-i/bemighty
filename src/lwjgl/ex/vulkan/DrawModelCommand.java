@@ -73,18 +73,18 @@ public class DrawModelCommand implements Command, AutoCloseable {
 	}
 	
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
+	public void run(RecordInfo info) {
 		
 		// transitionまでは、ClearColorと共通
-		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {
+		clearColor.run(info, () -> {
 			
-			commandBuffer.transitionImageLayout(depthBarrier);	
-			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
-				commandBuffer.bindGraphics(pipeline);
-				commandBuffer.setViewportFrom(swapChain, stack);
-				commandBuffer.setScissorFrom(swapChain, stack);
-				commandBuffer.bind(model);
-				commandBuffer.drawIndexed(model.getIndices().length, instanceCount, firstIndex, vertexOffset, firstInstance);
+			info.getGraphic().transitionImageLayout(depthBarrier);	
+			info.getGraphic().render(clearColor.getRenderingInfo(), () -> {
+				info.getGraphic().bindGraphics(pipeline);
+				info.getGraphic().setViewportFrom(swapChain, info.getStack());
+				info.getGraphic().setScissorFrom(swapChain, info.getStack());
+				info.getGraphic().bind(model);
+				info.getGraphic().drawIndexed(model.getIndices().length, instanceCount, firstIndex, vertexOffset, firstInstance);
 
 			});
 		});

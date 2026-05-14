@@ -1,4 +1,5 @@
 // -------------Java側と対応しなければならない↓------------
+#define PARTCLE_NUM 2
 struct Particle {
 	float2 position;
 	float velocity;
@@ -7,22 +8,24 @@ RWStructuredBuffer<Particle> particles;
 // -------------Java側と対応しなければならない↑------------
 
 
-
 struct VSOutput
 {
     float4 pos : SV_Position;
     float pointSize : SV_PointSize;
-    float3 fragColor : COLOR0;
 };
+
 
 
 [shader("vertex")]
 VSOutput vertMain(Particle particle) {
 	VSOutput output;
-    output.pos = float4(particle.position, 0.0, 1.0);    
+    output.pos = float4(particle.position, 0.0, 1.0);
+        
     output.pointSize = 100.0;
     
-    output.fragColor = float3(1.0, 0.0, 0.0);
+    
+    
+    
     return output;
 }
 
@@ -36,11 +39,12 @@ float4 fragMain() : SV_TARGET {
 }
 
 
+
 [shader("compute")]
-// 意味不明
-[numthreads(1,1,1)]
+// GPU処理では、マルチスレッドが基本。1点を1スレッドに処理させる
+[numthreads(PARTCLE_NUM,1,1)]
 void compMain(uint3 threadId : SV_DispatchThreadID)
-{    
+{     
     // 適当。確認ができない
-    float velocity = particles[0].velocity;
+    particles[0].position.x = -0.5;
 }

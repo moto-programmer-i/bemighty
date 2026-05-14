@@ -1,6 +1,6 @@
 package lwjgl.ex.vulkan;
 
-import static org.lwjgl.vulkan.VK13.*;
+import static org.lwjgl.vulkan.VK14.*;
 
 import java.util.Arrays;
 import org.lwjgl.system.MemoryStack;
@@ -19,15 +19,15 @@ public class FrameRender implements AutoCloseable {
 	private final Fence cpuSync;
 	private final Semaphore forSwapChain;
 	private final Semaphore complete;
-	private final CommandBuffer commandBuffer;
+	private final RecordInfo recordInfo;
 
 	public FrameRender(RenderSettings settings) {
 		this.settings = settings;
 		// AutoCloseableを変数として持つのでtry-with-resourcesができない
 		cpuSync = new Fence(settings.getLogicalDevice());
 		forSwapChain = new Semaphore(settings.getLogicalDevice());
-		complete = new Semaphore(settings.getLogicalDevice());		
-		commandBuffer = new CommandBuffer(settings.getCommandBufferSettings());
+		complete = new Semaphore(settings.getLogicalDevice());
+		recordInfo = new RecordInfo(settings.getCommandBufferSettings());
 	}
 	
 	public void submit(MemoryStack stack, Command command) {
@@ -50,17 +50,18 @@ public class FrameRender implements AutoCloseable {
 		cpuSync.waitAndReset();
 		var nextSwapChainImageView = settings.getSwapChain().acquireNextImageView(stack, forSwapChain);
 		
-		commandBuffer.reset();
+		// 1フレームの描画に必要な情報を設定
+		recordInfo.setFrame(stack, nextSwapChainImageView);
 		
 		
-    	commandBuffer.record(command, stack, nextSwapChainImageView);
-        var commandBufferInfoBuffers = commandBuffer.createSubmitInfoBuffer(stack);
+		command.run(recordInfo);
+        var graphicSubmitInfo = recordInfo.getGraphic().createSubmitInfoBuffer(stack);
         var swapChainInfo = forSwapChain.createSubmitInfoBuffer(stack);
         var completeInfo = complete.createSubmitInfoBuffer(stack);
 		var submitInfo = VkSubmitInfo2.calloc(1, stack)
 				.sType$Default()
 				.pWaitSemaphoreInfos(swapChainInfo)
-				.pCommandBufferInfos(commandBufferInfoBuffers)
+				.pCommandBufferInfos(graphicSubmitInfo)
 				.pSignalSemaphoreInfos(completeInfo)
 				;
 		
@@ -86,7 +87,7 @@ public class FrameRender implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		ExceptionUtils.close(commandBuffer, complete, forSwapChain, cpuSync);
+		ExceptionUtils.close(recordInfo, complete, forSwapChain, cpuSync);
 	}
 
 	public static FrameRender[] createArray(int length, RenderSettings settings) {

@@ -23,6 +23,7 @@ import lwjgl.ex.vulkan.CommandPoolSettings;
 import lwjgl.ex.vulkan.GraphicPipelineSettings;
 import lwjgl.ex.vulkan.ImageView;
 import lwjgl.ex.vulkan.Pipeline;
+import lwjgl.ex.vulkan.RecordInfo;
 import lwjgl.ex.vulkan.SwapChain;
 import motopgi.utils.ExceptionUtils;
 
@@ -34,7 +35,7 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 	
 	// Vulkanの意味不明の設計により、shader.slangの[numthreads(x,y,z)]と対応させなければならない
 	// https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html#_compute_shaders
-	public static final int NUM_THREADS_X = 1;
+	public static final int NUM_THREADS_X = 2;
 	public static final int NUM_THREADS_Y = 1;
 	public static final int NUM_THREADS_Z = 1;
 	private SwapChain swapChain;
@@ -44,9 +45,6 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 	
 	// Compute表示用
 	private final ClearColorCommand clearColor;
-	
-	private final CommandPool computeCommandPool;
-	private final CommandBuffer computeCommand;
 
 	public ComputeTestCommand(Color background, SwapChain swapChain, Pipeline graphic, Pipeline compute, ParticleTest particleTest) {
 		this.swapChain = swapChain;
@@ -57,45 +55,37 @@ public class ComputeTestCommand implements Command, AutoCloseable {
 		clearColor = new ClearColorCommand(background, swapChain);
 		
 		var logicalDevice = particleTest.getLogicalDevice();
-		
-		// ここでCommandBufferを作ってしまうと既存の設計と合わなくなるが、保留
-		computeCommandPool = new CommandPool(new CommandPoolSettings(logicalDevice));
-		computeCommand = new CommandBuffer(new CommandBufferSettings(computeCommandPool));
 	}
 	
 	@Override
-	public void run(MemoryStack stack, CommandBuffer commandBuffer, ImageView nextSwapChainImageView) {
+	public void run(RecordInfo recordInfo) {
 		// Computeを先に実行
 		// （同期などは保留）
-		computeCommand.record(() -> {
-			computeCommand.bindCompute(compute);
+		recordInfo.getCompute().record(() -> {
+			recordInfo.getCompute().bindCompute(compute);
 			// 意味不明
-			computeCommand.dispatch(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z);	
-		});
-		
-		
+			recordInfo.getCompute().dispatch(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z);	
+		});		
 		
 		
 		// renderingInfoが内部で必要なため流用
-		clearColor.run(stack, commandBuffer, nextSwapChainImageView, () -> {
-			
-			
-			commandBuffer.render(clearColor.getRenderingInfo(), () -> {
+		clearColor.run(recordInfo, () -> {
+			recordInfo.getGraphic().render(clearColor.getRenderingInfo(), () -> {
 
-				commandBuffer.setViewportFrom(swapChain, stack);
-				commandBuffer.setScissorFrom(swapChain, stack);
+				recordInfo.getGraphic().setViewportFrom(swapChain, recordInfo.getStack());
+				recordInfo.getGraphic().setScissorFrom(swapChain, recordInfo.getStack());
 				
-				commandBuffer.bindGraphics(graphic);
-				commandBuffer.bindVertices(particleTest.getForParticle());			
+				recordInfo.getGraphic().bindGraphics(graphic);
+				recordInfo.getGraphic().bindVertices(particleTest.getForParticle());			
 				
-				commandBuffer.draw(ParticleTest.PARTICLE_COUNT);
+				recordInfo.getGraphic().draw(ParticleTest.PARTICLE_COUNT);
 			});
 		});
 	}
 
 	@Override
 	public void close() throws Exception {
-		ExceptionUtils.close(computeCommandPool, clearColor);
+		ExceptionUtils.close(clearColor);
 	}
 
 }
