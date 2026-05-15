@@ -73,6 +73,12 @@ public final class VulkanConstants {
 	 * のfirstSet。0以外を渡す場合があるのか不明。
 	 */
 	public static final int DEFAULT_FIRST_SET = 0;
+	
+	/**
+	 * Bufferが複数想定 & 相対なので、１個の値をいじるのにindex0が必要なため
+	 * （例： put(FIRST_INDEX, value) ）
+	 */
+	public static final int FIRST_INDEX = 0;
 
 	private VulkanConstants() {
 	}

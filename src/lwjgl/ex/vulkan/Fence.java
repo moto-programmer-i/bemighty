@@ -43,8 +43,13 @@ public class Fence implements AutoCloseable {
 		try (var stack = MemoryStack.stackPush()) {
             var info = VkFenceCreateInfo.calloc(stack)
                     .sType$Default()
-            		// 最初からsignaled、待機終了
-                    .flags(VK_FENCE_CREATE_SIGNALED_BIT);
+                    
+                    // https://docs.vulkan.org/tutorial/latest/_attachments/31_compute_shader.cpp
+                    // からFenceでswapChainを待つようになったので変わった。
+                    // 設定が必要になれば追加
+//            		// 最初からsignaled、待機終了
+//                    .flags(VK_FENCE_CREATE_SIGNALED_BIT)
+                    ;
 
             LongBuffer lp = stack.mallocLong(1);
             Vulkan.throwExceptionIfFailed(vkCreateFence(logicalDevice.getDevice(), info, null, lp), "Fenceの作成に失敗しました");

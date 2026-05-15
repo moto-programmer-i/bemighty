@@ -37,6 +37,10 @@ public class CommandBuffer implements AutoCloseable {
 	private final CommandBufferSettings settings;
 	private VkCommandBuffer buffer;
 	
+	private PointerBuffer pointer = MemoryUtil.memAllocPointer(1);
+	
+	private boolean recorded = false;
+	
 	public CommandBuffer(CommandBufferSettings settings) {
 		this.settings = settings;
 		try (var stack = MemoryStack.stackPush()) {
@@ -45,11 +49,10 @@ public class CommandBuffer implements AutoCloseable {
                     .commandPool(settings.getCommandPool().getHandler())
                     .level(settings.isPrimary() ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY)
                     .commandBufferCount(settings.getCount());
-            PointerBuffer pb = stack.mallocPointer(1);
-            Vulkan.throwExceptionIfFailed(vkAllocateCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), info, pb),
+            Vulkan.throwExceptionIfFailed(vkAllocateCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), info, pointer),
                     "CommandBufferの作成に失敗しました");
 
-            buffer = new VkCommandBuffer(pb.get(0), settings.getCommandPool().getSettings().getLogicalDevice().getDevice());
+            buffer = new VkCommandBuffer(pointer.get(0), settings.getCommandPool().getSettings().getLogicalDevice().getDevice());
             
              
     		// CommandBufferの使用法を決定
@@ -83,6 +86,8 @@ public class CommandBuffer implements AutoCloseable {
         finally {        	
         	Vulkan.throwExceptionIfFailed(vkEndCommandBuffer(buffer), "CommandBufferの終了に失敗しました");            	
         }
+
+		recorded = true;
     }
     
     public void begin() {
@@ -209,6 +214,8 @@ public class CommandBuffer implements AutoCloseable {
 		if(buffer == null) {
 			return;
 		}
+		MemoryUtil.memFree(pointer);
+		pointer = null;
 		try(beginInfo;dependencyInfo){};
 		// commandPoolでcloseされるらしい
 //		vkFreeCommandBuffers(settings.getCommandPool().getSettings().getLogicalDevice().getDevice(), settings.getCommandPool().getHandler(), buffer);
@@ -295,4 +302,18 @@ public class CommandBuffer implements AutoCloseable {
 	public void dispatch(int groupCountX, int groupCountY, int groupCountZ) {
 		vkCmdDispatch(buffer, groupCountX, groupCountY, groupCountZ);
 	}
+
+	public PointerBuffer getPointer() {
+		return pointer;
+	}
+
+	public boolean isRecorded() {
+		return recorded;
+	}
+
+	public void setRecorded(boolean recorded) {
+		this.recorded = recorded;
+	}
+	
 }
+

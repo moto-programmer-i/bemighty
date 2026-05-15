@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo;
 import org.lwjgl.vulkan.VkSemaphoreSubmitInfo;
 
-import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
+
 import static org.lwjgl.vulkan.VK14.*;
 
 //参考
@@ -17,6 +17,7 @@ import static org.lwjgl.vulkan.VK14.*;
  * GPU側の同期のための待機機構
  * https://chaosplant.tech/do/vulkan/ex2/
  */
+@Deprecated // 実はTimelineSemaphoreの下位互換らしい
 public class Semaphore implements AutoCloseable {
 	public static final long DEFAULT_STAGE_MASK = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
 	private long handler;

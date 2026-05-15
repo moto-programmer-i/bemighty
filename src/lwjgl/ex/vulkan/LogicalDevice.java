@@ -8,6 +8,7 @@ import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
 import org.lwjgl.vulkan.VkPhysicalDeviceExtendedDynamicStateFeaturesEXT;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
+import org.lwjgl.vulkan.VkPhysicalDeviceTimelineSemaphoreFeaturesKHR;
 import org.lwjgl.vulkan.VkPhysicalDeviceVulkan11Features;
 import org.lwjgl.vulkan.VkPhysicalDeviceVulkan13Features;
 
@@ -59,11 +60,18 @@ public class LogicalDevice implements AutoCloseable {
                     .ppEnabledExtensionNames(requiredExtensionsBuffer)
                     .pQueueCreateInfos(queueInfoBuffer);
         	
+        	// timelineSemaphoreが対応してない場合は保留
+        	var timelineSemaphoreFeatures = VkPhysicalDeviceTimelineSemaphoreFeaturesKHR.calloc(stack).sType$Default()
+        			.timelineSemaphore(true)
+        			;
+        	
         	if (settings.isSynchronization2()) {
         		// synchronization2 を有効化に必要な構造体たちを作成
             	var extendedDynamicStateFeatures = VkPhysicalDeviceExtendedDynamicStateFeaturesEXT.calloc(stack)
                         .sType$Default()
-                        .extendedDynamicState(true);
+                        .extendedDynamicState(true)
+                        .pNext(timelineSemaphoreFeatures.address())
+                        ;
             	var vulkan13Features = VkPhysicalDeviceVulkan13Features.calloc(stack)
                         .sType$Default()
                         .pNext(extendedDynamicStateFeatures.address())

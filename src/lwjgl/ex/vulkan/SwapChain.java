@@ -141,8 +141,8 @@ public class SwapChain implements AutoCloseable {
 
 	}
 
-	public ImageView acquireNextImageView(MemoryStack stack, Semaphore acquire) {
-		return imageViews[acquireNextImageIndex(stack, acquire)];
+	public ImageView acquireNextImageView(MemoryStack stack, Fence fence) {
+		return imageViews[acquireNextImageIndex(stack, fence)];
 	}
 
 	/**
@@ -152,10 +152,12 @@ public class SwapChain implements AutoCloseable {
 	 * @param acquire
 	 * @return
 	 */
-	private int acquireNextImageIndex(MemoryStack stack, Semaphore acquire) {
+	private int acquireNextImageIndex(MemoryStack stack, Fence fence) {
 		IntBuffer imageIndexBuffer = stack.mallocInt(1);
+		// https://docs.vulkan.org/tutorial/latest/_attachments/31_compute_shader.cpp
+		// にて同期がfenceに変わった。理由は不明
 		int code = vkAcquireNextImageKHR(settings.getLogicalDevice().getDevice(), handler, Long.MAX_VALUE,
-				acquire.getHandler(), MemoryUtil.NULL, imageIndexBuffer);
+				MemoryUtil.NULL, fence.getHandler(), imageIndexBuffer);
 		switch (code) {
 		// おそらく、OUT_OF_DATEのときだけ別対応が必要だが、保留
 		case VK_ERROR_OUT_OF_DATE_KHR:
