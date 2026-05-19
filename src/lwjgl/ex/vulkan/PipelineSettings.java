@@ -16,26 +16,24 @@ import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 
 public class PipelineSettings {
-	private StagingBuffer[] buffers;
+	private LogicalDevice logicalDevice;
+	private List<Descriptor> descriptorList = new ArrayList<>();
 	private Shader shader;
 	private List<ShaderStageSettings> shaderStageSettingsList = new ArrayList<>();
 	
 	// Bufferだけなら簡単だったが、Vulkanのクソ設計によりDescriptorの中にBufferと他が混在する
-	private Sampler sampler;
+//	private Sampler sampler;
 	
-	public PipelineSettings(Shader shader, StagingBuffer... buffers) {
+	public PipelineSettings(LogicalDevice logicalDevice, Shader shader) {
+		this.logicalDevice = logicalDevice;
 		this.shader = shader;
-		this.buffers = buffers;
-	}
-
-	public StagingBuffer[] getBuffers() {
-		return buffers;
-	}
-
-	public Sampler getSampler() {
-		return sampler;
 	}
 	
+	public LogicalDevice getLogicalDevice() {
+		return logicalDevice;
+	}
+
+
 	public void add(ShaderStageSettings shaderStageSettings) {
 		shaderStageSettingsList.add(shaderStageSettings);
 	}
@@ -44,6 +42,14 @@ public class PipelineSettings {
 		return shaderStageSettingsList;
 	}
 	
+	public void add(Descriptor descriptor) {
+		descriptorList.add(descriptor);
+	}
+	
+	public List<Descriptor> getDescriptorList() {
+		return descriptorList;
+	}
+
 	/**
 	 * VkComputePipelineCreateInfo.BufferにshaderStage情報を書き込み
 	 * @param compute

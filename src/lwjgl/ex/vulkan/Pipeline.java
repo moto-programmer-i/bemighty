@@ -236,7 +236,7 @@ public class Pipeline implements AutoCloseable {
     private Pipeline(PipelineSettings settings) {
     	this.settings = settings;
     	// バッファがlogicalDeviceを持っているので、先頭のものから取得
-    	logicalDevice = settings.getBuffers()[0].getSettings().getLogicalDevice();
+    	logicalDevice = settings.getLogicalDevice();
     }
     
     
@@ -253,22 +253,12 @@ public class Pipeline implements AutoCloseable {
     	
 		var device = logicalDevice.getDevice();
 		
-		// bufferをdescriptorのリストとして扱う
-		descriptorList = Arrays.asList(settings.getBuffers());
-		
-		// Bufferだけなら簡単だったが、
-		// Vulkanのクソ設計によりDescriptorの中にBufferと他が混在する
-		if (settings.getSampler() != null) {
-			descriptorList.add(settings.getSampler());
-		}
-				
+		// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
+		// 事前にdescriptorTypeの種類ごとに数える必要がある
+		descriptorList = settings.getDescriptorList();
 		var descriptorTypeMap = new HashMap<Integer, Integer>();
 		
-		
-		
 		try(var stack = MemoryStack.stackPush()) {
-			// 本来絶対にDescriptorPoolなどいらないが、Vulkanの制約上必須になっているので仕方ない
-			// 事前にdescriptorTypeの種類ごとに数える必要がある
 			// Integerのオートボクシングによってやや遅いが、問題がでたら考える
 			for(var descriptor: descriptorList) {
 				var descriptorType = descriptor.getDescriptorType();
@@ -325,7 +315,11 @@ public class Pipeline implements AutoCloseable {
 	        
 	        // さらにDescriptorSetを設定しなければならない。意味不明。
 	        for(int d = 0; d < descriptorList.size(); ++d) {
-	        	descriptorList.get(d).write(descriptorSetBuffer.get(d), d, forDescriptorSet, stack);
+	        	descriptorList.get(d).write(
+	        			descriptorSetBuffer.get(d).sType$Default(),
+	        			d,
+	        			forDescriptorSet,
+	        			stack);
 	        }
 	        
 	        vkUpdateDescriptorSets(device, descriptorSetBuffer, null);

@@ -133,10 +133,11 @@ public class Main {
 						
 						// shader.slangと対応させる必要がある
 						// ComputePipelineと GraphicPipelineの関係が謎
-						var computeSettings = new PipelineSettings(shader, particleTest.getBuffer()); 
+						var computeSettings = new PipelineSettings(logicalDevice, shader);
+						particleTest.addDescriptorsTo(computeSettings);
 						// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
 						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, "compMain"));
-						var graphicShaderSettings = new PipelineSettings(shader, particleTest.getBuffer());
+						var graphicShaderSettings = new PipelineSettings(logicalDevice, shader);
 						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
 						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
 						var graphicSettings = new GraphicPipelineSettings(surfaceSettings);

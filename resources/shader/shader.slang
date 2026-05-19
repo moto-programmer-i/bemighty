@@ -2,9 +2,12 @@
 #define PARTCLE_NUM 2
 struct Particle {
 	float2 position;
-	float velocity;
 };
-RWStructuredBuffer<Particle> particles;
+struct ParticleSSBO {
+    Particle particles;
+};
+StructuredBuffer<ParticleSSBO> particlesIn;
+RWStructuredBuffer<ParticleSSBO> particlesOut;
 // -------------Java側と対応しなければならない↑------------
 
 
@@ -14,12 +17,15 @@ struct VSOutput
     float pointSize : SV_PointSize;
 };
 
+// static var tempPosition = float4(0.0, 0.0, 0.0, 1.0);
 
 
 [shader("vertex")]
 VSOutput vertMain(Particle particle) {
 	VSOutput output;
     output.pos = float4(particle.position, 0.0, 1.0);
+    // output.pos = float4(result[0], 0.0, 0.0, 1.0);
+    // output.pos = tempPosition;
         
     output.pointSize = 100.0;
     
@@ -38,6 +44,9 @@ float4 fragMain() : SV_TARGET {
     return tempColor;
 }
 
+static float velocity = 0.1;
+static float deltaTime = 1.0 / 30;
+
 
 
 [shader("compute")]
@@ -45,6 +54,13 @@ float4 fragMain() : SV_TARGET {
 [numthreads(PARTCLE_NUM,1,1)]
 void compMain(uint3 threadId : SV_DispatchThreadID)
 {     
+    uint index = threadId.x;
+    particlesOut[index].particles.position = particlesIn[index].particles.position + velocity * deltaTime;
+    
+    // staticは別々？
+    // tempColor.x = 1.0;
+    // tempPosition.x = 0.5;
+    
     // 適当。確認ができない
-    particles[0].position.x = -0.5;
+    // particles[0].position.x = -0.5;
 }
