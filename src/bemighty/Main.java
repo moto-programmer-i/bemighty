@@ -162,7 +162,7 @@ public class Main {
 								
 								
 								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, graphic, compute, particleTest)) {
-									final int testCount = 1;
+									final int testCount = 3;
 									for(int i = 0; i < testCount; ++i) {
 										if (window.shouldClose()) {
 											break;
@@ -171,6 +171,9 @@ public class Main {
 										window.pollEvents();
 										
 										render.render(command);
+										
+										// 適当に描画を待つ
+										// Thread.sleep(500);
 									}
 									
 									// 処理後の時刻を取得

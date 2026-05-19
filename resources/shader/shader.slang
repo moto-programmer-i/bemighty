@@ -6,7 +6,7 @@ struct Particle {
 struct ParticleSSBO {
     Particle particles;
 };
-StructuredBuffer<ParticleSSBO> particlesIn;
+// StructuredBuffer<ParticleSSBO> particlesIn;
 RWStructuredBuffer<ParticleSSBO> particlesOut;
 // -------------Java側と対応しなければならない↑------------
 
@@ -55,7 +55,9 @@ static float deltaTime = 1.0 / 30;
 void compMain(uint3 threadId : SV_DispatchThreadID)
 {     
     uint index = threadId.x;
-    particlesOut[index].particles.position = particlesIn[index].particles.position + velocity * deltaTime;
+    // particlesOut[index].particles.position = particlesIn[index].particles.position + velocity * deltaTime;
+    // particlesOut[index].particles.position = particlesIn[index].particles.position + index * 0.5;
+    particlesOut[index].particles.position += index * 0.2;
     
     // staticは別々？
     // tempColor.x = 1.0;

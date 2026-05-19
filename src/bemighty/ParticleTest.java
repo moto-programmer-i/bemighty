@@ -74,7 +74,7 @@ public class ParticleTest implements AutoCloseable {
 		var descripotrList = pipelineSettings.getDescriptorList();
 		descripotrList.add(buffer);
 		
-		// チュートリアル上、bufferと同じデスクリプタがGPU上にもう1つ必要
-		descripotrList.add(buffer);
+//		// チュートリアル上、bufferと同じデスクリプタがGPU上にもう1つ必要
+//		descripotrList.add(buffer);
 	}
 }

@@ -41,10 +41,11 @@ public class TimelineSemaphore implements AutoCloseable {
         }
 	}
 	
-	public void clear() {
-		// チュートリアルだと0に戻さず、uintを++し続けるが、大丈夫なのか不明
-		timeline = 0;
-	}
+	// TimelineSemaphore内部の値を0にしなければ行けないが、方法が不明
+//	public void clear() {
+//		// チュートリアルだと0に戻さず、uintを++し続けるが、大丈夫なのか不明
+//		timeline = 0;
+//	}
 	
 	
 	public void submit(CommandBuffer commandBuffer, Queue queue, IntBuffer waitDestinationStageMask, MemoryStack stack) {
@@ -107,8 +108,5 @@ public class TimelineSemaphore implements AutoCloseable {
 		
 		Vulkan.throwExceptionIfFailed(vkWaitSemaphores(logicalDevice.getDevice(), info, Long.MAX_VALUE),
 				"vkWaitSemaphoresに失敗しました");
-		
-		// チュートリアルだと0に戻さず、uintを++し続けるが、大丈夫なのか不明
-		timeline = 0;
 	}
 }
