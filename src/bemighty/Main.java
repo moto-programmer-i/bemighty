@@ -162,7 +162,7 @@ public class Main {
 								
 								
 								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, graphic, compute, particleTest)) {
-									final int testCount = 3;
+									final int testCount = 4;
 									for(int i = 0; i < testCount; ++i) {
 										if (window.shouldClose()) {
 											break;
@@ -171,16 +171,16 @@ public class Main {
 										window.pollEvents();
 										
 										render.render(command);
-										
-										// 適当に描画を待つ
-										// Thread.sleep(500);
 									}
 									
 									// 処理後の時刻を取得
 							        long endMilliseconds = System.currentTimeMillis();
 							        System.out.println("処理時間 " + (endMilliseconds - startMilliseconds) / 1000.0);									
 									// ウィンドウが閉じられるまで待つ
-									window.waitUntilClose();	
+									window.waitUntilClose();
+									
+									// 適当に待つ
+									Thread.sleep(200);
 								}
 								
 //							}

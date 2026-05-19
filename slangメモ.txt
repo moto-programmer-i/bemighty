@@ -9,6 +9,17 @@ https://i.redd.it/93e8dzrsiakd1.png
 画面の領域がグループごとに区切られてしまっているが、
 threadIdの値はグループ関係なく一意になる模様。
 ----------------------------------------------------------------------------------------
+■static
+staticではない https://shader-slang.org/slang/user-guide/conventional-features.html#expressions
+// a "thread-local" global variable
+static int c = 3;
+
+// a compile-time constant
+static const int d = 4;
+
+
+
+----------------------------------------------------------------------------------------
 ■playground用機能
 https://shader-slang.org/slang-playground/
 
