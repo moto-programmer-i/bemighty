@@ -1,66 +1,59 @@
 // -------------Java側と対応しなければならない↓------------
-#define PARTCLE_NUM 2
-struct Particle {
-	float2 position;
+struct VSInput {
+    float3 position;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 color;
+    float2 texCoord;
 };
-struct ParticleSSBO {
-    Particle particles;
+
+struct UniformBuffer {
+    float4x4 model;
+    float4x4 view;
+    float4x4 proj;
 };
-// StructuredBuffer<ParticleSSBO> particlesIn;
-RWStructuredBuffer<ParticleSSBO> particlesOut;
+ConstantBuffer<UniformBuffer> ubo;
 // -------------Java側と対応しなければならない↑------------
 
 
-struct VSOutput
-{
-    float4 pos : SV_Position;
-    float pointSize : SV_PointSize;
+
+struct VertexOutput {
+    float4 position : SV_Position;
+    // チュートリアルでは含まれるが、今のところ使用していない
+    // float3 color;
+    float2 texCoord;
 };
 
-// static var tempPosition = float4(0.0, 0.0, 0.0, 1.0);
-
+// すべての頂点に対して呼び出される
 [shader("vertex")]
-VSOutput vertMain(Particle particle) {
-	VSOutput output;
-    output.pos = float4(particle.position, 0.0, 1.0);
+VertexOutput vertMain(VSInput input) {
+    VertexOutput output;
+    // 変形なし
+    // output.position = float4(input.position, 1.0);
     
-    // computeで変更したstaticは反映されない。
-	// output.pos = float4(offset, 0.0, 0.0, 1.0);
-    // output.pos = tempPosition;
-        
-    output.pointSize = 60.0;
+    // 移動、拡大、回転のみ
+    // output.position = mul(ubo.model, float4(input.position, 1.0));
     
+    // UniformBufferObjectを用いた座標の変換 
+    output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
+
     
-    
-    
+    // output.color = input.color;
+    output.texCoord = input.texCoord;
     return output;
 }
 
+// テクスチャが入っているらしい。どうやってバッファから受け取っているかは不明
+Sampler2D texture;
+
 // デバッグ用 RGBA（現状Aが効いてないが、不明）
-static const float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
+static float4 tempColor = float4(0.0, 1.0, 0.0, 1.0);
 
 [shader("fragment")]
-float4 fragMain() : SV_TARGET {
+float4 fragMain(VertexOutput inVert) : SV_Target
+{
+    // テクスチャ座標から色を取得
+    return texture.Sample(inVert.texCoord);
+    
     // 色を直接出力したい場合
-    return tempColor;
-}
-
-
-
-static const float velocity = 0.2;
-
-
-// a "thread-local" global variable
-// static int c = 3;
-
-[shader("compute")]
-// GPU処理では、マルチスレッドが基本。1点を1スレッドに処理させる
-[numthreads(PARTCLE_NUM,1,1)]
-void compMain(uint3 threadId : SV_DispatchThreadID)
-{     
-    var index = threadId.x;
-    // 初期化の方法が不明、バッファでbooleanを送るしかないのか？
-   
-    // 点ごとに適当に動かす
-    particlesOut[index].particles.position += index * velocity;
+    // return tempColor;
 }

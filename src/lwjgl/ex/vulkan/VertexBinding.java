@@ -13,15 +13,27 @@ public class VertexBinding {
 	private int bytes;
 	private int format;
 	
+	
+	
 	public VertexBinding(float... values) {
 		this.values = values;
-		
+		this(values.length);
+	}
+	
+	public VertexBinding(FloatVector2 vector) {
+		this(vector.getX(), vector.getY());
+	}
+	
+	public VertexBinding(int valueCount) {		
 		// VertexInputAttributeDescriptionのために、バイト数のoffsetが必要
-		bytes = Float.BYTES * values.length;
-		
+		bytes = Float.BYTES * valueCount;
+
+		setFormat(valueCount);
+	}
+	
+	private void setFormat(int valueCount) {
 		// format設定、Vulkanのクソ設計によりRGBformatが流用されている
-		// 他でも必要になる場合はメソッド化
-		format = switch(values.length)  {
+		format = switch(valueCount)  {
 			// 個数によってformatをわけるしかない
 			case 1 -> VK_FORMAT_R32_SFLOAT;
 			case 2 -> VK_FORMAT_R32G32_SFLOAT;
@@ -31,10 +43,10 @@ public class VertexBinding {
 		};
 	}
 	
-	public VertexBinding(FloatVector2 vector) {
-		this(vector.getX(), vector.getY());
-	}
-	
+	/**
+	 * 
+	 * @return 値を紐づけていない場合は空
+	 */
 	public float[] getValues() {
 		return values;
 	}

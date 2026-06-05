@@ -1,6 +1,6 @@
 package lwjgl.ex.vulkan;
 
-import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
 import static org.lwjgl.vulkan.VK14.*;
 
 import java.util.OptionalInt;
@@ -18,7 +18,12 @@ public enum BufferType {
 	 * （Descriptorでは送らない）
 	 */
 	INDEX(BufferType.USAGE_INDEX_DESTINATION, OptionalInt.empty()),
-	STORAGE(BufferType.USAGE_SHADER_STORAGE, OptionalInt.of(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER));
+	STORAGE(BufferType.USAGE_SHADER_STORAGE, OptionalInt.of(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)),
+	UNIFORM(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OptionalInt.of(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)),
+	/**
+	 * Texture（Descriptorでは送らない）
+	 */
+	TEXTURE(BufferType.USAGE_SOURCE, OptionalInt.empty());
 	private final int usage;
 	private OptionalInt descriptorType;
 	

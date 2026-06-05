@@ -38,7 +38,7 @@ public class Texture implements AutoCloseable {
 	private Handler imageHandler;
 	
 	
-	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, UniformBufferObject uniformObject) {
+	public Texture(BufferedImage image, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, UniformBufferObject uniformObject) {
 		this.image = image;
 		this.logicalDevice = logicalDevice;
 		commandBuffer = new CommandBuffer(new CommandBufferSettings(commandPool));
@@ -49,6 +49,8 @@ public class Texture implements AutoCloseable {
 		});
 		bufferSettings.setSize(AssimpUtils.calcSize(image));
 		
+
+		bufferSettings.setType(BufferType.TEXTURE);
 		
 		// 保留
 		// VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT
@@ -186,7 +188,8 @@ public class Texture implements AutoCloseable {
 		return imageHandler;
 	}
 
-	
-	
 
+	public ImageView getTextureImageView() {
+		return textureImageView;
+	}
 }

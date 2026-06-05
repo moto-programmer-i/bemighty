@@ -24,6 +24,7 @@ import motopgi.utils.AutoCloseableList;
 import motopgi.utils.ExceptionUtils;
 import motopgi.utils.FloatVector2;
 import motopgi.utils.FloatVector3;
+import motopgi.utils.ListUtils;
 
 import static lwjgl.ex.vulkan.VulkanConstants.*;
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
@@ -35,6 +36,26 @@ import static lwjgl.ex.vulkan.StagingBufferSettings.*;
 public class Model implements AutoCloseable {
 	// 頂点の重複を削除できてない。なぜ？
 	public static final int DEFAULT_IMPORT_FILE_FLAG = Assimp.aiProcess_JoinIdenticalVertices;
+	
+	/**
+	 * shader.slangと対応
+	 * struct VSInput {
+	 * 		float3 position;
+	 * 
+	 * に対応する、floatの数
+	 * 
+	 */
+	public static final int VERTEX_INPOSITION_FLOAT_NUM = 3;
+	
+	/**
+	 * shader.slangと対応
+	 * struct VSInput {
+	 * 		float3 texCoord;
+	 * 
+	 * に対応する、floatの数
+	 * 
+	 */
+	public static final int VERTEX_TEXTURE_COORD_FLOAT_NUM = 2;
 	
 	private LogicalDevice logicalDevice;
 	private AIScene model;
@@ -49,26 +70,29 @@ public class Model implements AutoCloseable {
 	private UniformBufferObject uniformObject;
 	private AutoCloseableList<Texture> textures;
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, SwapChain swapChain) throws Exception {
-		this(modelPath, logicalDevice, commandPool, queue, pipeline, swapChain, DEFAULT_IMPORT_FILE_FLAG);
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, SwapChain swapChain) throws Exception {
+		this(modelPath, logicalDevice, commandPool, queue, swapChain, DEFAULT_IMPORT_FILE_FLAG);
 	}
 	
-	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, Pipeline pipeline, SwapChain swapChain, int importFileFlag) throws Exception {
+	public Model(Path modelPath, LogicalDevice logicalDevice, CommandPool commandPool, Queue queue, SwapChain swapChain, int importFileFlag) throws Exception {
 		this.model = Assimp.aiImportFile(modelPath.toString(), importFileFlag);
 		this.logicalDevice = logicalDevice;
 		
 		// 各メッシュのtranslation（offset）を取得しなければならない
 		var translations = new ArrayList<FloatVector3>();
 		var  childNodes = model.mRootNode().mChildren();
-		var childLimit = childNodes.limit();
-		for(int i = 0; i < childLimit; ++i) {
-			try(var child = AINode.create(childNodes.get(i))) {
-				// 平行移動を取り出す
-				// https://chaosplant.tech/do/vulkan/5-14/#ping-xing-yi-dong
-				var transformation = child.mTransformation();
-				translations.add(new FloatVector3(transformation.a4(), transformation.b4(), transformation.c4()));
-			};
+		if (childNodes != null) {
+			var childLimit = childNodes.limit();
+			for(int i = 0; i < childLimit; ++i) {
+				try(var child = AINode.create(childNodes.get(i))) {
+					// 平行移動を取り出す
+					// https://chaosplant.tech/do/vulkan/5-14/#ping-xing-yi-dong
+					var transformation = child.mTransformation();
+					translations.add(new FloatVector3(transformation.a4(), transformation.b4(), transformation.c4()));
+				};
+			}
 		}
+		
 		
 		
 		//　配列のサイズを確定しなければならないので、先に頂点数を取得しなければならない
@@ -106,8 +130,8 @@ public class Model implements AutoCloseable {
         		var mesh = meshes.get(m);
             	var numVertices = mesh.mNumVertices();
             	
-            	// translation(offset)が必要
-            	var translation = translations.get(m);
+            	// translation(offset)がある場合は取得
+            	var translation = ListUtils.getOrNull(translations, m);
             	
             	// テクスチャ複数の場合は保留
             	var textureCoords = mesh.mTextureCoords(0);
@@ -115,9 +139,17 @@ public class Model implements AutoCloseable {
             	var verticesBuffer = mesh.mVertices();
             	for(int v = 0; v < numVertices; ++v) {
             		var vertex = verticesBuffer.get(v);
-            		vertices[verticesIndex++] = vertex.x() + translation.getX();
-            		vertices[verticesIndex++] = vertex.y() + translation.getY();
-            		vertices[verticesIndex++] = vertex.z() + translation.getZ();
+            		if(translation != null) {
+            			vertices[verticesIndex++] = vertex.x() + translation.getX();
+                		vertices[verticesIndex++] = vertex.y() + translation.getY();
+                		vertices[verticesIndex++] = vertex.z() + translation.getZ();
+            		}
+            		else {
+            			vertices[verticesIndex++] = vertex.x();
+                		vertices[verticesIndex++] = vertex.y();
+                		vertices[verticesIndex++] = vertex.z();
+            		}
+            		
             		
 //            		System.out.println("y " + vertex.y());
             		
@@ -195,7 +227,7 @@ public class Model implements AutoCloseable {
         
 
      // Textureの取得
-        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, pipeline, uniformObject);
+        textures = AssimpUtils.readTextures(model, logicalDevice, commandPool, queue, uniformObject);
         
         // 描画範囲初期化
         onSwapChainRecreate(swapChain);
@@ -270,4 +302,21 @@ public class Model implements AutoCloseable {
 		uniformObject.update();
 	}
 	
+	/**
+	 * slangとの対応用インスタンスを返す
+	 * @return
+	 */
+	public static VertexBindingBuilder createBinding() {
+		return VertexBindingBuilder.create(new VertexBinding(VERTEX_INPOSITION_FLOAT_NUM))
+				.add(new VertexBinding(VERTEX_TEXTURE_COORD_FLOAT_NUM));
+	}
+
+	public AutoCloseableList<Texture> getTextures() {
+		return textures;
+	}
+	
+	public void addDescriptorTo(PipelineSettings pipeline) {
+		// Descriptorに書くのはUniformBufferだけでよい
+		pipeline.add(uniformObject.getBuffer());
+	}
 }

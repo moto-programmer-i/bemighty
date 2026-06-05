@@ -58,14 +58,7 @@ public class Pipeline implements AutoCloseable {
     private void initAsCompute() {
     	var device = logicalDevice.getDevice();
     	
-    	try(var stack = MemoryStack.stackPush()) {
-    		VkPipelineLayoutCreateInfo layout = createLayoutInfo(stack);
-    		
-    		var forLayout = stack.mallocLong(1);
-    		Vulkan.throwExceptionIfFailed(vkCreatePipelineLayout(device, layout, null, forLayout),
-                    "ComputePipelineLayoutの作成に失敗しました");
-    		layoutHandler = forLayout.get(0);
-    		
+    	try(var stack = MemoryStack.stackPush()) {    		
     		var compute = VkComputePipelineCreateInfo.calloc(1, stack).sType$Default()
     				.layout(layoutHandler);
     		settings.write(compute, stack);
@@ -89,7 +82,8 @@ public class Pipeline implements AutoCloseable {
     	
     	// Descriptor周りを初期化
     	// （今までGraphicPipelineでやっていたのに、Computeでこっちに移った。意味不明）
-    	compute.initDescriptor(settings);
+    	// 正しい設計方法が分かり次第対処
+    	// compute.initDescriptor(settings);
     	
     	compute.initAsCompute();
     	return compute;
@@ -97,6 +91,11 @@ public class Pipeline implements AutoCloseable {
     
     public static Pipeline createGraphics(PipelineSettings settings, GraphicPipelineSettings graphicSettings, VertexBindingBuilder binding) {
     	var grachics = new Pipeline(settings);
+    	
+    	// どこでDescriptorを初期化するべきか不明、
+    	// 正しい設計方法が分かり次第対処
+    	grachics.initDescriptor(settings);
+    	
     	grachics.initAsGraphics(graphicSettings, binding);
     	return grachics;
     }
@@ -164,19 +163,6 @@ public class Pipeline implements AutoCloseable {
                     .depthAttachmentFormat(depthFormat)
                     ;
 
-            
-            var layout = VkPipelineLayoutCreateInfo.calloc(stack).sType$Default()
-            		;
-            		// ComputePipelineがでてきたら、GraphicPipelineDescriptorLayout設定がなくなった
-            		// 意味不明
-            		// https://docs.vulkan.org/tutorial/latest/_attachments/31_compute_shader.cpp
-            		// .pSetLayouts(forDescriptorLayouts);
-            var forLayout = stack.mallocLong(1);
-            Vulkan.throwExceptionIfFailed(vkCreatePipelineLayout(device, layout, null, forLayout),
-                    "PipelineLayoutの作成に失敗しました");
-            layoutHandler = forLayout.get(0);
-
-            var shader = settings.getShader();
             var createInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack)
                     .sType$Default()
                     .renderPass(VK_NULL_HANDLE)
@@ -204,26 +190,6 @@ public class Pipeline implements AutoCloseable {
             handler = forHandler.get(0);
         }
     }
-    
-    private VkPipelineLayoutCreateInfo createLayoutInfo(MemoryStack stack) {
-		return VkPipelineLayoutCreateInfo.calloc(stack).sType$Default()
-				.pSetLayouts(forDescriptorLayouts);
-	}
-  
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -323,6 +289,18 @@ public class Pipeline implements AutoCloseable {
 	        }
 	        
 	        vkUpdateDescriptorSets(device, descriptorSetBuffer, null);
+	        
+	        
+	        
+	        // PipelineLayoutの方も対応して初期化しなければいけない。
+	        // PipelineLayoutはpushConstantも含むため
+	        var pipelineLayout = VkPipelineLayoutCreateInfo.calloc(stack).sType$Default()
+					.pSetLayouts(forDescriptorLayouts);
+			
+			var forLayout = stack.mallocLong(1);
+			Vulkan.throwExceptionIfFailed(vkCreatePipelineLayout(device, pipelineLayout, null, forLayout),
+	                "ComputePipelineLayoutの作成に失敗しました");
+			layoutHandler = forLayout.get(0);
 		}
     }
 	

@@ -16,15 +16,17 @@ public class RenderSettings {
 	private SwapChain swapChain;
 	private Queue queue;
 	private Shader shader;
-	private final CommandPoolSettings commandPoolSettings;
+	private final CommandPool commandPool;
 	private final CommandBufferSettings commandBufferSettings = new CommandBufferSettings();
 	private final QueueSettings queueSettings;
 	
 	
 
-	public RenderSettings(LogicalDevice logicalDevice, SwapChain swapChain, Queue queue, Shader shader) {
+	public RenderSettings(LogicalDevice logicalDevice, SwapChain swapChain, CommandPool commandPool, Queue queue, Shader shader) {
+		this.commandPool = commandPool;
+		commandBufferSettings.setCommandPool(commandPool);
+		
 		queueSettings = new QueueSettings(logicalDevice);
-		commandPoolSettings = new CommandPoolSettings(logicalDevice);
 		setLogicalDevice(logicalDevice);
 		this.swapChain = swapChain;
 		this.queue = queue;
@@ -37,7 +39,6 @@ public class RenderSettings {
 
 	public void setLogicalDevice(LogicalDevice logicalDevice) {
 		this.logicalDevice = logicalDevice;
-		commandPoolSettings.setLogicalDevice(logicalDevice);
 		queueSettings.setLogicalDevice(logicalDevice);
 	}
 	
@@ -61,8 +62,8 @@ public class RenderSettings {
 		return commandBufferSettings;
 	}
 
-	public CommandPoolSettings getCommandPoolSettings() {
-		return commandPoolSettings;
+	public CommandPool getCommandPool() {
+		return commandPool;
 	}
 
 	public QueueSettings getQueueSettings() {

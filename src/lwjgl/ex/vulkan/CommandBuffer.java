@@ -130,7 +130,9 @@ public class CommandBuffer implements AutoCloseable {
 
     public void bindGraphics(Pipeline pipeline) {
     	vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandler());
-    	// Computeが追加されてからやらなくなった。意味不明
+    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
+    	
+    	// チュートリアルではComputeが追加されるとBindDescriptorSetsをやらなくなった。意味不明
 //    	vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayoutHandler(), DEFAULT_FIRST_SET, pipeline.getForDescriptorSet(), null);
     }
     

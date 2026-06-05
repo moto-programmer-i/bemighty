@@ -71,9 +71,7 @@ public class UniformBufferObject implements AutoCloseable {
 		});
 		settings.setSize(BYTES);
 		
-		// usageを直接いじるのをやめる、何が適切かは不明
-		// settings.setUsage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-		settings.setType(BufferType.VERTEX);
+		settings.setType(BufferType.UNIFORM);
 		
 		settings.setDestinationMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_VISIBLE);
 		settings.setUnMap(false);
@@ -313,4 +311,5 @@ public class UniformBufferObject implements AutoCloseable {
 		data[i] = -(near * far / f_n);
 	}
 
+	
 }

@@ -49,6 +49,8 @@ import lwjgl.ex.vulkan.QueueSettings;
 import lwjgl.ex.vulkan.RectUtils;
 import lwjgl.ex.vulkan.Render;
 import lwjgl.ex.vulkan.RenderSettings;
+import lwjgl.ex.vulkan.Sampler;
+import lwjgl.ex.vulkan.SamplerSettings;
 import lwjgl.ex.vulkan.DrawModelCommand;
 import lwjgl.ex.vulkan.Shader;
 import lwjgl.ex.vulkan.ShaderSettings;
@@ -57,6 +59,7 @@ import lwjgl.ex.vulkan.Surface;
 import lwjgl.ex.vulkan.SurfaceSettings;
 import lwjgl.ex.vulkan.SwapChain;
 import lwjgl.ex.vulkan.SwapChainSettings;
+import lwjgl.ex.vulkan.VertexBindingBuilder;
 import lwjgl.ex.vulkan.Vulkan;
 import lwjgl.ex.vulkan.VulkanSettings;
 import lwjgl.ex.vulkan.Window;
@@ -69,8 +72,8 @@ public class Main {
 	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
-//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
-	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/polyMesh.gltf");
+	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
+//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/polyMesh.gltf");
 
 	public static void main(String[] args) throws Exception {
 		// 処理前の時刻を取得
@@ -120,70 +123,89 @@ public class Main {
 				// 並列にインスタンスを作成するべきだが、今はこのまま
 				try(var logicalDevice = new LogicalDevice(logicalDeviceSettings);
 						var surface = new Surface(surfaceSettings);
-						var particleTest = new ParticleTest(logicalDevice)
+//						var particleTest = new ParticleTest(logicalDevice)
 						) {
 					
+					var commandPoolSettings = new CommandPoolSettings(logicalDevice);
 					var swapChainSettings = new SwapChainSettings(window, logicalDevice, surface);
-					
 					var shaderSettings = new ShaderSettings(logicalDevice, SHADER_SPV);
 					
-					try(var swapChain = new SwapChain(swapChainSettings);
+					var queueSettings = new QueueSettings(logicalDevice);
+					Queue queue = new Queue(queueSettings);
+					
+					try(var commandPool = new CommandPool(commandPoolSettings);
+							var swapChain = new SwapChain(swapChainSettings);
 							var shader = new Shader(shaderSettings);
+							var testModel = new Model(TEST_MODEL, logicalDevice, commandPool, queue, swapChain);
 									) {
+
+						var samplerSettings = new SamplerSettings(logicalDevice,
+								
+								// テクスチャが複数の場合、不明
+								testModel.getTextures().get(0).getTextureImageView());
 						
-						// shader.slangと対応させる必要がある
-						// ComputePipelineと GraphicPipelineの関係が謎
-						var computeSettings = new PipelineSettings(logicalDevice, shader);
-						particleTest.addDescriptorsTo(computeSettings);
-						// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
-						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, "compMain"));
-						var graphicShaderSettings = new PipelineSettings(logicalDevice, shader);
-						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
-						graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
-						var graphicSettings = new GraphicPipelineSettings(surfaceSettings);
-						
-						// 点を描画するときはトポロジを点にしなくてはいけない
-						graphicSettings.setTopology(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
-						
-						
-						var queueSettings = new QueueSettings(logicalDevice);
-						Queue queue = new Queue(queueSettings);
-						
-						var renderSettings = new RenderSettings(logicalDevice, swapChain, queue, shader);
-						
-						try(var graphic = Pipeline.createGraphics(graphicShaderSettings, graphicSettings, particleTest.getBinding());
-								var compute = Pipeline.createCompute(computeSettings);
-								var render = new Render(renderSettings)
-								) {
+						try(var sampler = new Sampler(samplerSettings)) {
+
+							// shader.slangと対応させる必要がある
+							// ComputePipelineと GraphicPipelineの関係が謎
+	//						var computeSettings = new PipelineSettings(logicalDevice, shader);
+	//						particleTest.addDescriptorsTo(computeSettings);
+	//						// https://docs.vulkan.org/tutorial/latest/_attachments/17_swap_chain_recreation.cpp
+	//						computeSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_COMPUTE_BIT, "compMain"));
+							var graphicShaderSettings = new PipelineSettings(logicalDevice, shader);
+							graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_VERTEX_BIT, "vertMain"));
+							graphicShaderSettings.add(new ShaderStageSettings(VK_SHADER_STAGE_FRAGMENT_BIT, "fragMain"));
 							
-							// 頂点の重複を削除できてない。なぜ？
-//							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
-//							try(var testModel = new Model(TEST_MODEL, logicalDevice, render.getCommandPool(), queue, vertexDescriptionHelper, swapChain)) {
+							// descriptor設定
+							testModel.addDescriptorTo(graphicShaderSettings);
+							graphicShaderSettings.add(sampler);
+							
+							var graphicSettings = new GraphicPipelineSettings(surfaceSettings);
+							
+							
+							
+	//						// 点を描画するときはトポロジを点にしなくてはいけない
+	//						graphicSettings.setTopology(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+							
+							
+							
+							
+							var renderSettings = new RenderSettings(logicalDevice, swapChain, commandPool, queue, shader);
+							
+							try(var render = new Render(renderSettings);
+									
+	//								var compute = Pipeline.createCompute(computeSettings);
+									
+									) {
 								
-								
-								try (var command = new ComputeTestCommand(BACKGROUND, swapChain, graphic, compute, particleTest)) {
-									final int testCount = 4;
-									for(int i = 0; i < testCount; ++i) {
-										if (window.shouldClose()) {
-											break;
+								// 頂点の重複を削除できてない。なぜ？
+	//							int importFileFlag = Assimp.aiProcess_JoinIdenticalVertices;
+								try(var graphic = Pipeline.createGraphics(graphicShaderSettings, graphicSettings, Model.createBinding())) {
+									
+									
+									try (var command = new DrawModelCommand(testModel, BACKGROUND, swapChain, graphic)) {
+										final int testCount = 1;
+										for(int i = 0; i < testCount; ++i) {
+											if (window.shouldClose()) {
+												break;
+											}
+											// ウィンドウをイベント待ちへ
+											window.pollEvents();
+											
+											render.render(command);
 										}
-										// ウィンドウをイベント待ちへ
-										window.pollEvents();
 										
-										render.render(command);
+										// 処理後の時刻を取得
+								        long endMilliseconds = System.currentTimeMillis();
+								        System.out.println("処理時間 " + (endMilliseconds - startMilliseconds) / 1000.0);									
+										// ウィンドウが閉じられるまで待つ
+										window.waitUntilClose();
+										
+										// 適当に待つ
+										Thread.sleep(200);
 									}
-									
-									// 処理後の時刻を取得
-							        long endMilliseconds = System.currentTimeMillis();
-							        System.out.println("処理時間 " + (endMilliseconds - startMilliseconds) / 1000.0);									
-									// ウィンドウが閉じられるまで待つ
-									window.waitUntilClose();
-									
-									// 適当に待つ
-									Thread.sleep(200);
 								}
-								
-//							}
+							}
 						}
 					}
 				}
