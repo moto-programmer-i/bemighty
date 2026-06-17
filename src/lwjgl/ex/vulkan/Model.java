@@ -209,20 +209,27 @@ public class Model implements AutoCloseable {
         swapChain.setView(uniformObject);
         
         // デバッグ用
-//        uniformObject.scale(0.4f);
-//        uniformObject.move(-0.2f, 0f, 0f);
-//        var axis = new FloatVector3(0f, 1f, 0f);
-//        var angle = Math.PI / 6;
-//        uniformObject.rotate(axis, angle);
-//        uniformObject.rotate(axis, angle);
-//        uniformObject.rotate(axis, angle);
-        var camera = new FloatVector3(0, 0.3f, 0);
+        uniformObject.scale(0.4f);
+//        uniformObject.move(-0.2f, 0.2f, -0.2f);
+        
+        
+        
+//        var axisX = new FloatVector3(1f, 0f, 0f);
+//        uniformObject.rotate(axisX, -Math.PI / 12);
+        var axisY = new FloatVector3(0f, 1f, 0f);
+        uniformObject.rotate(axisY, Math.PI / 12);
+//        var axisZ = new FloatVector3(0f, 0f, 1f);
+//        uniformObject.rotate(axisZ, angle);
+        
+        var camera = new FloatVector3(0, 0.2f, 0);
         var direction = new FloatVector3(0, 0, 1);
 //         // y軸とdirectionが重なるときだけ計算が特殊になる
 //        var direction = new FloatVector3(0, 1, 0);
       uniformObject.setView(camera, direction);
 //        System.out.println("setProjection");
-        uniformObject.perspective(2f, 2f, 0f, 100f);
+      
+      // nearを-1くらいにしないと、箱を回転させたときに手前がよく見えない
+      uniformObject.perspective(2f, 2f, -1f, 100f);
         
         
 

@@ -140,6 +140,8 @@ public class UniformBufferObject implements AutoCloseable {
 		scale = s;
 	}
 	
+	
+	
 	/**
 	 * 回転を設定（過去の角度は捨てる）
 	 * https://chaosplant.tech/do/vulkan/5-14/#hui-zhuan
@@ -180,6 +182,7 @@ public class UniformBufferObject implements AutoCloseable {
 		
 		// 回転にかかる部分だけは掛ける必要がある
 		data[MATRIX4_INDEX_00] = (float) (scale * (x * xOne_cos + cos));
+		System.out.println("座標 " + data[MATRIX4_INDEX_00]);
 		data[MATRIX4_INDEX_10] = (float)(y * xOne_cos + zsin);
 		data[MATRIX4_INDEX_20] = (float)(zxOne_cos - ysin);
 		data[MATRIX4_INDEX_01] = (float)(xyOne_cos - zsin);

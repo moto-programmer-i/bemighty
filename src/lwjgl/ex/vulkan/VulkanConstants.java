@@ -6,6 +6,8 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkOffset3D;
 
+import motopgi.utils.FloatVector3;
+
 public final class VulkanConstants {
 	public static final int DEFAULT_VIEWPORT = 0;
 	public static final float DEFAULT_MIN_DEPTH = 0.0f;
@@ -79,6 +81,10 @@ public final class VulkanConstants {
 	 * （例： put(FIRST_INDEX, value) ）
 	 */
 	public static final int FIRST_INDEX = 0;
+	
+	public static final FloatVector3  AXIS_X = new FloatVector3(1f, 0f, 0f);
+	public static final FloatVector3  AXIS_Y = new FloatVector3(0f, 1f, 0f);
+	public static final FloatVector3  AXIS_Z = new FloatVector3(0f, 0f, 1f);
 
 	private VulkanConstants() {
 	}
