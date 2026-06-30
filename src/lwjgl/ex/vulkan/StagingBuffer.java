@@ -31,7 +31,7 @@ public class StagingBuffer implements AutoCloseable, Descriptor {
 //    private long mappedMemory = NULL;
 //    private PointerBuffer forMappedMemory;
 	private LongBuffer forMemory = MemoryUtil.memAllocLong(1);
-	PointerBuffer forMap = MemoryUtil.memAllocPointer(1);
+	private PointerBuffer forMap = MemoryUtil.memAllocPointer(1);
 
 	private StagingBufferSettings settings;
 

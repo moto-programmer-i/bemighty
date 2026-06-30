@@ -7,9 +7,24 @@ struct VSInput {
 };
 
 struct UniformBuffer {
-    float4x4 model;
-    float4x4 view;
-    float4x4 proj;
+	// 回転軸
+	float3 rotateAxis;
+	
+	// ここの間になぜか不明なfloatが存在する
+	
+	// (1 - cosθ)回転
+	float3 oneCosRotateAxis; 	
+	
+	float cos;
+	float sin;
+	
+	// cos sinの後だと、なぜか値が入らなかった
+	// float3 oneCosRotateAxis; // (1 - cosθ)回転
+	
+	
+    // float4x4 model;
+    // float4x4 view;今まで使ってた？
+    // float4x4 proj;
 };
 ConstantBuffer<UniformBuffer> ubo;
 // -------------Java側と対応しなければならない↑------------
@@ -23,6 +38,7 @@ struct VertexOutput {
     float2 texCoord;
 };
 
+
 // すべての頂点に対して呼び出される
 [shader("vertex")]
 VertexOutput vertMain(VSInput input) {
@@ -34,10 +50,53 @@ VertexOutput vertMain(VSInput input) {
     // output.position = mul(ubo.model, float4(input.position, 1.0));
     
     // UniformBufferObjectを用いた座標の変換 
-    output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
+    // output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
 
+
+	// 一旦回転のみ
+	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
+	output.position = float4(
+		(ubo.cos * input.position
+			+ ubo.oneCosRotateAxis * mul(ubo.rotateAxis, input.position) 
+			+ ubo.sin * cross(ubo.rotateAxis, input.position)),
+		1.0);
+	
+	/*
+	// デバッグ
+	var p = input.position;
+    var theta = float.getPi() / 2;
+    // var r = float3(0, 1, 0);
+    var r = ubo.rotateAxis;
+    var cos = cos(theta);
+    // var cos = ubo.cos;
+    var sin = sin(theta);
+    // var sin = ubo.sin;
+    var oneCosRotateAxis = (1 - cos)  * r;
+    // var oneCosRotateAxis = ubo.oneCosRotateAxis;
+    // oneCosRotateAxis.x = 0;    
+     
+    var result = cos * p
+			+ oneCosRotateAxis * mul(r, p) 
+			+ sin * cross(r, p);
+	
+	if (ubo.sin < 99) {
+	// if (ubo.oneCosRotateAxis.x < 3) {
+	// if (ubo.rotateAxis.z < 1) {
+	// if (ubo.temp < 3) {
+	    result.y -= 0.5;
+	} else {
+		result.y += 0.5;
+	}   		
+	
+	output.position = float4(
+		result,
+		1.0);
+	*/
+	
+		
+	// output.position = float4(input.position, 1.0);
     
-    // output.color = input.color;
+
     output.texCoord = input.texCoord;
     return output;
 }

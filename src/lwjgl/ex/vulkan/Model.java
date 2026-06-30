@@ -118,6 +118,15 @@ public class Model implements AutoCloseable {
             		var face = faces.get(f);
             		indicesCount += face.mNumIndices();
             	}
+            	
+            	// 法線
+            	var normals = mesh.mNormals();
+            	var numNormals = normals.limit();
+            	for(int n = 0; n < numNormals; ++n) {
+            		var normal = normals.get(n);
+//            		System.out.println("法線" + n + " " + normal.x() + " " + normal.y() + " " + normal.z() );
+            	}
+            	
             }
         	vertices = new float[(int) XYZUV_COUNT * verticesCount];
         	indices = new int[indicesCount];
@@ -139,6 +148,8 @@ public class Model implements AutoCloseable {
             	var verticesBuffer = mesh.mVertices();
             	for(int v = 0; v < numVertices; ++v) {
             		var vertex = verticesBuffer.get(v);
+            		
+            		
             		if(translation != null) {
             			vertices[verticesIndex++] = vertex.x() + translation.getX();
                 		vertices[verticesIndex++] = vertex.y() + translation.getY();
@@ -208,18 +219,29 @@ public class Model implements AutoCloseable {
         // 初期化
         swapChain.setView(uniformObject);
         
+        // ここで変更しても間に合わないはずだが、なぜうまくいっていたか不明
+        
         // デバッグ用
-        uniformObject.scale(0.4f);
-//        uniformObject.move(-0.2f, 0.2f, -0.2f);
+//         uniformObject.scale(0.1f);
+//        uniformObject.move(0.5f, 0, 0);
         
         
         
-//        var axisX = new FloatVector3(1f, 0f, 0f);
-//        uniformObject.rotate(axisX, -Math.PI / 12);
-        var axisY = new FloatVector3(0f, 1f, 0f);
-        uniformObject.rotate(axisY, Math.PI / 12);
-//        var axisZ = new FloatVector3(0f, 0f, 1f);
-//        uniformObject.rotate(axisZ, angle);
+        
+//        uniformObject.rotate(VulkanConstants.AXIS_X,
+//        		0
+//        		-Math.PI / 2
+//        		-Math.PI / 12
+//        		);
+//        var axisY = new FloatVector3(0f, 1f, 0f);
+//        uniformObject.rotate(axisY, Math.PI / 12);
+
+//        uniformObject.rotate(VulkanConstants.AXIS_Z,
+////        		0
+////        		Math.PI / 12
+////        		Math.PI / 3
+//        		Math.PI / 2
+//        		);
         
         var camera = new FloatVector3(0, 0.2f, 0);
         var direction = new FloatVector3(0, 0, 1);
