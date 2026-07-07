@@ -13,15 +13,21 @@ struct UniformBuffer {
 	// ここの間になぜか不明なfloatが存在する
 	
 	// (1 - cosθ)回転
-	float3 oneCosRotateAxis; 	
+	float3 oneCosRotateAxis;
+	
+	// ここの間になぜか不明なfloatが存在する
+	
+	float3 translate;
 	
 	float cos;
 	float sin;
 	
-	// cos sinの後だと、なぜか値が入らなかった
+	// cos sinの後だと、なぜか値が入らなかった tranlateも同様
 	// float3 oneCosRotateAxis; // (1 - cosθ)回転
 	
 	float scale;
+	
+	
 	
 	
     // float4x4 model;
@@ -46,7 +52,7 @@ struct VertexOutput {
 VertexOutput vertMain(VSInput input) {
     VertexOutput output;
     // 変形なし
-    // output.position = float4(input.position, 1.0);
+    output.position = float4(input.position, 1.0);
     
     // 移動、拡大、回転のみ
     // output.position = mul(ubo.model, float4(input.position, 1.0));
@@ -54,8 +60,7 @@ VertexOutput vertMain(VSInput input) {
     // UniformBufferObjectを用いた座標の変換 
     // output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
 
-
-	// 一旦回転のみ
+	
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
 	output.position = float4(
 		(ubo.cos * input.position
@@ -65,15 +70,22 @@ VertexOutput vertMain(VSInput input) {
 			// 拡大
 			* ubo.scale
 			
+			// 平行移動
+			+ ubo.translate
+			
 			,
 		1.0);
 	
-	// デバッグ用
+	
 	/*
-	if (ubo.scale > 0) {
+	// デバッグ用
+	// if (ubo.translate.x > 665) {
+	// if (ubo.translate.y > 2000) {
+	// if (ubo.translate.x > 0) {
+	if (ubo.cos > 20000) {
 		output.position.x += 1;
 	}
-	*/
+	// */
     
 
     output.texCoord = input.texCoord;

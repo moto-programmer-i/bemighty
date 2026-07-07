@@ -18,10 +18,13 @@ import static lwjgl.ex.vulkan.StagingBufferSettings.*;
  * のUniformBufferObject
  */
 public class UniformBufferObject implements AutoCloseable {
+	// LWJGLでなぜか値がずれるため作成。修正されしだいこちらも修正
+	private static final float DUMMY = 0f;
+	
 	private double theta = (float)(
-//			0
+			0
 //			Math.PI / 2
-			Math.PI * 2 / 12
+//			Math.PI * 2 / 12
 //			Math.PI / 2
 			
 			);
@@ -31,17 +34,20 @@ public class UniformBufferObject implements AutoCloseable {
 	// ロドリゲスの回転公式 https://w3e.kanazawa-it.ac.jp/math/physics/category/physical_math/linear_algebra/henkan-tex.cgi?target=/math/physics/category/physical_math/linear_algebra/rodrigues_rotation_formula.html
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
 	// を計算するためにGPUに送る変数
-	private FloatVector3 rotateAxis = new FloatVector3(0, 1, 1).normalize();
+	private FloatVector3 rotateAxis = new FloatVector3(0, 0, 1).normalize();
 	// private float cos = (float)Math.cos(theta);
 	private float cos = (float)Math.cos(theta);
 	private float sin = (float)Math.sin(theta);
 	// (1 - cosθ)回転
 	private FloatVector3 oneCosRotateAxis = rotateAxis.clone().multiplies(1 - cos);
+	
 	private float scale = 0.8f;
+	// 平行移動 （yは上がマイナス）
+	private FloatVector3 translate = new FloatVector3(0f, -0.5f, 0);
 	// -------------.slang側と対応しなければならない↑------------
 	
 	// 上の変数の個数（現状、数えて対応させるしかない）
-	private static final int LENGTH = 9 + 1; // なぜかずれるのでダミー分を追加
+	private static final int LENGTH = 12 + 2; // なぜかずれるのでダミー分を追加
 	private static final int BYTES = Float.BYTES * LENGTH;
 	
 	
@@ -94,11 +100,17 @@ public class UniformBufferObject implements AutoCloseable {
 			// バグ？なのか知らないが、なぜかoneCosRotateAxisがずれる
 			// どうしようもないので非常に嫌だが、ダミーをいれて対処する
 			// 本来はLWJGLに報告するべきだが、面倒なので保留
-			uniformBuffer.put(0);
+			uniformBuffer.put(DUMMY);
 			
 			uniformBuffer.put(oneCosRotateAxis.getX());
 			uniformBuffer.put(oneCosRotateAxis.getY());
 			uniformBuffer.put(oneCosRotateAxis.getZ());
+			
+			uniformBuffer.put(DUMMY);
+			
+			uniformBuffer.put(translate.getX());
+			uniformBuffer.put(translate.getY());
+			uniformBuffer.put(translate.getZ());
 			
 			uniformBuffer.put(cos);
 			uniformBuffer.put(sin);
