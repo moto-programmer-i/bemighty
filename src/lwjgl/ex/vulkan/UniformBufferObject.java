@@ -21,24 +21,28 @@ public class UniformBufferObject implements AutoCloseable {
 	private double theta = (float)(
 //			0
 //			Math.PI / 2
-			Math.PI * 4 / 12
+			Math.PI * 2 / 12
 //			Math.PI / 2
 			
 			);
 	
 	// -------------.slang側と対応しなければならない↓------------
 	// https://techblog.sega.jp/entry/2021/06/15/100000 pdf 130ページ目
+	// ロドリゲスの回転公式 https://w3e.kanazawa-it.ac.jp/math/physics/category/physical_math/linear_algebra/henkan-tex.cgi?target=/math/physics/category/physical_math/linear_algebra/rodrigues_rotation_formula.html
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
 	// を計算するためにGPUに送る変数
-	private FloatVector3 rotateAxis = new FloatVector3(0, 0.5f, 1f).normalize();
+	private FloatVector3 rotateAxis = new FloatVector3(0, 1, 1).normalize();
 	// private float cos = (float)Math.cos(theta);
 	private float cos = (float)Math.cos(theta);
 	private float sin = (float)Math.sin(theta);
 	// (1 - cosθ)回転
 	private FloatVector3 oneCosRotateAxis = rotateAxis.clone().multiplies(1 - cos);
-	// 上の変数の個数（現状、数えて対応させるしかない）
-	private static final int LENGTH = 8 + 1; // なぜかずれるのでダミー分を追加
+	private float scale = 0.8f;
 	// -------------.slang側と対応しなければならない↑------------
+	
+	// 上の変数の個数（現状、数えて対応させるしかない）
+	private static final int LENGTH = 9 + 1; // なぜかずれるのでダミー分を追加
+	private static final int BYTES = Float.BYTES * LENGTH;
 	
 	
 	
@@ -67,7 +71,7 @@ public class UniformBufferObject implements AutoCloseable {
 	private static DoubleVector3 direction;
 	
 	// model（モデルごとに異なるためstaticではない）
-	private double scale = 1.0;
+	
 	private DoubleVector3 translation;
 	
 	private StagingBuffer buffer;
@@ -96,13 +100,12 @@ public class UniformBufferObject implements AutoCloseable {
 			uniformBuffer.put(oneCosRotateAxis.getY());
 			uniformBuffer.put(oneCosRotateAxis.getZ());
 			
-			
 			uniformBuffer.put(cos);
 			uniformBuffer.put(sin);
+			
+			uniformBuffer.put(scale);
 		});
-		// 一旦回転だけ見たい
-//		settings.setSize(BYTES);
-		settings.setSize(Float.BYTES * LENGTH);
+		settings.setSize(BYTES);
 		
 		
 		settings.setType(BufferType.UNIFORM);

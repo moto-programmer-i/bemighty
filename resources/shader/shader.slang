@@ -21,6 +21,8 @@ struct UniformBuffer {
 	// cos sinの後だと、なぜか値が入らなかった
 	// float3 oneCosRotateAxis; // (1 - cosθ)回転
 	
+	float scale;
+	
 	
     // float4x4 model;
     // float4x4 view;今まで使ってた？
@@ -58,43 +60,20 @@ VertexOutput vertMain(VSInput input) {
 	output.position = float4(
 		(ubo.cos * input.position
 			+ ubo.oneCosRotateAxis * mul(ubo.rotateAxis, input.position) 
-			+ ubo.sin * cross(ubo.rotateAxis, input.position)),
+			+ ubo.sin * cross(ubo.rotateAxis, input.position))
+			
+			// 拡大
+			* ubo.scale
+			
+			,
 		1.0);
 	
+	// デバッグ用
 	/*
-	// デバッグ
-	var p = input.position;
-    var theta = float.getPi() / 2;
-    // var r = float3(0, 1, 0);
-    var r = ubo.rotateAxis;
-    var cos = cos(theta);
-    // var cos = ubo.cos;
-    var sin = sin(theta);
-    // var sin = ubo.sin;
-    var oneCosRotateAxis = (1 - cos)  * r;
-    // var oneCosRotateAxis = ubo.oneCosRotateAxis;
-    // oneCosRotateAxis.x = 0;    
-     
-    var result = cos * p
-			+ oneCosRotateAxis * mul(r, p) 
-			+ sin * cross(r, p);
-	
-	if (ubo.sin < 99) {
-	// if (ubo.oneCosRotateAxis.x < 3) {
-	// if (ubo.rotateAxis.z < 1) {
-	// if (ubo.temp < 3) {
-	    result.y -= 0.5;
-	} else {
-		result.y += 0.5;
-	}   		
-	
-	output.position = float4(
-		result,
-		1.0);
+	if (ubo.scale > 0) {
+		output.position.x += 1;
+	}
 	*/
-	
-		
-	// output.position = float4(input.position, 1.0);
     
 
     output.texCoord = input.texCoord;
