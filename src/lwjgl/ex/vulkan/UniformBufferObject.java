@@ -1,4 +1,7 @@
 package lwjgl.ex.vulkan;
+// 参考
+// https://chaosplant.tech/do/vulkan/5-14/
+
 
 import java.nio.FloatBuffer;
 
@@ -9,57 +12,53 @@ import motopgi.utils.FloatVector3;
 
 import static org.lwjgl.vulkan.VK14.*;
 
-import java.util.Stack;
 
 import static lwjgl.ex.vulkan.StagingBufferSettings.*;
+import static lwjgl.ex.vulkan.VulkanConstants.DUMMY;
 
 /**
  * https://docs.vulkan.org/tutorial/latest/_attachments/28_model_loading.cpp
  * のUniformBufferObject
  */
-public class UniformBufferObject implements AutoCloseable {
-	// LWJGLでなぜか値がずれるため作成。修正されしだいこちらも修正
-	private static final float DUMMY = 0f;
-	
-	private double theta = (float)(
-			0
-//			Math.PI / 2
-//			Math.PI * 2 / 12
-//			Math.PI / 2
-			
-			);
-	
+public class UniformBufferObject implements AutoCloseable {	
 	// -------------.slang側と対応しなければならない↓------------
-	// https://techblog.sega.jp/entry/2021/06/15/100000 pdf 130ページ目
-	// ロドリゲスの回転公式 https://w3e.kanazawa-it.ac.jp/math/physics/category/physical_math/linear_algebra/henkan-tex.cgi?target=/math/physics/category/physical_math/linear_algebra/rodrigues_rotation_formula.html
-	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
-	// を計算するためにGPUに送る変数
-	private FloatVector3 rotateAxis = new FloatVector3(0, 0, 1).normalize();
-	// private float cos = (float)Math.cos(theta);
-	private float cos = (float)Math.cos(theta);
-	private float sin = (float)Math.sin(theta);
-	// (1 - cosθ)回転
-	private FloatVector3 oneCosRotateAxis = rotateAxis.clone().multiplies(1 - cos);
+	// 平行移動 （yは上がマイナス）
+	private FloatVector3 translate = new FloatVector3(0.5f, 0f, 0f);
+	
+	private FloatVector3 cameraPosition = new FloatVector3(0.5f, 0f, 0f);
+	
+	private Rotation local = new Rotation(
+			0f
+//			(float)(Math.PI / 12)
+			,
+			
+			new FloatVector3(0, 0, 1));
+	
+	// カメラ座標系参考
+	// https://mem-archive.com/2018/02/17/post-74/
+	// 計算上、カメラの向きの逆回転が必要なので
+	// ここには最初から逆をいれておく
+	private Rotation camera = new Rotation(
+//			0f
+			(float)(-Math.PI * 1 / 12)
+			,
+			
+			new FloatVector3(0, 1, 0));
 	
 	private float scale = 0.8f;
-	// 平行移動 （yは上がマイナス）
-	private FloatVector3 translate = new FloatVector3(0f, -0.5f, 0);
+	
 	// -------------.slang側と対応しなければならない↑------------
 	
 	// 上の変数の個数（現状、数えて対応させるしかない）
-	private static final int LENGTH = 12 + 2; // なぜかずれるのでダミー分を追加
+	private static final int LENGTH = Rotation.FLOAT_LENGTH * 2 + 4 + 1 + 10; // なぜかずれるのでダミー分を追加
 	private static final int BYTES = Float.BYTES * LENGTH;
-	
-	
-	
 	
 	
 	private StagingBufferSettings settings;
 
 	
 	
-	// 行列計算の参考
-	// https://chaosplant.tech/do/vulkan/5-14/
+	
 	
 	// proj
 	// 最適な初期値は不明
@@ -72,13 +71,6 @@ public class UniformBufferObject implements AutoCloseable {
 	private static double near = DEFAULT_NEAR;
 	private static double far = DEFAULT_FAR;
 	
-	// view
-	private static DoubleVector3 camera = new DoubleVector3();
-	private static DoubleVector3 direction;
-	
-	// model（モデルごとに異なるためstaticではない）
-	
-	private DoubleVector3 translation;
 	
 	private StagingBuffer buffer;
 	
@@ -91,31 +83,27 @@ public class UniformBufferObject implements AutoCloseable {
 				uniformBuffer = buffer.getFloatBuffer(0, LENGTH);
 			} else {
 				uniformBuffer.clear();
-			}			
+			}
 			
-			uniformBuffer.put(rotateAxis.getX());
-			uniformBuffer.put(rotateAxis.getY());
-			uniformBuffer.put(rotateAxis.getZ());
+			// 先にfloat3をいれないとなぜか0になる
 			
-			// バグ？なのか知らないが、なぜかoneCosRotateAxisがずれる
+			// モデルの位置とカメラの位置を相殺
+			uniformBuffer.put(translate.getX() - cameraPosition.getX());
+			uniformBuffer.put(translate.getY() - cameraPosition.getY());
+			uniformBuffer.put(translate.getZ() - cameraPosition.getZ());
+			// バグ？なのか知らないが、なぜかfloat3がずれる
 			// どうしようもないので非常に嫌だが、ダミーをいれて対処する
 			// 本来はLWJGLに報告するべきだが、面倒なので保留
 			uniformBuffer.put(DUMMY);
 			
-			uniformBuffer.put(oneCosRotateAxis.getX());
-			uniformBuffer.put(oneCosRotateAxis.getY());
-			uniformBuffer.put(oneCosRotateAxis.getZ());
-			
-			uniformBuffer.put(DUMMY);
-			
-			uniformBuffer.put(translate.getX());
-			uniformBuffer.put(translate.getY());
-			uniformBuffer.put(translate.getZ());
-			
-			uniformBuffer.put(cos);
-			uniformBuffer.put(sin);
+			local.write(uniformBuffer);
+			camera.write(uniformBuffer);
 			
 			uniformBuffer.put(scale);
+			
+			/* デバッグ用
+			uniformBuffer.put(666);// 
+			*/
 		});
 		settings.setSize(BYTES);
 		

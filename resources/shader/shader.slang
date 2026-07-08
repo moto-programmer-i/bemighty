@@ -6,33 +6,33 @@ struct VSInput {
     float2 texCoord;
 };
 
-struct UniformBuffer {
+struct Rotation {
 	// 回転軸
-	float3 rotateAxis;
+	float3 axis;
 	
 	// ここの間になぜか不明なfloatが存在する
 	
 	// (1 - cosθ)回転
-	float3 oneCosRotateAxis;
-	
-	// ここの間になぜか不明なfloatが存在する
-	
-	float3 translate;
+	float3 oneCosAxis;
 	
 	float cos;
 	float sin;
+}
+
+struct UniformBuffer {
+	float3 translate;
 	
-	// cos sinの後だと、なぜか値が入らなかった tranlateも同様
-	// float3 oneCosRotateAxis; // (1 - cosθ)回転
+	// モデル自体の回転
+	Rotation local;
+	
+	// ここの間になぜか不明なfloat3が存在する
+	
+	// カメラ用の回転
+	Rotation camera;
+	
+	// floatの後だと、なぜかfloat3の値が入らない （不明な空間かも？）
 	
 	float scale;
-	
-	
-	
-	
-    // float4x4 model;
-    // float4x4 view;今まで使ってた？
-    // float4x4 proj;
 };
 ConstantBuffer<UniformBuffer> ubo;
 // -------------Java側と対応しなければならない↑------------
@@ -52,7 +52,7 @@ struct VertexOutput {
 VertexOutput vertMain(VSInput input) {
     VertexOutput output;
     // 変形なし
-    output.position = float4(input.position, 1.0);
+    // output.position = float4(input.position, 1.0);
     
     // 移動、拡大、回転のみ
     // output.position = mul(ubo.model, float4(input.position, 1.0));
@@ -61,28 +61,37 @@ VertexOutput vertMain(VSInput input) {
     // output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
 
 	
+
+	// モデルの回転
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
-	output.position = float4(
-		(ubo.cos * input.position
-			+ ubo.oneCosRotateAxis * mul(ubo.rotateAxis, input.position) 
-			+ ubo.sin * cross(ubo.rotateAxis, input.position))
+	var position = ubo.local.cos * input.position
+			+ ubo.local.oneCosAxis * mul(ubo.local.axis, input.position) 
+			+ ubo.local.sin * cross(ubo.local.axis, input.position)
 			
 			// 拡大
 			* ubo.scale
 			
 			// 平行移動
-			+ ubo.translate
-			
-			,
-		1.0);
+			+ ubo.translate;
 	
+	// カメラ座標系へ（カメラの向きと逆回転）		
+	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
+	position = ubo.camera.cos * position
+			+ ubo.camera.oneCosAxis * mul(ubo.camera.axis, position) 
+			+ ubo.camera.sin * cross(ubo.camera.axis, position);
+	
+	
+	output.position = float4(position, 1.0);
 	
 	/*
 	// デバッグ用
-	// if (ubo.translate.x > 665) {
-	// if (ubo.translate.y > 2000) {
-	// if (ubo.translate.x > 0) {
-	if (ubo.cos > 20000) {
+	if (ubo.translate.x > 0.1) {
+	// if (ubo.local.axis.x > 600) {
+	// if (ubo.local.oneCosAxis.x > 600) {
+	// if (ubo.local.sin > 600) {
+	// if (ubo.camera.axis.x > 600) {
+	// if (ubo.camera.sin > 600) {
+	// if (ubo.scale > 600) {
 		output.position.x += 1;
 	}
 	// */

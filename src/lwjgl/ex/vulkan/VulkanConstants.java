@@ -86,6 +86,10 @@ public final class VulkanConstants {
 	public static final FloatVector3  AXIS_Y = new FloatVector3(0f, 1f, 0f);
 	public static final FloatVector3  AXIS_Z = new FloatVector3(0f, 0f, 1f);
 
+
+	// LWJGLでなぜか値がずれるため作成。修正されしだいこちらも修正
+	public static final float DUMMY = 0f;
+	
 	private VulkanConstants() {
 	}
 
