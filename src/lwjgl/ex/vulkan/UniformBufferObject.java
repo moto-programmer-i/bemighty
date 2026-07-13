@@ -23,29 +23,29 @@ import static lwjgl.ex.vulkan.VulkanConstants.DUMMY;
 public class UniformBufferObject implements AutoCloseable {	
 	// -------------.slang側と対応しなければならない↓------------
 	// 平行移動 （yは上がマイナス）
-	private FloatVector3 translate = new FloatVector3(0.5f, 0f, 0f);
+	private FloatVector3 translate = new FloatVector3(0f, -0.4f, 0f);
 	
-	private FloatVector3 cameraPosition = new FloatVector3(0.5f, 0f, 0f);
+	private FloatVector3 cameraPosition = new FloatVector3(0f, 0f, 0f);
 	
 	private Rotation local = new Rotation(
-			0f
-//			(float)(Math.PI / 12)
+//			0f
+			(float)(-Math.PI / 6)
 			,
 			
-			new FloatVector3(0, 0, 1));
+			new FloatVector3(1, 0, 0));
 	
 	// カメラ座標系参考
 	// https://mem-archive.com/2018/02/17/post-74/
 	// 計算上、カメラの向きの逆回転が必要なので
 	// ここには最初から逆をいれておく
 	private Rotation camera = new Rotation(
-//			0f
-			(float)(-Math.PI * 1 / 12)
+			0f
+//			(float)(-Math.PI * 1 / 12)
 			,
 			
 			new FloatVector3(0, 1, 0));
 	
-	private float scale = 0.8f;
+	private float scale = 1.4f;
 	
 	// -------------.slang側と対応しなければならない↑------------
 	

@@ -47,6 +47,14 @@ struct VertexOutput {
 };
 
 
+// 画面の縦横比はどうせ16:9なので、合わせてパースをつける
+// https://chaosplant.tech/do/vulkan/5-14/#pasuwotukeru-1
+static float persX = 0.2;
+static float persY = persX * 9 / 16;
+static float minPersX = 0.8;
+static float minPersY = 0.9;
+
+
 // すべての頂点に対して呼び出される
 [shader("vertex")]
 VertexOutput vertMain(VSInput input) {
@@ -54,13 +62,6 @@ VertexOutput vertMain(VSInput input) {
     // 変形なし
     // output.position = float4(input.position, 1.0);
     
-    // 移動、拡大、回転のみ
-    // output.position = mul(ubo.model, float4(input.position, 1.0));
-    
-    // UniformBufferObjectを用いた座標の変換 
-    // output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.position, 1.0))));
-
-	
 
 	// モデルの回転
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
@@ -74,21 +75,35 @@ VertexOutput vertMain(VSInput input) {
 			// 平行移動
 			+ ubo.translate;
 	
+		
+	
+	/*
+	
 	// カメラ座標系へ（カメラの向きと逆回転）		
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
 	position = ubo.camera.cos * position
 			+ ubo.camera.oneCosAxis * mul(ubo.camera.axis, position) 
 			+ ubo.camera.sin * cross(ubo.camera.axis, position);
 	
+	*/
 	
-	output.position = float4(position, 1.0);
+	// パース
+	// 確認してみたら、z軸がなぜか手前が+なので参考から逆数に
+	// zが0以上1未満以外の範囲は描画されないことに注意
+	// 範囲変換 https://scrapbox.io/rn-works/%E6%95%B0%E5%AD%A6_:_%E7%AF%84%E5%9B%B2%E5%A4%89%E6%8F%9B
+	position.x *= position.z * persX + minPersX;
+	position.y *= position.z * persY + minPersY;
+	
+	
+	output.position = float4(position, 1.0);	
+	
 	
 	/*
 	// デバッグ用
-	if (ubo.translate.x > 0.1) {
-	// if (ubo.local.axis.x > 600) {
-	// if (ubo.local.oneCosAxis.x > 600) {
-	// if (ubo.local.sin > 600) {
+	// if (ubo.translate.x > 0.1) {
+	// if (ubo.local.axis.x > 0) {
+	// if (ubo.local.oneCosAxis.x > 0) {
+	// if (ubo.local.sin > 0) {
 	// if (ubo.camera.axis.x > 600) {
 	// if (ubo.camera.sin > 600) {
 	// if (ubo.scale > 600) {

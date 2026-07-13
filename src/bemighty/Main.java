@@ -66,8 +66,8 @@ import lwjgl.ex.vulkan.Window;
 import lwjgl.ex.vulkan.WindowSettings;
 
 public class Main {
-	public static int WIDTH = 400;
-	public static int HEIGHT = 400;
+	public static int WIDTH = 800;
+	public static int HEIGHT = 450;
 	public static String WINDOW_NAME = "Be Mighty";
 	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
