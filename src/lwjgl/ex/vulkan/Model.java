@@ -161,6 +161,15 @@ public class Model implements AutoCloseable {
                 		vertices[verticesIndex++] = vertex.z();
             		}
             		
+            		// デバッグ用
+            		/*
+            		System.out.println("(" 
+            				+ vertices[verticesIndex - 3]
+            				+ ", " + vertices[verticesIndex - 2]
+            				+ ", " + vertices[verticesIndex - 1]
+            				);
+            		// */
+            		
             		
 //            		System.out.println("y " + vertex.y());
             		

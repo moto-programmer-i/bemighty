@@ -49,25 +49,28 @@ struct VertexOutput {
 
 // 画面の縦横比はどうせ16:9なので、合わせてパースをつける
 // https://chaosplant.tech/do/vulkan/5-14/#pasuwotukeru-1
-static float persX = 0.2;
-static float persY = persX * 9 / 16;
-static float minPersX = 0.8;
-static float minPersY = 0.9;
+static const float persX = 0.2;
+static const float persY = persX * 9 / 16;
+static const float minPersX = 0.8;
+static const float minPersY = 0.9;
 
+// デフォルトだと手前が+、1〜0を描画してしまうため、
+// 原点が1になってしまうので調整用
+static const float cameraZTranslate = 1;
 
 // すべての頂点に対して呼び出される
 [shader("vertex")]
 VertexOutput vertMain(VSInput input) {
     VertexOutput output;
     // 変形なし
-    // output.position = float4(input.position, 1.0);
-    
+    // var position = input.position;
 
 	// モデルの回転
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
-	var position = ubo.local.cos * input.position
+	var position = (ubo.local.cos * input.position
 			+ ubo.local.oneCosAxis * mul(ubo.local.axis, input.position) 
 			+ ubo.local.sin * cross(ubo.local.axis, input.position)
+			)
 			
 			// 拡大
 			* ubo.scale
@@ -75,17 +78,12 @@ VertexOutput vertMain(VSInput input) {
 			// 平行移動
 			+ ubo.translate;
 	
-		
-	
-	/*
-	
 	// カメラ座標系へ（カメラの向きと逆回転）		
 	// cosθ位置 + (1 - cosθ)(回転・位置)回転 + sinθ(回転×位置)
 	position = ubo.camera.cos * position
 			+ ubo.camera.oneCosAxis * mul(ubo.camera.axis, position) 
 			+ ubo.camera.sin * cross(ubo.camera.axis, position);
-	
-	*/
+			
 	
 	// パース
 	// 確認してみたら、z軸がなぜか手前が+なので参考から逆数に
@@ -93,6 +91,10 @@ VertexOutput vertMain(VSInput input) {
 	// 範囲変換 https://scrapbox.io/rn-works/%E6%95%B0%E5%AD%A6_:_%E7%AF%84%E5%9B%B2%E5%A4%89%E6%8F%9B
 	position.x *= position.z * persX + minPersX;
 	position.y *= position.z * persY + minPersY;
+	
+	
+	// 1〜0の範囲を 0〜-1 に変更
+	position.z += cameraZTranslate;
 	
 	
 	output.position = float4(position, 1.0);	
@@ -106,7 +108,7 @@ VertexOutput vertMain(VSInput input) {
 	// if (ubo.local.sin > 0) {
 	// if (ubo.camera.axis.x > 600) {
 	// if (ubo.camera.sin > 600) {
-	// if (ubo.scale > 600) {
+	if (ubo.scale > 600) {
 		output.position.x += 1;
 	}
 	// */

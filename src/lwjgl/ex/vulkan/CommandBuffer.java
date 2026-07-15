@@ -159,6 +159,8 @@ public class CommandBuffer implements AutoCloseable {
 	            // Swapchainの大きさに設定
 	            .width(swapchain.getWidth())
 	            .height(swapchain.getHeight())
+	            // 設定可能に見えるが、結局は0〜1でやった方がいいらしい
+	            // The Vulkan spec states: If the VK_EXT_depth_range_unrestricted extension is not enabled, maxDepth must be between 0.0 and 1.0, inclusive (https://vulkan.lunarg.com/doc/view/1.4.321.1/linux/antora/spec/latest/chapters/vertexpostproc.html#VUID-VkViewport-maxDepth-01235)
 	            .minDepth(DEFAULT_MIN_DEPTH)
 	            .maxDepth(DEFAULT_MAX_DEPTH)
 			);
