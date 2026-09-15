@@ -33,7 +33,7 @@ public final class AssimpUtils {
 		int numTextures = scene.mNumTextures();
         for(int i = 0; i < numTextures; ++i) {
         	// Assimpの設計ミスにより、画像が圧縮されている場合は
-        	// 幅にサイズ、高さが0になる
+        	// 幅にサイズが格納されており、高さは0になる
         	var texture = AITexture.create(scene.mTextures().get(i));
         	if (texture.mHeight() != 0) {
         		// 圧縮されていない場合は未実装

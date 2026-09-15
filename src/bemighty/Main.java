@@ -72,8 +72,12 @@ public class Main {
 	public static Color BACKGROUND = Color.black;
 	public static final Path RESOURCE_PATH = FileSystems.getDefault().getPath("resources");
 	public static final Path SHADER_SPV = RESOURCE_PATH.resolve("shader/slang.spv");
-	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
+
+//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/hero.glb");
+//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/princess_summer.glb");
+//	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/test.gltf");
 //	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/polyMesh.gltf");
+	public static final Path TEST_MODEL = RESOURCE_PATH.resolve("models/poly_texture.glb");
 
 	public static void main(String[] args) throws Exception {
 		// 処理前の時刻を取得
@@ -140,7 +144,8 @@ public class Main {
 									) {
 
 						var samplerSettings = new SamplerSettings(logicalDevice,
-								
+					
+							
 								// テクスチャが複数の場合、不明
 								testModel.getTextures().get(0).getTextureImageView());
 						

@@ -142,6 +142,11 @@ public class Model implements AutoCloseable {
             	// translation(offset)がある場合は取得
             	var translation = ListUtils.getOrNull(translations, m);
             	
+//            	これでテクスチャを区別できるはずなんだが
+//            	var materialIndex = mesh.mMaterialIndex();
+//            	System.out.println("materialIndex "+ materialIndex);
+//            https://docs.vulkan.org/tutorial/latest/Building_a_Simple_Engine/Loading_Models/04_loading_gltf.html
+            	
             	// テクスチャ複数の場合は保留
             	var textureCoords = mesh.mTextureCoords(0);
             	
