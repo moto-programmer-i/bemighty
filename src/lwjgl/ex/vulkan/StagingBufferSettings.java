@@ -1,8 +1,9 @@
 package lwjgl.ex.vulkan;
 
-import java.nio.LongBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.function.Consumer;
-import java.util.function.LongConsumer;
+
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
@@ -63,6 +64,40 @@ public class StagingBufferSettings implements Cloneable {
 	public StagingBufferSettings(LogicalDevice logicalDevice, Consumer<PointerBuffer> copy) {
 		this.logicalDevice = logicalDevice;
 		this.copy = copy;
+	}
+	
+	/**
+	 * float送信用のインスタンス作成
+	 * （sizeも同時に設定される）
+	 * @param logicalDevice
+	 * @param size
+	 * @param copy 送信の内容
+	 * @return
+	 */
+	public static StagingBufferSettings createFloat(LogicalDevice logicalDevice, int length, Consumer<FloatBuffer> copy) {
+		// こうしないとサイズと、内部Bufferのlengthを同時に設定できない
+		var instance = new StagingBufferSettings(logicalDevice, (buffer -> {
+			copy.accept(buffer.getFloatBuffer(0, length));
+		}));
+		instance.setSize(Float.BYTES * length);
+		return instance;
+	}
+	
+	/**
+	 * float送信用のインスタンス作成
+	 * （sizeも同時に設定される）
+	 * @param logicalDevice
+	 * @param size
+	 * @param copy 送信の内容
+	 * @return
+	 */
+	public static StagingBufferSettings createInt(LogicalDevice logicalDevice, int length, Consumer<IntBuffer> copy) {
+		// こうしないとサイズと、内部Bufferのlengthを同時に設定できない
+		var instance = new StagingBufferSettings(logicalDevice, (buffer -> {
+			copy.accept(buffer.getIntBuffer(0, length));
+		}));
+		instance.setSize(Integer.BYTES * length);
+		return instance;
 	}
 
 	

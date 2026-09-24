@@ -18,6 +18,11 @@ Shaderが複数ある場合の対処不明
 モデルの読み込みで頂点の重複含め、無駄が多い
 	GPUに書く形式でまとめて中間ファイルを用意してみる
 	一個のファイルを読んでGPUにそのまま渡したらいけるようにしたい
+	
+	↓モデルに対して事前にやっておきたい
+	// vulkanではy座標が逆なので調整
+	// https://docs.vulkan.org/tutorial/latest/08_Loading_models.html
+	vertexBuffer.put(1.0f - textureCoord.y());
 
 Shaderの読み込みでreadAllBytesからmallocしており、無駄なコピーが発生する
 	適切なライブラリあるか？独自実装しかないか？

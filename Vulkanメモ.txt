@@ -1,3 +1,9 @@
+参考になりそうな例
+
+https://github.com/SaschaWillems/Vulkan/blob/master/examples/
+----------------------------------------------------------------------
+
+
 https://chaosplant.tech/do/vulkan/5-13/
 小さい数値データはプッシュ定数
 大きなバッファやテクスチャ画像などのデータはデスクリプタ
