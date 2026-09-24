@@ -283,11 +283,9 @@ public class Model implements AutoCloseable {
 	}
 	
 	private StagingBufferSettings createVertexBufferSettings() {
-		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			var vertexBuffer = buffer.getFloatBuffer(0, vertices.length);
+		var settings = StagingBufferSettings.createFloat(logicalDevice, vertices.length, (vertexBuffer) -> {
 			vertexBuffer.put(vertices);
 		});
-		settings.setSize(Float.BYTES * vertices.length);
 //		settings.setUsage(USAGE_VERTEX_DESTINATION);
 //		settings.setUsage(USAGE_SOURCE);
 		settings.setType(BufferType.VERTEX);
@@ -300,8 +298,7 @@ public class Model implements AutoCloseable {
 	}
 	
 	private StagingBufferSettings createIndexBufferSettings() {
-		var settings = new StagingBufferSettings(logicalDevice, (buffer) -> {
-			var indexBuffer = buffer.getIntBuffer(0, indices.length);
+		var settings = StagingBufferSettings.createInt(logicalDevice, indices.length, (indexBuffer) -> {
 			indexBuffer.put(indices);
 		});
 		settings.setSize(Integer.BYTES * Float.BYTES * indices.length);
