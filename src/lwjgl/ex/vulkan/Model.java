@@ -301,7 +301,6 @@ public class Model implements AutoCloseable {
 		var settings = StagingBufferSettings.createInt(logicalDevice, indices.length, (indexBuffer) -> {
 			indexBuffer.put(indices);
 		});
-		settings.setSize(Integer.BYTES * Float.BYTES * indices.length);
 		settings.setType(BufferType.INDEX);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_DESTINATION);
 //		settings.setSourceMemoryPropertyFlags(MEMORY_PROPERTY_FLAGS_SOURCE);
